@@ -11,9 +11,14 @@ class Command(BaseCommand):
         def_time = def_time - timedelta(minutes=def_time.minute)
         def_time = datetime.strftime(def_time,"%Y-%m-%d %H:%M")
         parser.add_argument('--date', dest='date', action='store', type=str, default=def_time, help="Input tanggal dan jam data yang ingin diambil dengan format 'YYYY-MM-DD HH:MM'")
+        parser.add_argument('--durasi', dest='durasi', action='store', type=float, default=1)
 
     def handle(self, *args, **options):
         dtime = options.get('date')
+        dur = options.get('durasi')
+        dtime_end = datetime.strptime(dtime,"%Y-%m-%d %H:%M") + timedelta(hours=dur)
+        dtime_end = datetime.strftime(dtime_end,"%Y-%m-%d %H:%M")
+
         self.stdout.write(
             self.style.SUCCESS(f'{dtime}: Load data ritase')
         )
@@ -21,7 +26,7 @@ class Command(BaseCommand):
         sql_load = f'''
         declare @start_date datetime, @enddate datetime
         set @start_date = '{dtime}'
-        set @enddate = DATEADD("HH", 1, @start_date)
+        set @enddate = '{dtime_end}'
 
         SELECT 
             sl.id as 'load_id',
@@ -87,7 +92,7 @@ class Command(BaseCommand):
         sql_dump = f'''
         declare @start_date datetime, @enddate datetime
         set @start_date = '{dtime}'
-        set @enddate = DATEADD("HH", 2, @start_date)
+        set @enddate = '{dtime_end}'
 
         SELECT 
             sl.id as 'load_id',
