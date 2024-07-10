@@ -13,6 +13,15 @@ import pandas as pd
 import math
 
 # Create your views here.
+material = {
+    'Mud':'Mud',
+    'GENS':'Sekatan',
+    'GENK':'Kocoran',
+    'GENFC':'Fine Coal',
+    'PAAP':'PAAP',
+    'GENMC':'Mud Cair',
+    }
+
 def index(request):
     return render(request, 'ritase/index.html')
 
@@ -43,8 +52,6 @@ def load_ritase_to_db(request):
     result = df.groupby(['hauler','operator_hauler_id','loader','operator_loader_id','type','hour','report_date','shift'], as_index=False, dropna=False).agg({'time_full':'count'})
     result = result.pivot(index=['report_date','shift','hauler','operator_hauler_id','loader','operator_loader_id','type'], columns='hour',values='time_full').fillna(0).astype(int)
     result = result.sort_values('hauler').reset_index()
-
-
 
     for i, d in result.iterrows():
         cek_ritase.objects.create(
@@ -171,6 +178,12 @@ def update(request):
     val = request.POST.get('value')
     cek_ritase.objects.filter(pk=id).update(**{col:val})
     
+    if col == "material":
+        remark = material.get(val,None)
+        csr = cek_ritase.objects.get(pk=id)
+        csr.remark = remark
+        csr.save()
+
     response = {}
     return JsonResponse(response)
 
