@@ -14,12 +14,7 @@ import math
 
 # Create your views here.
 def index(request):
-    shift = request.GET.get('shift')
-    if shift == '2':
-        loop_times = [f'{hour:02d} - {(hour+1)%24:02d}' for hour in range(18, 6, -1)]
-    else:
-        loop_times = [f'{hour:02d} - {(hour+1)%24:02d}' for hour in range(6, 18)]
-    return render(request, 'ritase/index.html', {'jam': loop_times})
+    return render(request, 'ritase/index.html')
 
 def load_ritase_to_db(request):
     date = request.POST.get('date')
