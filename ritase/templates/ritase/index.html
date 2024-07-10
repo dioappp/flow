@@ -64,9 +64,47 @@
 <script type="text/javascript">
   function getHeaders(){
     if($("#shift-select").val() == 1){
-      headers = ["Loader", "Material", "Remarks","6","7","8","9","10","11","12","13","14","15","16","17","#"];}
+      headers = ["Loader", "Material", "Remarks","6","7","8","9","10","11","12","13","14","15","16","17","#"];
+      column = [
+            { data: "loader", width:"10%" },
+            { data: "material" },
+            { data: "remark" },
+            { data: "a", width:"6%"},
+            { data: "b", width:"6%"},
+            { data: "c", width:"6%"},
+            { data: "d", width:"6%"},
+            { data: "e", width:"6%"},
+            { data: "f", width:"6%"},
+            { data: "g", width:"6%"},
+            { data: "h", width:"6%"},
+            { data: "i", width:"6%"},
+            { data: "j", width:"6%"},
+            { data: "k", width:"6%"},
+            { data: "l", width:"6%"}, 
+            { data: "action", width:"3%"}, 
+        ]
+    }
     else {
       headers = ["Loader", "Material", "Remarks","18","19","20","21","22","23","0","1","2","3","4","5","6","#"];
+      column = [
+            { data: "loader", width:"10%" },
+            { data: "material" },
+            { data: "remark" },
+            { data: "a", width:"6%"},
+            { data: "b", width:"6%"},
+            { data: "c", width:"6%"},
+            { data: "d", width:"6%"},
+            { data: "e", width:"6%"},
+            { data: "f", width:"6%"},
+            { data: "g", width:"6%"},
+            { data: "h", width:"6%"},
+            { data: "i", width:"6%"},
+            { data: "j", width:"6%"},
+            { data: "k", width:"6%"},
+            { data: "l", width:"6%"}, 
+            { data: "m", width:"6%"}, 
+            { data: "action", width:"3%"}, 
+        ]
     }
   }
 
@@ -202,24 +240,7 @@
           d.operator_id = item.id; 
         },
       },
-      columns: [
-        { data: "loader", width:"10%" },
-        { data: "material" },
-        { data: "remark" },
-        { data: "a", width:"6%"},
-        { data: "b", width:"6%"},
-        { data: "c", width:"6%"},
-        { data: "d", width:"6%"},
-        { data: "e", width:"6%"},
-        { data: "f", width:"6%"},
-        { data: "g", width:"6%"},
-        { data: "h", width:"6%"},
-        { data: "i", width:"6%"},
-        { data: "j", width:"6%"},
-        { data: "k", width:"6%"},
-        { data: "l", width:"6%"}, 
-        { data: "action", width:"3%"}, 
-      ],
+      columns: column,
       rowId: 'id'
     });
   }
