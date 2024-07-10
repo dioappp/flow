@@ -1,0 +1,349 @@
+{% extends 'base.html' %} 
+{% load static %} 
+
+{% block title %} | Produksi {%endblock%} 
+{% block breadcrumb_title %} Produksi {%endblock%} 
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+  <a href="#">Produksi</a>
+</li>
+<li class="breadcrumb-item">
+  <a href="#">Ritase</a>
+</li>
+{% endblock breadcrumb %} 
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-body">
+        <div class="mb-3 row row-cols-auto justify-content-md-center">
+          <label for="date-select" class="col col-form-label">Tanggal</label>
+          <div class="col">
+            <input class="form-control" type="date" placeholder="Month data.." onchange="load()"
+              id="date-select" name="date" value="{% now "Y-m-d" %}" />
+          </div>
+          <label for="shift-select" class="col col-form-label">Shift</label>
+          <div class="col-sm-1">
+            <select type="text" class="form-control" name="shift" id="shift-select" onchange="load()" required>
+              <option value="1">Shift 1</option>
+              <option value="2">Shift 2</option>
+            </select>
+          </div>
+          <label for="cn-hauler" class="col col-form-label">CN Hauler</label>
+          <div class="col">
+            <input type="text" class="form-control" id="cn-hauler" onchange="load();">
+          </div>
+          <button
+              type="button"
+              class="btn btn-primary me-3"
+              id="btn_load"
+              onclick="loadTable()"
+            >
+              <i class="feather mr-2 icon-loader"></i> Load
+          </button>
+          <button
+              type="button"
+              class="btn btn-danger"
+              id="btn_load_db"
+              onclick="dbRitase()"
+              disabled
+            >
+              <i class="feather mr-2 icon-loader"></i> Load DB
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %} 
+
+{% block script %}
+{% include "partials/script.html"%}
+<script type="text/javascript">
+  function getHeaders(){
+    if($("#shift-select").val() == 1){
+      headers = ["Loader", "Material", "Remarks","6","7","8","9","10","11","12","13","14","15","16","17","#"];}
+    else {
+      headers = ["Loader", "Material", "Remarks","18","19","20","21","22","23","0","1","2","3","4","5","6","#"];
+    }
+  }
+
+  function load(){
+    $.ajax({
+      url:"{% url 'ritase:cek_operator'%}",
+      type: "POST",
+      data: {
+        date: $("#date-select").val(),
+        shift: $("#shift-select").val(),
+        hauler: $("#cn-hauler").val(),
+      },
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      complete: function(d){
+        generateCard(d.responseJSON.data);
+      }
+    })
+  };
+
+  function generateCard(data) {
+    var container = d3.select(".pc-content");
+
+    container.selectAll("#operator-card").remove();
+    tables = [];
+    editors= [];
+
+    data.forEach(function(item, index){
+      var row =container.append("div").attr("class", "row").attr("id","operator-card");
+      var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card");
+      var cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
+      var cardBodyOp = operator.append("div").attr("class", "card-body");
+      var form = cardBodyOp.append("form").attr("id", "operator-form")
+        .attr("method","POST")
+        .attr("enctype","multipart/form-data")
+        .attr("action","{% url 'ritase:update_operator' %}")
+
+        form.append("input").attr("type","hidden").attr("name","csrfmiddlewaretoken").attr("value","{{ csrf_token }}")
+
+      var formGroups = [
+        { label: 'ID', inputType: "number", inputValue: item.id, readonly: true},
+        { label: "Operator", inputType: "text", inputValue: item.operator, readonly: true },
+        { label: "NRP", inputType: "number", inputValue: item.NRP, readonly: true },
+        { label: "HM Start", inputType: "number", inputValue: item.hm_start, readonly: false },
+        { label: "HM End", inputType: "number", inputValue: item.hm_end, readonly: false }
+      ];
+      formGroups.forEach(group => {
+        var formGroup = form.append("div").attr("class", "mb-0 row");
+        formGroup.append("label")
+          .attr("for", group.label.replace(/\s+/g, ''))
+          .attr("class", "col-sm-3 col-form-label")
+          .text(group.label);
+        
+        const inputDiv = formGroup.append("div").attr("class", "col-sm");
+        var input = inputDiv.append("input")
+          .attr("type", group.inputType)
+          .attr("name", group.label)
+          .attr("class", group.inputValue !== null ? "form-control-plaintext" : "form-control")
+          .attr("id", group.label.replace(/\s+/g, ''))
+          .attr("value", group.inputValue || "")
+          .attr("readonly", group.readonly ? true : null);
+        
+        if (!group.readonly) {
+          input.on("change", function() {
+            handleInputChange(form);
+          });
+        }
+      });
+
+      var ritase = row.append("div").attr("class", "col-lg-9").append("div").attr("class", "card");
+      var cardHeaderRit = ritase.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Ritase");
+      var cardBodyRit = ritase.append("div").attr("class", "card-body")
+        .append("div").attr("class", "card-body table-border-style")
+        .append("div").attr("class", "table-responsive")
+        .append("table").attr("class", "table table-striped").attr("id", "load-table"+index);
+        
+      var thead = cardBodyRit.append("thead").append("tr");
+
+      getHeaders()
+
+      headers.forEach(header => {
+        thead.append("th")
+          .attr("class", "align-middle bg-primary text-white")
+          .text(header);
+      });
+
+      cardBodyRit.append("tbody");
+      
+      var table = createTable(index, item);
+      tables.push(table);
+
+      var editor = new DatatablesInlineEditor(table, options); 
+      editors.push(editor);
+    })
+  }
+
+  function createTable(index, item){
+    // Initialize DataTable for this specific card
+    return $("#load-table"+index).DataTable({
+      processing: true,
+      serverSide: true,
+      ordering: false,
+      paging: false,
+      searching: false,
+      layout:{
+        bottomStart:null,
+        bottomEnd: function(){
+          let container = d3.select(document.createElement('div'));
+          
+          let button = container.append("button")
+            .attr('class','btn btn-sm btn-primary')
+            .attr('type','button')
+            .attr('id','addRow-'+index)
+            .attr('data-id',item.id)
+            .on('click',function(){addRow(this)})
+            .append("i")
+            .attr("class","ti ti-plus")
+            .style("color","#FFFFFF")
+          
+          return container.node();
+        }
+      },
+      ajax: {
+        url: "{% url 'ritase:cek_ritase' %}",
+        type: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}",
+        },
+        data: function(d){
+          d.date = $("#date-select").val();
+          d.shift = $("#shift-select").val();
+          d.operator_id = item.id; 
+        },
+      },
+      columns: [
+        { data: "loader", width:"10%" },
+        { data: "material" },
+        { data: "remark" },
+        { data: "a", width:"6%"},
+        { data: "b", width:"6%"},
+        { data: "c", width:"6%"},
+        { data: "d", width:"6%"},
+        { data: "e", width:"6%"},
+        { data: "f", width:"6%"},
+        { data: "g", width:"6%"},
+        { data: "h", width:"6%"},
+        { data: "i", width:"6%"},
+        { data: "j", width:"6%"},
+        { data: "k", width:"6%"},
+        { data: "l", width:"6%"}, 
+        { data: "action", width:"3%"}, 
+      ],
+      rowId: 'id'
+    });
+  }
+
+  var options = {
+    cellSelector: 'tbody td',
+    headers: {"X-CSRFToken": "{{ csrf_token }}"},
+    fields: [
+        { name: 'loader', type: 'text' },
+        { name: 'material', 
+          type: 'select', 
+          options:[
+            {value: 'Coal', label: 'Coal'},
+            {value: 'IPD', label: 'IPD'},
+            {value: 'OB', label: 'OB'},
+            {value: 'Top Soil', label: 'Top Soil'},
+            {value: 'Mud', label: 'Mud'},
+            {value: 'nan', label: 'nan'},
+          ],
+          className: 'form-control'
+        },
+        { name: 'a', type: 'numeric' },
+        { name: 'b', type: 'numeric' },
+        { name: 'c', type: 'numeric' },
+        { name: 'd', type: 'numeric' },
+        { name: 'e', type: 'numeric' },
+        { name: 'f', type: 'numeric' },
+        { name: 'g', type: 'numeric' },
+        { name: 'h', type: 'numeric' },
+        { name: 'i', type: 'numeric' },
+        { name: 'j', type: 'numeric' },
+        { name: 'k', type: 'numeric' },
+        { name: 'l', type: 'numeric' },
+        { name: 'm', type: 'numeric' },
+    ],
+    url: "{% url 'ritase:update'%}",
+    method: 'POST',
+    data: {
+      youSendData: true,
+    },
+  };
+
+  function addRow(button) {
+    $.ajax({
+      url:"{% url 'ritase:addrow' %}",
+      type: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: {
+        date: $("#date-select").val(),
+        shift: $("#shift-select").val(),
+        hauler: $("#cn-hauler").val(),
+        id: button.getAttribute('data-id')
+      },
+      complete:function(){
+        loadTable()
+      }
+    })
+  }
+
+  function loadTable(){
+    tables.forEach(function(table){
+      table.draw()
+    }) 
+  }
+
+  function dbRitase(){
+    $.ajax({
+      url: "{% url 'ritase:to_db' %}",
+      type: "POST",
+      headers:{
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: {
+        date: $("#date-select").val(),
+        shift: $("#shift-select").val(),
+      }
+    })
+  }
+  
+  function handleInputChange(form) {
+    // Check if the button already exists
+    if (!form.select("button#save-button").node() && !form.select("button#cancel-button").node()) {
+        // Add a button at the bottom of the card
+        var cardFooter = form.append("div").attr("class", "mb-0 mt-2 row d-flex justify-content-end")
+        cardFooter.append("button")
+            .attr("id", "cancel-button")
+            .attr("type","button")
+            .attr("class", "btn btn-secondary me-3")
+            .attr("style","width: auto")
+            .text("Cancel")
+            .on("click", function() {
+                load()
+            });
+        cardFooter.append("button")
+            .attr("id", "save-button")
+            .attr("type","submit")
+            .attr("class", "btn btn-primary")
+            .attr("style","width: auto")
+            .text("Save Changes")
+            .on("click", function() {
+              setTimeout(function() {
+                // Remove the cardFooter after submission
+                cardFooter.remove();
+            }, 1000);
+            });
+      }
+  }
+
+  function deleteRow(button){
+    $.ajax({
+      url:"{% url 'ritase:delete_row' %}",
+      type: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      data: {
+        id: button.getAttribute('data-id')
+      },
+      complete:function(){
+        loadTable()
+      }
+    })
+  }
+</script>
+{% endblock script %}

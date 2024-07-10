@@ -1,0 +1,203 @@
+{% load static %}
+<!-- [ Sidebar Menu ] start -->
+<nav class="pc-sidebar pc-sidebar-hide">
+  <div class="navbar-wrapper">
+    <div class="m-header">
+      <a href="../dashboard/index.html" class="b-brand text-primary">
+        <!-- ========   Change your logo from here   ============ -->
+        <img src="{% static 'images/logo-flow.svg' %}" class="img-fluid logo-lg" alt="logo">
+        <span class="badge bg-light-success rounded-pill ms-2 theme-version">v0.1.0</span>
+      </a>
+    </div>
+    <div class="navbar-content">
+      <div class="card pc-user-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <img src="{% static 'images/user/avatar-1.jpg' %}" alt="user-image" class="user-avtar wid-45 rounded-circle" />
+            </div>
+            <div class="flex-grow-1 ms-3 me-2">
+              <h6 class="mb-0">Jonh Smith</h6>
+              <small>MCR Mining</small>
+            </div>
+            <a class="btn btn-icon btn-link-secondary avtar" data-bs-toggle="collapse" href="#pc_sidebar_userlink">
+              <svg class="pc-icon">
+                <use xlink:href="#custom-sort-outline"></use>
+              </svg>
+            </a>
+          </div>
+          <div class="collapse pc-user-links" id="pc_sidebar_userlink">
+            <div class="pt-3">
+              <a href="#!">
+                <i class="ti ti-user"></i>
+                <span>My Account</span>
+              </a>
+              <a href="#!">
+                <i class="ti ti-settings"></i>
+                <span>Settings</span>
+              </a>
+              <a href="#!">
+                <i class="ti ti-power"></i>
+                <span>Logout</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="pc-navbar">
+        <li class="pc-item pc-caption">
+          <label>Navigation</label>
+        </li>
+
+        <li class="pc-item">
+          <a href="{% url 'ritase:home' %}" class="pc-link">
+            <span class="pc-micon">
+              <i class="fas fa-chart-area"></i>
+            </span>
+            <span class="pc-mtext">Dashboard</span>
+          </a>
+        </li>
+
+        <li class="pc-item pc-caption">
+          <label>Standby</label>
+          <svg class="pc-icon">
+            <use xlink:href="#custom-notification-status"></use>
+          </svg>
+        </li>
+        <li class="pc-item pc-hasmenu">
+          <a href="#!" class="pc-link"
+            ><span class="pc-micon">
+              <i class=" fas fa-snowplow"></i>
+            </span
+            ><span class="pc-mtext">Loader</span><span class="pc-arrow"><i data-feather="chevron-right"></i></span
+          ></a>
+          <ul class="pc-submenu">
+            <li class="pc-item"><a class="pc-link" href="{% url 'stb_loader:index' %}">Hourly</a></li>
+            <li class="pc-item"><a class="pc-link" href="{% url 'stb_loader_shiftly:index' %}">Shiftly</a></li>
+          </ul>
+        </li>
+        <li class="pc-item pc-hasmenu">
+          <a href="#!" class="pc-link">
+            <span class="pc-micon">
+              <i class="fas fa-truck-monster"></i>
+            </span>
+            <span class="pc-mtext">Hauler</span><span class="pc-arrow"><i data-feather="chevron-right"></i></span>
+          </a>
+          <ul class="pc-submenu">
+            <li class="pc-item"><a class="pc-link" href="{% url 'stb_hauler:index' %}">Hourly</a></li>
+            <li class="pc-item"><a class="pc-link" href="{% url 'stb_hauler_shiftly:index' %}">Shiftly</a></li>
+          </ul>
+        </li>
+
+        <li class="pc-item pc-caption">
+          <label>Produksi</label>
+          <svg class="pc-icon">
+            <use xlink:href="#custom-notification-status"></use>
+          </svg>
+        </li>
+        <li class="pc-item">
+          <a href="{% url 'ritase:home' %}" class="pc-link">
+            <span class="pc-micon">
+              <i class="fas fa-shipping-fast"></i>
+            </span>
+            <span class="pc-mtext">Ritase</span>
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+<!-- [ Sidebar Menu ] end -->
+
+<!-- [ Header Topbar ] start -->
+<header class="pc-header">
+  <div class="header-wrapper"> 
+    <!-- [Mobile Media Block] start -->
+    <div class="me-auto pc-mob-drp">
+      <ul class="list-unstyled">
+        <!-- ======= Menu collapse Icon ===== -->
+        <li class="pc-h-item pc-sidebar-collapse">
+          <a href="#" class="pc-head-link ms-0" id="sidebar-hide">
+            <i class="ti ti-menu-2"></i>
+          </a>
+        </li>
+        <li class="pc-h-item pc-sidebar-popup">
+          <a href="#" class="pc-head-link ms-0" id="mobile-collapse">
+            <i class="ti ti-menu-2"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <!-- [Mobile Media Block end] -->
+<div class="ms-auto">
+  <ul class="list-unstyled">
+    <div class="pc-h-item">
+      <label>&nbsp;</label><br />
+      <button type="button" class="btn btn-primary event-btnx m-2" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
+      </button>
+    </div>
+    <li class="dropdown pc-h-item header-user-profile">
+      <a
+        class="pc-head-link dropdown-toggle arrow-none me-0"
+        data-bs-toggle="dropdown"
+        href="#"
+        role="button"
+        aria-haspopup="false"
+        data-bs-auto-close="outside"
+        aria-expanded="false"
+      >
+        <img src="{% static 'images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar" />
+      </a>
+      <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
+        <div class="dropdown-header d-flex align-items-center justify-content-between">
+          <h5 class="m-0">Profile</h5>
+        </div>
+        <div class="dropdown-body">
+          <div class="profile-notification-scroll position-relative" style="max-height: calc(100vh - 225px)">
+            <div class="d-flex mb-1">
+              <div class="flex-shrink-0">
+                <img src="{% static 'images/user/avatar-2.jpg' %}" alt="user-image" class="user-avtar wid-35" />
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <h6 class="mb-1">Carson Darrin 🖖</h6>
+                <span>carson.darrin@company.io</span>
+              </div>
+            </div>
+            <hr class="border-secondary border-opacity-50" />
+            <p class="text-span">Manage</p>
+            <a href="#" class="dropdown-item">
+              <span>
+                <svg class="pc-icon text-muted me-2">
+                  <use xlink:href="#custom-setting-outline"></use>
+                </svg>
+                <span>Settings</span>
+              </span>
+            </a>
+            <a href="#" class="dropdown-item">
+              <span>
+                <svg class="pc-icon text-muted me-2">
+                  <use xlink:href="#custom-share-bold"></use>
+                </svg>
+                <span>Share</span>
+              </span>
+            </a>
+            <a href="#" class="dropdown-item">
+              <span>
+                <svg class="pc-icon text-muted me-2">
+                  <use xlink:href="#custom-lock-outline"></use>
+                </svg>
+                <span>Change Password</span>
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
+</div>
+</header>
+<!-- [ Header ] end -->

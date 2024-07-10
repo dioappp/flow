@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title> Flow {% block title %}{%endblock%}</title>
+    {%include "partials/header.html"%}
+    {%include "partials/style.html"%}
+    {% comment %} <script src="{% static 'vendors/sidebar.js' %}"></script> {% endcomment %}
+  </head>
+  <script src="{% static 'js/jquery-3.6.1.min.js' %}"></script>
+  <script src="{% static 'vendors/datatables/datatables.js' %}"></script>
+  <script src="{% static 'vendors/datatables/DatatablesInlineEditor-main/datatables_inline_editor.js' %}"></script>
+  <script src="{% static 'vendors/d3/index.js' %}" charset="utf-8"></script>
+  <script src="{% static 'vendors/d3/d3-timeline.js' %}"></script>
+  {% comment %} <script src="{% static 'vendors/select2/js/select2.js' %}"></script> {% endcomment %}
+  
+  <body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="light">
+    <!-- [ Pre-loader ] start -->
+    <div class="loader-bg">
+      <div class="loader-track">
+        <div class="loader-fill"></div>
+      </div>
+    </div>
+    <!-- [ Pre-loader ] End -->
+
+    {%include "partials/sidebar.html"%}
+    <!-- [ Main Content ] start -->
+    <div class="pc-container">
+      <div class="pc-content">
+        <!-- [ breadcrumb ] start -->
+        <div class="page-header">
+          <div class="page-block">
+            <div class="row align-items-center">
+              <div class="col-md-12">
+                <ul class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="#">Home</a></li>
+                  {% block breadcrumb %}{% endblock %}
+                </ul>
+              </div>
+              <div class="col-md-12">
+                <div class="page-header-title">
+                  <h2 class="mb-0">
+                    {% block breadcrumb_title %}Standby{% endblock %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- [ breadcrumb ] end -->
+        {% block content %}{% endblock %}
+        <!-- [ Main Content ] end -->
+      </div>
+    </div>
+    <!-- [ Custom-Menu ] start -->
+    <div id="customContextMenu" style="display: none" class="context-menu">
+      <ul class="list-group">
+        <button class="list-group-item" onclick="split()">Split</button>
+        <button class="list-group-item" data-bs-toggle="modal" data-bs-target="#addModal">Add</button>
+      </ul>
+    </div>
+    <!-- [ Custom-Menu ] end -->
+    {% include "partials/footer.html"%} 
+
+    {% block modals %}{% endblock %}
+
+    {% block script %}{% endblock %}
+
+
+  </body>
+</html>
