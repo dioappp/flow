@@ -4,15 +4,30 @@ from hm.models import hmOperator
 from datetime import datetime, timedelta
 import pytz
 
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('--date','-d', dest='date', action='store', type=str, help="Input tanggal yang akan di ambil ex. '2024-06-30'")
-        parser.add_argument('--shift','-s', dest='shift', action='store', type=int, help= "Input shift 1 atau 2")
+        parser.add_argument(
+            "--date",
+            "-d",
+            dest="date",
+            action="store",
+            type=str,
+            help="Input tanggal yang akan di ambil ex. '2024-06-30'",
+        )
+        parser.add_argument(
+            "--shift",
+            "-s",
+            dest="shift",
+            action="store",
+            type=int,
+            help="Input shift 1 atau 2",
+        )
 
     def handle(self, *args, **options):
-        date_str = options.get('date')
+        date_str = options.get("date")
         date = datetime.strptime(date_str, "%Y-%m-%d")
-        shift = options.get('shift')
+        shift = options.get("shift")
 
         if shift == 1:
             ts = date_str + " 06:30"
@@ -31,11 +46,11 @@ class Command(BaseCommand):
         exec [jmineops_reporting].[dbo].[mdi_login_hm] @startdate, @enddate
         """
 
-        csr = connections['jigsaw'].cursor()
+        csr = connections["jigsaw"].cursor()
         csr.execute(query)
         data = csr.fetchall()
 
-        tz = pytz.timezone('UTC')
+        tz = pytz.timezone("UTC")
 
         for d in data:
             hmOperator.objects.get_or_create(
@@ -44,8 +59,8 @@ class Command(BaseCommand):
                 NRP=d[2],
                 login_time=tz.localize(d[3]),
                 defaults={
-                    "logout_time":tz.localize(d[4]) if d[4] else None,
-                    "hm_start":d[5],
-                    "hm_end":d[6],
-                    }
+                    "logout_time": tz.localize(d[4]) if d[4] else None,
+                    "hm_start": d[5],
+                    "hm_end": d[6],
+                },
             )

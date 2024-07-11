@@ -1,5 +1,6 @@
 from django.db import models
 
+
 # Create your models here.
 class hmOperator(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -14,4 +15,3 @@ class hmOperator(models.Model):
     logout_time = models.DateTimeField(null=True)
     hm_start = models.FloatField(null=True)
     hm_end = models.FloatField(null=True)
-
