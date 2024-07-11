@@ -5,25 +5,33 @@ from django.db import connections
 from datetime import timedelta, datetime
 import pytz
 
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         def_time = datetime.now() - timedelta(hours=1)
         def_time = def_time - timedelta(minutes=def_time.minute)
-        def_time = datetime.strftime(def_time,"%Y-%m-%d %H:%M")
-        parser.add_argument('--date', dest='date', action='store', type=str, default=def_time, help="Input tanggal dan jam data yang ingin diambil dengan format 'YYYY-MM-DD HH:MM'")
-        parser.add_argument('--durasi', dest='durasi', action='store', type=float, default=1)
+        def_time = datetime.strftime(def_time, "%Y-%m-%d %H:%M")
+        parser.add_argument(
+            "--date",
+            dest="date",
+            action="store",
+            type=str,
+            default=def_time,
+            help="Input tanggal dan jam data yang ingin diambil dengan format 'YYYY-MM-DD HH:MM'",
+        )
+        parser.add_argument(
+            "--durasi", dest="durasi", action="store", type=float, default=1
+        )
 
     def handle(self, *args, **options):
-        dtime = options.get('date')
-        dur = options.get('durasi')
-        dtime_end = datetime.strptime(dtime,"%Y-%m-%d %H:%M") + timedelta(hours=dur)
-        dtime_end = datetime.strftime(dtime_end,"%Y-%m-%d %H:%M")
+        dtime = options.get("date")
+        dur = options.get("durasi")
+        dtime_end = datetime.strptime(dtime, "%Y-%m-%d %H:%M") + timedelta(hours=dur)
+        dtime_end = datetime.strftime(dtime_end, "%Y-%m-%d %H:%M")
 
-        self.stdout.write(
-            self.style.SUCCESS(f'{dtime}: Load data ritase')
-        )
-        tz = pytz.timezone('UTC')
-        sql_load = f'''
+        self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data ritase"))
+        tz = pytz.timezone("UTC")
+        sql_load = f"""
         declare @start_date datetime, @enddate datetime
         set @start_date = '{dtime}'
         set @enddate = '{dtime_end}'
@@ -45,8 +53,8 @@ class Command(BaseCommand):
         FULL JOIN [jmineops_reporting].[dbo].[locations] loc3 ON loc3.id = loc.region_id
         WHERE sl.deleted_at is NULL AND dateadd("HH",8,time_full) between @start_date and @enddate
         ORDER BY time_full asc
-        '''
-        cursor_jigsaw = connections['jigsaw'].cursor()
+        """
+        cursor_jigsaw = connections["jigsaw"].cursor()
         cursor_jigsaw.execute(sql_load)
         data = cursor_jigsaw.fetchall()
 
@@ -54,42 +62,36 @@ class Command(BaseCommand):
             dt = tz.localize(d[1])
             date = dt.date()
             hour = dt.hour
-            if  (6 < hour < 18) or ((hour == 6) and (dt.minute >= 30)):
+            if (6 < hour < 18) or ((hour == 6) and (dt.minute >= 30)):
                 shift = 1
             else:
                 shift = 2
-                
+
             if (shift == 2) and (hour <= 6):
                 report_date = date - timedelta(days=1)
             else:
                 report_date = date
-            
-            loader,_ = loaderID.objects.get_or_create(
-                unit=d[3]
-            )
-            truck,_ = truckID.objects.get_or_create(
-                jigsaw=d[2]
-            )
+
+            loader, _ = loaderID.objects.get_or_create(unit=d[3])
+            truck, _ = truckID.objects.get_or_create(jigsaw=d[2])
             ritase.objects.update_or_create(
-                date=date, hour=hour, shift=shift,
+                date=date,
+                hour=hour,
+                shift=shift,
                 load_id=d[0],
                 time_full=dt,
-                truck_id = truck,
-                loader_id = loader,
+                truck_id=truck,
+                loader_id=loader,
                 material=d[4],
                 blast=d[5],
                 grade=d[6],
-                report_date = report_date
+                report_date=report_date,
             )
 
-        self.stdout.write(
-            self.style.SUCCESS(f'{dtime}: Sukses memuat data loading')
-        )
-        self.stdout.write(
-            self.style.SUCCESS(f'{dtime}: Memulai memuat data Dumping')
-        )
+        self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data loading"))
+        self.stdout.write(self.style.SUCCESS(f"{dtime}: Memulai memuat data Dumping"))
 
-        sql_dump = f'''
+        sql_dump = f"""
         declare @start_date datetime, @enddate datetime
         set @start_date = '{dtime}'
         set @enddate = '{dtime_end}'
@@ -115,7 +117,7 @@ class Command(BaseCommand):
         join [jmineops_reporting].[dbo].[enum_tables] emat on emat.id = sd.material_id
         WHERE sd.deleted_at is NULL AND dateadd("HH",8,time_empty) between @start_date and @enddate
         ORDER BY time_empty asc
-        '''
+        """
         cursor_jigsaw.execute(sql_dump)
         data = cursor_jigsaw.fetchall()
 
@@ -129,6 +131,4 @@ class Command(BaseCommand):
             except ritase.DoesNotExist:
                 continue
         cursor_jigsaw.close()
-        self.stdout.write(
-            self.style.SUCCESS(f'{dtime}: Sukses memuat data Dumping')
-        )
+        self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data Dumping"))
