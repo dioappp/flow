@@ -9,6 +9,7 @@ class distance(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
 
+    date = models.DateField()
     loader = models.ForeignKey(loaderID, on_delete=models.SET_NULL, null=True)
     blok_loading = models.FloatField()
     elevasi_loading = models.IntegerField()
