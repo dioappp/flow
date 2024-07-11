@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %} | Distance{%endblock%}
+{% block breadcrumb_title %} Distance {%endblock%} 
+
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+  <a href="#">Distance</a>
+</li>
+{% endblock breadcrumb %} 
+
+{% block content %}
+<div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-body">
+          <div class="mb-3 row row-cols-auto justify-content-md-center">
+            <h1>Import Data</h1>
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              {{ form.as_div }}
+              <button type="submit">Upload</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

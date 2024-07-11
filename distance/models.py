@@ -1,6 +1,7 @@
 from django.db import models
 from stb_loader.models import loaderID
 
+
 # Create your models here.
 class distance(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -8,7 +9,7 @@ class distance(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True)
 
-    loader = models.ForeignKey(loaderID, on_delete=models.SET_NULL, null = True)
+    loader = models.ForeignKey(loaderID, on_delete=models.SET_NULL, null=True)
     blok_loading = models.FloatField()
     elevasi_loading = models.IntegerField()
     lokasi_dumping = models.CharField(max_length=20)
