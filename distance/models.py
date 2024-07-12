@@ -14,7 +14,7 @@ class distance(models.Model):
     blok_loading = models.FloatField()
     elevasi_loading = models.IntegerField()
     lokasi_dumping = models.CharField(max_length=20)
-    elevasi_dumping = models.IntegerField()
+    elevasi_dumping = models.FloatField()
     horizontal_distance = models.FloatField()
     lokasi = models.CharField(max_length=10)
     vertical_distance = models.FloatField()
