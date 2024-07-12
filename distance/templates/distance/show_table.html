@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %} | Import Distance{%endblock%}
+{% block breadcrumb_title %} Import Distance {%endblock%} 
+
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+  <a href="{% url 'distance:index'%}">Distance</a>
+</li>
+<li class="breadcrumb-item">
+  <a href="#">Import</a>
+</li>
+{% endblock breadcrumb %} 
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-header">
+        <div class="row justify-content-between">
+          <div class="col-auto">
+            <h5>Table Distance</h5> 
+          </div>
+          <div class="col-auto">
+            <button
+                type="button"
+                class="btn btn-primary"
+                id="btn_upload"
+                onclick="sendTableData()"
+              >
+                <i class="feather mr-2 icon-upload"></i> Load
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="container">
+          <div class="table-responsive">
+              {{ df_html|safe }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+  function tableToJson(table) {
+    let data = [];
+    let headers = [];
+
+    // Get the headers
+    for (let i = 0; i < table.rows[0].cells.length; i++) {
+      headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi, '');
+    }
+
+    // Get the rows
+    for (let i = 1; i < table.rows.length; i++) {
+      let tableRow = table.rows[i];
+      let rowData = {};
+
+      for (let j = 0; j < tableRow.cells.length; j++) {
+        rowData[headers[j]] = tableRow.cells[j].innerHTML;
+      }
+
+      data.push(rowData);
+    }
+
+    return data;
+  }
+
+  function sendTableData() {
+    let table = document.getElementById('table-distance');
+    let jsonData = tableToJson(table);
+  
+    $.ajax({
+      url: "{% url 'distance:to_db'%}",  // Adjust the URL to match your Django endpoint
+      type: 'POST',
+      contentType: 'application/json',
+      headers: {
+        'X-CSRFToken': "{{ csrf_token }}" 
+      },
+      data: JSON.stringify(jsonData),
+      success: function(response) {
+        console.log('Success:', response);
+      },
+      error: function(xhr, status, error) {
+        console.error('Error:', error);
+      }
+    });
+  }
+</script>
+
+{% endblock%}
