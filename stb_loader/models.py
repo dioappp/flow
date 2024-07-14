@@ -38,6 +38,7 @@ class ClusterLoader(models.Model):
     deleted_at = models.DateTimeField(null=True)
 
     date = models.DateField()
+    hour = models.IntegerField()
     unit = models.ForeignKey(loaderID, on_delete=models.CASCADE)
     cluster = models.CharField(max_length=20)
     pit = models.CharField(max_length=10)
