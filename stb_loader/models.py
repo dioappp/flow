@@ -40,5 +40,5 @@ class ClusterLoader(models.Model):
     date = models.DateField()
     hour = models.IntegerField()
     unit = models.ForeignKey(loaderID, on_delete=models.CASCADE)
-    cluster = models.CharField(max_length=20)
-    pit = models.CharField(max_length=10)
+    cluster = models.CharField(max_length=20, null=True)
+    pit = models.CharField(max_length=10, null=True)
