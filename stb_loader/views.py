@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
-from django.db.models import Sum
+from django.db.models import Sum, Subquery, OuterRef, Q
 from stb_loader.models import LoaderStatus, ClusterLoader
 from ritase.models import ritase
 from datetime import datetime, timedelta
 import math
 import pandas as pd
+from django.db.models.functions import Coalesce
+import json
 
 
 # Create your views here.
@@ -52,7 +54,10 @@ def index(request):
             .distinct()
         )
         clusters.append(cluster)
-    pit_cluster = zip(pits, clusters)
+    pit_cluster = [
+        (pit.capitalize(), [cluster.capitalize() for cluster in cluster_list])
+        for pit, cluster_list in zip(pits, clusters)
+    ]
     return render(
         request,
         "stb_loader/index.html",
@@ -68,9 +73,26 @@ def index(request):
 def reportDataSTB(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
+    cluster = json.loads(request.POST.get("cluster"))
+    cluster = [item.upper() for item in cluster]
 
-    maindata = LoaderStatus.objects.filter(date=date_pattern, hour=hour_pattern)
-    maindata = maindata.values("unit__unit").distinct().order_by("-unit__unit")
+    subquery_loader = ClusterLoader.objects.filter(
+        unit=OuterRef("unit"), date=OuterRef("date"), hour=OuterRef("hour")
+    )
+
+    maindata = (
+        LoaderStatus.objects.filter(date=date_pattern, hour=hour_pattern)
+        .annotate(
+            cluster=Coalesce(Subquery(subquery_loader.values("cluster")[:1]), None),
+            pit=Coalesce(Subquery(subquery_loader.values("pit")[:1]), None),
+        )
+        .values("unit__unit", "pit", "cluster")
+        .order_by("-pit", "cluster", "-unit__unit")
+    )
+    if not cluster:
+        maindata = maindata.values("unit__unit").distinct()
+    else:
+        maindata = maindata.filter(cluster__in=cluster).values("unit__unit").distinct()
 
     total = maindata.count()
     data = maindata.filter(unit__unit__icontains=request.POST.get("search[value]"))

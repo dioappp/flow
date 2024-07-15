@@ -42,8 +42,8 @@
             <label>{{ pit }}</label><br/>
             <div class="btn-group btn-group-sm" role="group" aria-label="button cluster">
               {% for cluster in clusters %}
-              <input type="checkbox" class="btn-check" id="btncheck-{{ cluster }}-{{ forloop.counter0 }}" autocomplete="off">
-              <label class="btn btn-outline-primary" for="btncheck-{{ cluster }}-{{ forloop.counter0 }}">{{ cluster }}</label>
+              <input type="checkbox" class="btn-check" id="btn-{{ cluster }}" onchange="load()" autocomplete="off">
+              <label class="btn btn-outline-primary" for="btn-{{ cluster }}">{{ cluster }}</label>
               {% endfor %}
             </div>
           </div>
