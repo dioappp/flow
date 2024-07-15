@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.db.models import Sum
-from stb_loader.models import LoaderStatus
+from stb_loader.models import LoaderStatus, ClusterLoader
 from ritase.models import ritase
 from datetime import datetime, timedelta
 import math
@@ -40,10 +40,28 @@ def index(request):
         "WH general",
     ]
     tipe_ritase = ["OB", "General", "Coal", "Top Soil", "IPD", "Mud", "Spoil"]
+    pits = list(
+        ClusterLoader.objects.exclude(pit=None).values_list("pit", flat=True).distinct()
+    )
+    clusters = []
+    for pit in pits:
+        cluster = list(
+            ClusterLoader.objects.exclude(cluster=None)
+            .filter(pit=pit)
+            .values_list("cluster", flat=True)
+            .distinct()
+        )
+        clusters.append(cluster)
+    pit_cluster = zip(pits, clusters)
     return render(
         request,
         "stb_loader/index.html",
-        {"jam": loop_times, "stb": stb, "ritase": tipe_ritase},
+        {
+            "jam": loop_times,
+            "stb": stb,
+            "ritase": tipe_ritase,
+            "pit_cluster": pit_cluster,
+        },
     )
 
 
