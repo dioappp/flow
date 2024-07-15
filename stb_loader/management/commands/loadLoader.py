@@ -1,14 +1,15 @@
 from django.core.management.base import BaseCommand
 from django.db import connections
-from stb_loader.models import loaderID, LoaderStatus
+from stb_loader.models import loaderID, LoaderStatus, ClusterLoader
 from stb_loader.management.commands.stb_code import standby_codes, RANK, BDC
 import stb_loader.management.commands.function as f
 import pandas as pd
+from pandas import DataFrame
 from datetime import time, datetime, timedelta
 
 
 class Command(BaseCommand):
-    def main(self, dtime):
+    def main(self, dtime: str) -> tuple[DataFrame, DataFrame]:
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data shift states Loader"))
 
         ss_sql = f"""
@@ -16,24 +17,22 @@ class Command(BaseCommand):
         set @time_start = '{dtime}'
         set @time_end = DATEADD(hour, 1, @time_start)
         SELECT 
-            dateadd("HH",8,sfi.time) as 'Time_Start'
-            ,dateadd("HH",8,time_end) as 'Time_End'
-            ,eqp.name as 'Equipment'
-            ,enum.name as 'Status'
-            ,reason.descrip as 'Reason'
-            ,loc.name as 'Lokasi'
-            ,reg.name as 'Region'
-            ,comment
-            ,enum2.name as 'Equipment_Class' 
-            ,(CAST(sfi.seconds as float)/60) as 'Durasi_Menit'
+            dateadd("HH",8,sfi.time) as 'Time Start' -- 0
+            ,dateadd("HH",8,time_end) as 'Time End' -- 1
+            ,eqp.name as 'Equipment' -- 2
+            ,enum.name as 'Status' -- 3
+            ,reason.descrip as 'Reason' -- 4
+            ,loc.name as 'Lokasi' -- 5
+            ,clust.region as 'Cluster' -- 6
+            ,clust.pit as 'Pit' -- 7
+            ,enum2.name as 'Equipment_Class' -- 8
         FROM [jmineops_reporting].[dbo].[states_for_interval](dateadd("HH",-8,@time_start),dateadd("HH",-8,@time_end)) sfi
         JOIN [jmineops_reporting].[dbo].[equipment] eqp ON eqp.id=sfi.equipment_id
         FULL JOIN [jmineops_reporting].[dbo].[enum_tables] enum ON enum.id = sfi.status_id
         FULL JOIN [jmineops_reporting].[dbo].[reasons] reason ON reason.id = sfi.reason_id
         FULL JOIN [jmineops_reporting].[dbo].[locations] loc ON loc.id = sfi.location_id
-        FULL JOIN [jmineops_reporting].[dbo].[locations] reg ON loc.region_id = reg.id
-        FULL JOIN [jmineops_reporting].[dbo].[locations] blast ON blast.id = sfi.blast_id
         FULL JOIN [jmineops_reporting].[dbo].[enum_tables] enum2 ON enum2.id = eqp.equipment_type_id
+        left join jmineops_reporting.dbo.adaro_ust_pathjalur clust on clust.code = LEFT(loc.name,3)
         WHERE sfi.deleted_at is NULL AND sfi.id is not NULL and (eqp.name like 'X%%' or eqp.name like 'S%%' or eqp.name like 'E%%') 
         """
 
@@ -44,12 +43,24 @@ class Command(BaseCommand):
         shift_states_df = pd.DataFrame(
             columns=["Time Start", "Time End", "Equipment", "Reason"]
         )
+        cluster_df = pd.DataFrame(
+            columns=["Equipment", "Hour", "Date", "Cluster", "Pit"]
+        )
 
         for i, d in enumerate(data):
             shift_states_df.loc[i, "Time Start"] = d[0]
             shift_states_df.loc[i, "Time End"] = d[1]
             shift_states_df.loc[i, "Equipment"] = d[2]
             shift_states_df.loc[i, "Reason"] = d[4]
+            cluster_df.loc[i, "Hour"] = d[0]
+            cluster_df.loc[i, "Date"] = d[0]
+            cluster_df.loc[i, "Equipment"] = d[2]
+            cluster_df.loc[i, "Cluster"] = d[6]
+            cluster_df.loc[i, "Pit"] = d[7]
+
+        cluster_df["Date"] = pd.to_datetime(cluster_df["Date"]).dt.date
+        cluster_df["Hour"] = pd.to_datetime(cluster_df["Hour"]).dt.hour
+        cluster_df = cluster_df.drop_duplicates().reset_index(drop=True)
 
         shift_states_df["Time Start"] = pd.to_datetime(
             shift_states_df["Time Start"], format="%Y-%m-%d %H:%M:%S", utc=True
@@ -370,7 +381,7 @@ class Command(BaseCommand):
         result["report_date"] = result["date"]
         cond = (result["shift"] == 2) & (result["hour"] <= 6)
         result.loc[cond, "report_date"] = result["date"] - pd.Timedelta(days=1)
-        return result
+        return result, cluster_df
 
     def add_arguments(self, parser):
         def_time = datetime.now() - timedelta(hours=1)
@@ -394,19 +405,29 @@ class Command(BaseCommand):
             )
         )
 
-        data = self.main(dtime)
+        data, cluster = self.main(dtime)
         for i, row in data.iterrows():
             unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
-            LoaderStatus.objects.create(
+            LoaderStatus.objects.update_or_create(
                 date=row["date"],
                 shift=row["shift"],
                 hour=row["hour"],
                 timeStart=row["Time Start"],
-                unit=unit,
-                standby_code=row["Standby Code"],
-                remarks=row["remarks"],
                 report_date=row["report_date"],
+                unit=unit,
+                defaults={
+                    "standby_code": row["Standby Code"],
+                    "remarks": row["remarks"],
+                },
             )
-            # print(f'imported {i+1}/{len(data)}')
+
+        for i, row in cluster.iterrows():
+            unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
+            ClusterLoader.objects.update_or_create(
+                unit=unit,
+                hour=row["Hour"],
+                date=row["Date"],
+                defaults={"cluster": row["Cluster"], "pit": row["Pit"]},
+            )
 
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))
