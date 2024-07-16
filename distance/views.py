@@ -1,18 +1,27 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
 from distance.models import distance
 from stb_loader.models import loaderID
 from distance.forms import UploadFileForm
 import pandas as pd
 from pandas import DataFrame
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 
 # Create your views here.
 def index(request):
+    today = timezone.now().date()
+    seven_days_ago = today - timedelta(days=7)
     form = UploadFileForm()
-    return render(request, "distance/index.html", {"form": form})
+    dates = (
+        distance.objects.filter(date__range=[seven_days_ago, today])
+        .values_list("date", flat=True)
+        .distinct()
+        .order_by("date")
+    )
+    return render(request, "distance/index.html", {"form": form, "dates": dates})
 
 
 def extract_data_ob(df: DataFrame, date: datetime, lokasi: str) -> DataFrame:

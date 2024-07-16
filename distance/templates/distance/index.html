@@ -26,5 +26,21 @@
         </div>
       </div>
     </div>
+    <div class="col-lg-9">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            Data Distance 7 Hari Terakhir
+          </h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group">
+            {% for date in dates %}
+            <li class="list-group-item">{{ date }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
   </div> 
 {% endblock %}
