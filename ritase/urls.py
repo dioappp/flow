@@ -3,7 +3,7 @@ from ritase import views
 
 app_name = "ritase"
 urlpatterns = [
-    path("", views.index, name="home"),
+    path("", views.index, name="index"),
     path("load_ritase", views.load_ritase, name="cek_ritase"),
     path("update", views.update, name="update"),
     path("load_operator", views.operator, name="cek_operator"),
