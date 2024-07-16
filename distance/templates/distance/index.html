@@ -10,18 +10,19 @@
 {% endblock breadcrumb %} 
 
 {% block content %}
+{% load crispy_forms_tags %}
   <div class="row">
-    <div class="col">
+    <div class="col-lg-3">
       <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Import Data Distance</h5>
+        </div>
         <div class="card-body">
-          <div class="mb-3 row row-cols-auto justify-content-md-center">
-            <h5>Import Data</h5>
-            <form method="post" enctype="multipart/form-data" action="{% url 'distance:import' %}">
-              {% csrf_token %}
-              {{ form.as_div }}
-              <button type="submit">Upload</button>
-            </form>
-          </div>
+          <form method="post" enctype="multipart/form-data" action="{% url 'distance:import' %}">
+            {% csrf_token %}
+            {{ form | crispy }}
+            <button type="submit" class="btn btn-info">Upload</button>
+          </form>
         </div>
       </div>
     </div>
