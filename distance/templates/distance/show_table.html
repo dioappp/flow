@@ -84,11 +84,8 @@
         'X-CSRFToken': "{{ csrf_token }}" 
       },
       data: JSON.stringify(jsonData),
-      complete: function(data, textStatus, jqXHR) {
-        var redirectUrl = jqXHR.getResponseHeader('Location');
-        if (redirectUrl) {
-            window.location.href = redirectUrl;
-        }
+      success: function(response) {
+        window.location.href = "{% url 'distance:index' %}";
       },
       error: function(xhr, status, error) {
         console.error('Error:', error);

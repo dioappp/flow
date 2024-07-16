@@ -104,11 +104,17 @@ def import_data(request):
             df = pd.concat(
                 [
                     df,
-                    extract_data_ob(file_ob["CENTRAL"], date, "CT1"),
-                    extract_data_coal(file_coal["Jigsaw SIS Rom 13A CT"], date, "CT1"),
-                    extract_data_coal(file_coal["Jigsaw SIS Rom 13B CT"], date, "CT1"),
-                    extract_data_coal(file_coal["Jigsaw SIS Rom 17 (CT)"], date, "CT1"),
-                    extract_data_coal(file_coal["Jigsaw SIS Rom 19"], date, "CT1"),
+                    extract_data_ob(file_ob["CENTRAL"], date, "CENTRAL"),
+                    extract_data_coal(
+                        file_coal["Jigsaw SIS Rom 13A CT"], date, "CENTRAL"
+                    ),
+                    extract_data_coal(
+                        file_coal["Jigsaw SIS Rom 13B CT"], date, "CENTRAL"
+                    ),
+                    extract_data_coal(
+                        file_coal["Jigsaw SIS Rom 17 (CT)"], date, "CENTRAL"
+                    ),
+                    extract_data_coal(file_coal["Jigsaw SIS Rom 19"], date, "CENTRAL"),
                     extract_data_coal(file_coal["Jigsaw SIS Rom 17B"], date, "NORTH"),
                     extract_data_coal(file_coal["Jigsaw SIS Rom 20"], date, "NORTH"),
                 ],
@@ -147,7 +153,7 @@ def to_db(request):
                 )
                 x = {d["loader"]: created}
                 updated_list.append(x)
-            return HttpResponseRedirect(reverse("distance:index"))
+            return JsonResponse({}, status=204)
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
     return JsonResponse({"error": "Invalid request method"}, status=405)
