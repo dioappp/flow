@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
+from django.urls import reverse
 from django.utils import timezone
 from distance.models import distance
 from stb_loader.models import loaderID
@@ -137,7 +138,7 @@ def to_db(request):
                     blok_loading=d["blok_loading"],
                     lokasi_dumping=d["lokasi_dumping"],
                     defaults={
-                        "elevasi_loading": int(d["elevasi_loading"]),
+                        "elevasi_loading": float(d["elevasi_loading"]),
                         "elevasi_dumping": float(d["elevasi_dumping"]),
                         "horizontal_distance": float(d["horizontal_distance"]),
                         "lokasi": d["lokasi"],
@@ -146,10 +147,7 @@ def to_db(request):
                 )
                 x = {d["loader"]: created}
                 updated_list.append(x)
-            return JsonResponse(
-                {"message": "Table data received successfully", "data": updated_list},
-                status=200,
-            )
+            return HttpResponseRedirect(reverse("index"))
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
     return JsonResponse({"error": "Invalid request method"}, status=405)

@@ -12,7 +12,7 @@ class distance(models.Model):
     date = models.DateField()
     loader = models.ForeignKey(loaderID, on_delete=models.SET_NULL, null=True)
     blok_loading = models.FloatField()
-    elevasi_loading = models.IntegerField()
+    elevasi_loading = models.FloatField()
     lokasi_dumping = models.CharField(max_length=20)
     elevasi_dumping = models.FloatField()
     horizontal_distance = models.FloatField()

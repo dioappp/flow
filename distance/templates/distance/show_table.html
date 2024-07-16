@@ -85,7 +85,12 @@
       },
       data: JSON.stringify(jsonData),
       success: function(response) {
-        console.log('Success:', response);
+        if (response.status === 302) {
+          const newUrl = response.getResponseHeader('Location');
+          window.location.href = newUrl;
+        } else {
+          console.log(response);
+        }
       },
       error: function(xhr, status, error) {
         console.error('Error:', error);
