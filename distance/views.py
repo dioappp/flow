@@ -58,7 +58,6 @@ def extract_data_coal(df: DataFrame, date: datetime, lokasi: str) -> DataFrame:
         columns={df.columns[idx]: new_name for idx, new_name in column_names.items()}
     )
     df["lokasi"] = lokasi
-    print(df.head())
     return df
 
 
