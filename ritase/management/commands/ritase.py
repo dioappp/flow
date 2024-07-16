@@ -102,12 +102,13 @@ class Command(BaseCommand):
             loc.name as 'dump_loc',
             case 
                 when loc.name like '%PERBAIKAN%' or loc.name like '%INPIT%' or loc.name like '%FRONT%' or loc.name like '%JALAN%' or loc.name like '%MAINT%' or loc.name like '%SUPP%' or loc.name like '%JLN%' then 'IPD' 
+                when loc.name like '%TS%' and emat.name in ('Blasted') then 'TSD'
                 else (	case 
                     when emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'OB'
                     when emat.name in ('Coal','Coal-Blasted') then 'Coal' 
-                    when emat.name in ('Top Soil') then 'Top Soil' 
+                    when emat.name in ('Top Soil') then 'TSD' 
                     when emat.name in ('Mud') then 'Mud' 
-                    when emat.name in ('Spoilled') then 'Spoil' 
+                    when emat.name in ('Spoilled') then 'Spoilled' 
                     when emat.name in ('Dirty Coal') then 'General' 
                     else emat.name end) end material_id
 

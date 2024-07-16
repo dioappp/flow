@@ -121,11 +121,7 @@
         "X-CSRFToken": "{{ csrf_token }}",
       },
       complete: function(d){
-        if (d.responseJSON.data.length == 0){
-          console.log('do something here')
-        } else {
-          generateCard(d.responseJSON.data);
-        }
+        generateCard(d.responseJSON.data);
       }
     })
   };
@@ -151,7 +147,7 @@
 
       var formGroups = [
         { label: 'ID', inputType: "number", inputValue: item.id, readonly: true},
-        { label: "Operator", inputType: "text", inputValue: item.NRP__operator, readonly: true },
+        { label: "Operator", inputType: "text", inputValue: item.operator, readonly: true },
         { label: "NRP", inputType: "number", inputValue: item.NRP, readonly: true },
         { label: "HM Start", inputType: "number", inputValue: item.hm_start, readonly: false },
         { label: "HM End", inputType: "number", inputValue: item.hm_end, readonly: false }
