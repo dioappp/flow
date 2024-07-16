@@ -147,7 +147,7 @@ def to_db(request):
                 )
                 x = {d["loader"]: created}
                 updated_list.append(x)
-            return HttpResponseRedirect(reverse("index"))
+            return HttpResponseRedirect(reverse("distance:index"))
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
     return JsonResponse({"error": "Invalid request method"}, status=405)

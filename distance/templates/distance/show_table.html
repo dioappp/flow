@@ -84,12 +84,10 @@
         'X-CSRFToken': "{{ csrf_token }}" 
       },
       data: JSON.stringify(jsonData),
-      success: function(response) {
-        if (response.status === 302) {
-          const newUrl = response.getResponseHeader('Location');
-          window.location.href = newUrl;
-        } else {
-          console.log(response);
+      complete: function(data, textStatus, jqXHR) {
+        var redirectUrl = jqXHR.getResponseHeader('Location');
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
         }
       },
       error: function(xhr, status, error) {
