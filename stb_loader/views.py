@@ -280,19 +280,29 @@ def export_excel(request):
     date = request.POST.get("date")
     shift = int(request.POST.get("shift"))
 
-    data = LoaderStatus.objects.filter(report_date=date, shift=shift).values(
-        "report_date",
-        "hour",
-        "shift",
-        "timeStart",
-        "standby_code",
-        "loader_id__unit",
-        "remarks",
-        "date",
+    subquery = ClusterLoader.objects.filter(
+        date=OuterRef("date"), hour=OuterRef("hour"), unit=OuterRef("unit")
+    )
+    data = (
+        LoaderStatus.objects.filter(report_date=date, shift=shift)
+        .annotate(
+            pit=Coalesce(Subquery(subquery.values("pit")[:1]), None),
+        )
+        .values(
+            "report_date",
+            "hour",
+            "shift",
+            "timeStart",
+            "standby_code",
+            "unit__unit",
+            "remarks",
+            "date",
+            "pit",
+        )
     )
 
     df = pd.DataFrame(list(data))
-    df = df.rename(columns={"loader_id__unit": "unit"})
+    df = df.rename(columns={"unit__unit": "unit"})
     df = df.sort_values(by=["unit", "timeStart"])
     df["timeStart"] = pd.to_datetime(df["timeStart"])
 
@@ -319,6 +329,7 @@ def export_excel(request):
             "durasi": "sum",
             "remarks": "first",
             "date": "first",
+            "pit": "first",
         }
     )
     result["Project"] = "ADMO"
@@ -326,7 +337,7 @@ def export_excel(request):
     result[["remarks", "BD Status", "statusBDC"]] = result["remarks"].str.split(
         ";", expand=True
     )
-    result["Location"] = "NT/CT (not yet)"
+    result.rename(columns={"pit": "Location"}, inplace=True)
     result["hour"] = result["hour"].apply(
         lambda x: (
             f"{x:02d}:00 - {(x+1):02d}:00"
