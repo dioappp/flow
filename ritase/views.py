@@ -177,7 +177,7 @@ def operator(request):
             Q(login_time__gte=ts, login_time__lte=te)
             | Q(logout_time__gte=ts, logout_time__lte=te),
         )
-        .values("id", "operator", "NRP", "hm_start", "hm_end")
+        .values("id", "NRP__operator", "NRP", "hm_start", "hm_end")
         .order_by("hm_start")
     )
 

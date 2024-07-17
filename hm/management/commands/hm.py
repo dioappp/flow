@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import connections
-from hm.models import hmOperator
+from hm.models import hmOperator, Operator
 from datetime import datetime, timedelta
 import pytz
 
@@ -53,10 +53,12 @@ class Command(BaseCommand):
         tz = pytz.timezone("UTC")
 
         for d in data:
+            nrp, _ = Operator.objects.get_or_create(
+                NRP=d[2], defaults={"operator": d[1]}
+            )
             hmOperator.objects.get_or_create(
                 equipment=d[0],
-                operator=d[1],
-                NRP=d[2],
+                NRP=nrp,
                 login_time=tz.localize(d[3]),
                 defaults={
                     "logout_time": tz.localize(d[4]) if d[4] else None,
