@@ -10,6 +10,9 @@ class Operator(models.Model):
     NRP = models.IntegerField(primary_key=True)
     operator = models.CharField(max_length=40)
 
+    def __str__(self) -> str:
+        return f"{str(self.NRP)}: {self.operator}"
+
 
 class hmOperator(models.Model):
     id = models.BigAutoField(primary_key=True)
