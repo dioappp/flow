@@ -94,7 +94,7 @@ class Command(BaseCommand):
         sql_dump = f"""
         declare @start_date datetime, @enddate datetime
         set @start_date = '{dtime}'
-        set @enddate = '{dtime_end}'
+        set @enddate = dateadd("HH",12,'{dtime_end}')
 
         SELECT 
             sl.id as 'load_id',
