@@ -4,7 +4,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponse
 from ritase.models import ritase, cek_ritase
-from hm.models import hmOperator
+from hm.models import hmOperator, Operator
 from django.db.models import Subquery, OuterRef, Q
 from django.db.models.functions import Coalesce
 from datetime import datetime, timedelta
@@ -154,11 +154,7 @@ def load_ritase_to_db(request):
     return HttpResponse(status=204)
 
 
-def operator(request):
-    date = request.POST.get("date")
-    shift = request.POST.get("shift")
-    hauler = request.POST.get("hauler").upper()
-
+def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
     if shift == "1":
         ts = date + " 06:30"
         te = date + " 18:00"
@@ -170,6 +166,15 @@ def operator(request):
 
     ts = UTC.localize(datetime.strptime(ts, "%Y-%m-%d %H:%M"))
     te = UTC.localize(datetime.strptime(te, "%Y-%m-%d %H:%M"))
+    return ts, te
+
+
+def operator(request):
+    date = request.POST.get("date")
+    shift = request.POST.get("shift")
+    hauler = request.POST.get("hauler").upper()
+
+    ts, te = get_shift_time(date, shift)
 
     data = (
         hmOperator.objects.filter(
@@ -295,6 +300,28 @@ def update_operator(request):
     obj.hm_start = hm_start
     obj.hm_end = hm_end
     obj.save()
+
+    return HttpResponse(status=204)
+
+
+def create_operator(request):
+    shift = request.POST.get("shift")
+    date = request.POST.get("date")
+    nrp = int(request.POST.get("NRP"))
+    hm_start = float(request.POST.get("HM Start"))
+    hm_end = float(request.POST.get("HM End"))
+    unit = request.POST.get("unit")
+
+    login, logout = get_shift_time(date, shift)
+    nrp_instance = Operator.objects.get(NRP=nrp)
+    hmOperator.objects.create(
+        NRP=nrp_instance,
+        hm_start=hm_start,
+        hm_end=hm_end,
+        equipment=unit,
+        login_time=login,
+        logout_time=logout,
+    )
 
     return HttpResponse(status=204)
 
