@@ -368,7 +368,7 @@ class Command(BaseCommand):
                     axis=0,
                 )
 
-        result = result.dropna(how="all")
+        result = result.dropna(how="all").reset_index(drop=True)
         result["date"] = pd.to_datetime(result["Time Start"]).dt.date
         result["hour"] = hour
         result["shift"] = 1 if (6 <= hour < 18) else 2
