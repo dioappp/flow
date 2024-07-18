@@ -179,8 +179,8 @@ def operator(request):
     data = (
         hmOperator.objects.filter(
             Q(equipment=hauler),
-            Q(login_time__gte=ts, login_time__lte=te)
-            | Q(logout_time__gte=ts, logout_time__lte=te),
+            Q(login_time__gte=ts, login_time__lt=te)
+            | Q(logout_time__gt=ts, logout_time__lte=te),
         )
         .values("id", "NRP__operator", "NRP", "hm_start", "hm_end")
         .order_by("hm_start")
