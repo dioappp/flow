@@ -28,4 +28,5 @@ urlpatterns = [
     path("reports/", include("report.urls")),
     path("", include("ritase.urls")),
     path("distance/", include("distance.urls")),
+    path("exporter/", include("exporter.urls")),
 ]

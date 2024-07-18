@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    | Exporter
+{% endblock title %}
+{% block breadcrumb_title %}
+    Exporter
+{% endblock breadcrumb_title %}
+{% block breadcrumb %}
+    <li class="breadcrumb-item">
+        <a href='{% url "exporter:index" %}'>Exporter</a>
+    </li>
+{% endblock breadcrumb %}
+{% block content %}
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3 row row-cols-auto justify-content-md-center">
+                        <label for="date-select" class="col col-form-label">Tanggal</label>
+                        <div class="col">
+                            <input class="form-control"
+                                   type="date"
+                                   placeholder="Month data.."
+                                   id="date-select"
+                                   name="date"
+                                   value="{% now "Y-m-d" %}" />
+                        </div>
+                        <label for="shift-select" class="col col-form-label">Shift</label>
+                        <div class="col-sm-1">
+                            <select type="text"
+                                    class="form-control"
+                                    name="shift"
+                                    id="shift-select"
+                                    required>
+                                <option value="1">Shift 1</option>
+                                <option value="2">Shift 2</option>
+                                <option value="0">All Shift</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Standby</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Production</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

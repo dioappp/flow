@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "stb_hauler_shiftly",
     "hm",
     "distance",
+    "exporter",
 ]
 
 MIDDLEWARE = [
