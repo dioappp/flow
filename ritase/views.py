@@ -186,17 +186,20 @@ def create_operator(request):
     unit = request.POST.get("unit")
 
     login, logout = get_shift_time(date, shift)
-    nrp_instance = Operator.objects.get(NRP=nrp)
-    hmOperator.objects.create(
-        NRP=nrp_instance,
-        hm_start=hm_start,
-        hm_end=hm_end,
-        equipment=unit,
-        login_time=login,
-        logout_time=logout,
-    )
+    try:
+        nrp_instance = Operator.objects.get(NRP=nrp)
+        hmOperator.objects.create(
+            NRP=nrp_instance,
+            hm_start=hm_start,
+            hm_end=hm_end,
+            equipment=unit,
+            login_time=login,
+            logout_time=logout,
+        )
 
-    return HttpResponse(status=204)
+        return HttpResponse(status=204)
+    except ObjectDoesNotExist:
+        return HttpResponse("NRP Belum terdaftar di Database Procon")
 
 
 def delete_row(request):
