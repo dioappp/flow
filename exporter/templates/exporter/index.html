@@ -13,12 +13,20 @@
 {% endblock breadcrumb %}
 {% block content %}
     <div class="row">
-        <div class="col">
+        <div class="col col-md-6">
             <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Standby</h5>
+                </div>
                 <div class="card-body">
-                    <div class="mb-3 row row-cols-auto justify-content-md-center">
-                        <label for="date-select" class="col col-form-label">Tanggal</label>
-                        <div class="col">
+                    <form method="POST"
+                          enctype="multipart/form-data"
+                          action="{% url 'exporter:standby' %}">
+                        {% csrf_token %}
+                        <input type="hidden" id="exportDate" name="date" value="">
+                        <input type="hidden" id="exportShift" name="shift" value="1">
+                        <div class="form-group">
+                            <label>Date</label>
                             <input class="form-control"
                                    type="date"
                                    placeholder="Month data.."
@@ -26,28 +34,21 @@
                                    name="date"
                                    value="{% now "Y-m-d" %}" />
                         </div>
-                        <label for="shift-select" class="col col-form-label">Shift</label>
-                        <div class="col-sm-1">
-                            <select type="text"
-                                    class="form-control"
-                                    name="shift"
-                                    id="shift-select"
-                                    required>
+                        <div class="form-group">
+                            <label for="shift-label" class="col-form-label">Shift</label>
+                            <br />
+                            <select class="form-control" name="shift" id="shift-select">
                                 <option value="1">Shift 1</option>
                                 <option value="2">Shift 2</option>
-                                <option value="0">All Shift</option>
+                                <option value="3">All Shift</option>
                             </select>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Standby</h5>
+                </form>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary" value='export' name="export">
+                        <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -56,8 +57,39 @@
                 <div class="card-header">
                     <h5 class="mb-0">Production</h5>
                 </div>
+                <div class="card-body">
+                    <form method="POST"
+                          enctype="multipart/form-data"
+                          action="{% url 'exporter:production' %}">
+                        {% csrf_token %}
+                        <input type="hidden" id="exportDate" name="date" value="">
+                        <input type="hidden" id="exportShift" name="shift" value="1">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input class="form-control"
+                                   type="date"
+                                   placeholder="Month data.."
+                                   id="date-select"
+                                   name="date"
+                                   value="{% now "Y-m-d" %}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="shift-label" class="col-form-label">Shift</label>
+                            <br />
+                            <select class="form-control" name="shift" id="shift-select">
+                                <option value="1">Shift 1</option>
+                                <option value="2">Shift 2</option>
+                                <option value="3">All Shift</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary" value='export' name="export">
+                        <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-
 {% endblock content %}
