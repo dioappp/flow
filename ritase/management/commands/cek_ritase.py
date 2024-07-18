@@ -5,29 +5,44 @@ from hm.models import hmOperator
 from ritase.models import ritase, cek_ritase
 import math
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        def_time = datetime.now()
-        def_time = def_time - timedelta(minutes=def_time.minute)
-        def_time = datetime.strftime(def_time, "%Y-%m-%d %H:%M")
+        now = datetime.now()
+        start_time = datetime.combine(now.date(), time(6, 30))
+        end_time = datetime.combine(now.date(), time(18, 0))
+
+        if start_time < now < end_time:
+            date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+            shift = 2
+        else:
+            date = now.strftime("%Y-%m-%d")
+            shift = 1
+
         parser.add_argument(
             "--date",
+            "-d",
             dest="date",
+            default=date,
             action="store",
             type=str,
-            default=def_time,
-            help="Input tanggal dan jam data yang ingin diambil dengan format 'YYYY-MM-DD HH:MM'",
+            help="Input tanggal yang akan di ambil ex. '2024-06-30'",
         )
         parser.add_argument(
-            "--durasi", dest="durasi", action="store", type=float, default=1
+            "--shift",
+            "-s",
+            dest="shift",
+            default=shift,
+            action="store",
+            type=int,
+            help="Input shift 1 atau 2",
         )
 
     def handle(self, *args, **options):
-        date = request.POST.get("date")
-        shift = request.POST.get("shift")
+        date = options.get("date")
+        shift = options.get("shift")
 
         subquery_hauler = hmOperator.objects.filter(
             equipment=OuterRef("truck_id__jigsaw"),
