@@ -52,13 +52,6 @@
                                 onclick="loadTable()">
                             <i class="feather mr-2 icon-loader"></i> Load
                         </button>
-                        <button type="button"
-                                class="btn btn-danger"
-                                id="btn_load_db"
-                                onclick="dbRitase()"
-                                disabled>
-                            <i class="feather mr-2 icon-loader"></i> Load DB
-                        </button>
                     </div>
                 </div>
             </div>
@@ -493,20 +486,6 @@
         function loadTable() {
             tables.forEach(function(table) {
                 table.draw()
-            })
-        }
-
-        function dbRitase() {
-            $.ajax({
-                url: "{% url 'ritase:to_db' %}",
-                type: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                data: {
-                    date: $("#date-select").val(),
-                    shift: $("#shift-select").val(),
-                }
             })
         }
 
