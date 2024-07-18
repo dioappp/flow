@@ -18,10 +18,10 @@
                 <div class="card-header">
                     <h5 class="mb-0">Standby</h5>
                 </div>
-                <div class="card-body">
-                    <form method="POST"
-                          enctype="multipart/form-data"
-                          action="{% url 'exporter:standby' %}">
+                <form method="POST"
+                      enctype="multipart/form-data"
+                      action="{% url 'exporter:standby' %}">
+                    <div class="card-body">
                         {% csrf_token %}
                         <input type="hidden" id="exportDate" name="date" value="">
                         <input type="hidden" id="exportShift" name="shift" value="1">
@@ -44,12 +44,12 @@
                             </select>
                         </div>
                     </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary" value='export' name="export">
+                            <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
+                        </button>
+                    </div>
                 </form>
-                <div class="card-footer">
-                    <button type="submit" class="btn btn-primary" value='export' name="export">
-                        <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
-                    </button>
-                </div>
             </div>
         </div>
         <div class="col col-md-6">
