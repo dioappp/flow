@@ -2,9 +2,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title> Flow {% block title %}{%endblock%}</title>
-    {%include "partials/header.html"%}
-    {%include "partials/style.html"%}
+    <title> Flow
+      {% block title %}
+      {% endblock title %}
+    </title>
+    {% include "partials/header.html" %}
+    {% include "partials/style.html" %}
     {% comment %} <script src="{% static 'vendors/sidebar.js' %}"></script> {% endcomment %}
   </head>
   <script src="{% static 'js/jquery-3.6.1.min.js' %}"></script>
@@ -13,8 +16,12 @@
   <script src="{% static 'vendors/d3/index.js' %}" charset="utf-8"></script>
   <script src="{% static 'vendors/d3/d3-timeline.js' %}"></script>
   {% comment %} <script src="{% static 'vendors/select2/js/select2.js' %}"></script> {% endcomment %}
-  
-  <body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="light">
+ 
+  <body data-pc-preset="preset-1"
+        data-pc-sidebar-caption="true"
+        data-pc-direction="ltr"
+        data-pc-theme_contrast=""
+        data-pc-theme="light">
     <!-- [ Pre-loader ] start -->
     <div class="loader-bg">
       <div class="loader-track">
@@ -23,7 +30,7 @@
     </div>
     <!-- [ Pre-loader ] End -->
 
-    {%include "partials/sidebar.html"%}
+    {% include "partials/sidebar.html" %}
     <!-- [ Main Content ] start -->
     <div class="pc-container">
       <div class="pc-content">
@@ -33,14 +40,19 @@
             <div class="row align-items-center">
               <div class="col-md-12">
                 <ul class="breadcrumb">
-                  <li class="breadcrumb-item"><a href="{% url 'ritase:index' %}">Home</a></li>
-                  {% block breadcrumb %}{% endblock %}
+                  <li class="breadcrumb-item">
+                    <a href="{% url 'ritase:index' %}">Home</a>
+                  </li>
+                  {% block breadcrumb %}
+                  {% endblock breadcrumb %}
                 </ul>
               </div>
               <div class="col-md-12">
                 <div class="page-header-title">
                   <h2 class="mb-0">
-                    {% block breadcrumb_title %}Standby{% endblock %}
+                    {% block breadcrumb_title %}
+                      Standby
+                    {% endblock breadcrumb_title %}
                   </h2>
                 </div>
               </div>
@@ -48,7 +60,8 @@
           </div>
         </div>
         <!-- [ breadcrumb ] end -->
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock content %}
         <!-- [ Main Content ] end -->
       </div>
     </div>
@@ -56,16 +69,19 @@
     <div id="customContextMenu" style="display: none" class="context-menu">
       <ul class="list-group">
         <button class="list-group-item" onclick="split()">Split</button>
-        <button class="list-group-item" data-bs-toggle="modal" data-bs-target="#addModal">Add</button>
+        <button class="list-group-item"
+                data-bs-toggle="modal"
+                data-bs-target="#addModal">Add</button>
       </ul>
     </div>
     <!-- [ Custom-Menu ] end -->
-    {% include "partials/footer.html"%} 
+    {% include "partials/footer.html" %}
+ 
 
-    {% block modals %}{% endblock %}
+    {% block modals %}
+    {% endblock modals %}
 
-    {% block script %}{% endblock %}
-
-
+    {% block script %}
+    {% endblock script %}
   </body>
 </html>
