@@ -204,58 +204,7 @@
     </div>
   </form>
 </div>
-<div class="modal fade"
-     id="exportModal"
-     tabindex="-1"
-     role="dialog"
-     aria-labelledby="exportModalLabel"
-     aria-hidden="true">
-  <form method="POST"
-        enctype="multipart/form-data"
-        action="{% url 'stb_loader:export_excel' %}">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Export Data</h5>
-          <button type="button"
-                  class="close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          {% csrf_token %}
-          <input type="hidden" id="exportDate" name="date" value="">
-          <input type="hidden" id="exportShift" name="shift" value="1">
-          <div class="form-group">
-            <label>Date</label>
-            <input class="form-control"
-                   type="date"
-                   placeholder="Month data.."
-                   id="date-select"
-                   name="date"
-                   value="{% now "Y-m-d" %}" />
-          </div>
-          <div class="form-group">
-            <label for="shift-label" class="col-form-label">Shift</label>
-            <br />
-            <select class="form-control" name="shift" id="shift-select">
-              <option value="1">Shift 1</option>
-              <option value="2">Shift 2</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary" value='export' name="export">
-            <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
+
 <div class="modal fade"
      id="confirmModal"
      tabindex="-1"
@@ -282,7 +231,7 @@
                  name="database_id_delete"
                  id="database_id_delete-label"
                  value="">
-          <p class='p-item'>Anda yakin ingin menghapus data ini?</p>
+          <p class="p-item">Anda yakin ingin menghapus data ini?</p>
           <div class="modal-footer flex-column align-items-stretch w-100 gap-2 pb-3 border-top-0">
             <button type="button"
                     class="btn btn-lg btn-secondary"
@@ -296,3 +245,4 @@
       </div>
     </form>
   </div>
+</div>
