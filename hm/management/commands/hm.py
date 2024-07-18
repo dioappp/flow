@@ -1,16 +1,28 @@
 from django.core.management.base import BaseCommand
 from django.db import connections
 from hm.models import hmOperator, Operator
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import pytz
 
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
+        now = datetime.now()
+        start_time = datetime.combine(now.date(), time(6, 30))
+        end_time = datetime.combine(now.date(), time(18, 0))
+
+        if start_time < now < end_time:
+            date = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+            shift = 2
+        else:
+            date = now.strftime("%Y-%m-%d")
+            shift = 1
+
         parser.add_argument(
             "--date",
             "-d",
             dest="date",
+            default=date,
             action="store",
             type=str,
             help="Input tanggal yang akan di ambil ex. '2024-06-30'",
@@ -19,6 +31,7 @@ class Command(BaseCommand):
             "--shift",
             "-s",
             dest="shift",
+            default=shift,
             action="store",
             type=int,
             help="Input shift 1 atau 2",
