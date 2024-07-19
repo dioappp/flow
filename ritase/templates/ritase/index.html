@@ -50,7 +50,7 @@
                                 class="btn btn-primary me-3"
                                 id="btn_load"
                                 onclick="loadTable()">
-                            <i class="feather mr-2 icon-loader"></i> Load
+                            <i class="feather mr-2 icon-loader"></i> Refresh
                         </button>
                     </div>
                 </div>
@@ -253,7 +253,12 @@
             data.forEach(function(item, index) {
                 var row = container.append("div").attr("class", "row").attr("id", "operator-card");
                 var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card");
-                var cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
+                var hm = item.hm_end - item.hm_start;
+                if (hm > 13 || hm < 0) {
+                    cardHeaderOp = operator.append("div").attr("class", "card-header bg-danger").append("h5").attr("class", "mb-0 text-white").text("Operator");
+                } else {
+                    cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
+                }
                 var cardBodyOp = operator.append("div").attr("class", "card-body");
                 var form = cardBodyOp.append("form").attr("id", "operator-form")
                     .attr("method", "POST")
