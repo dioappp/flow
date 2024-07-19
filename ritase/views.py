@@ -48,6 +48,7 @@ def operator(request):
     hauler = request.POST.get("hauler").upper()
 
     ts, te = get_shift_time(date, shift)
+    te = te - timedelta(minutes=15)
 
     data = (
         hmOperator.objects.filter(
