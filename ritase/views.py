@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponse
-from ritase.models import ritase, cek_ritase
+from ritase.models import ritase, cek_ritase, truckID
 from hm.models import hmOperator, Operator
 from django.db.models import Subquery, OuterRef, Q
 from django.db.models.functions import Coalesce
@@ -45,14 +45,24 @@ def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
 def operator(request):
     date = request.POST.get("date")
     shift = request.POST.get("shift")
-    hauler = request.POST.get("hauler").upper()
+    hauler = request.POST.get("hauler")
+
+    print(date, shift, hauler, sep="|")
 
     ts, te = get_shift_time(date, shift)
     te = te - timedelta(minutes=15)
 
+    if not str(hauler).startswith("d"):
+        obj = truckID.objects.get(code=hauler)
+        hauler_jigsaw = obj.jigsaw
+    else:
+        hauler_jigsaw = str(hauler).upper()
+
+    print(hauler_jigsaw)
+
     data = (
         hmOperator.objects.filter(
-            Q(equipment=hauler),
+            Q(equipment=hauler_jigsaw),
             Q(login_time__gte=ts, login_time__lt=te)
             | Q(logout_time__gt=ts, logout_time__lte=te),
         )

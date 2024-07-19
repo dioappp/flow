@@ -186,7 +186,7 @@
                 data: {
                     date: $("#date-select").val(),
                     shift: $("#shift-select").val(),
-                    hauler: $("#cn-hauler").val(),
+                    hauler: ($("#cn-hauler").val()).toString(),
                 },
                 headers: {
                     "X-CSRFToken": "{{ csrf_token }}",
