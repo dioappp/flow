@@ -11,12 +11,24 @@
         <a href="#">Produksi</a>
     </li>
     <li class="breadcrumb-item">
-        <a href="#">Ritase</a>
+        <a href="{% url 'ritase:index' %}">Ritase</a>
     </li>
 {% endblock breadcrumb %}
 {% block content %}
     <div class="row">
-        <div class="col">
+        <div class="col-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3 row row-cols-auto">
+                        <label for="cn-hauler" class="col-auto col-form-label">CN Hauler</label>
+                        <div class="col">
+                            <input type="text" class="form-control" id="cn-hauler" onchange="load();">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-9">
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3 row row-cols-auto justify-content-md-center">
@@ -31,7 +43,7 @@
                                    value="{% now "Y-m-d" %}" />
                         </div>
                         <label for="shift-select" class="col col-form-label">Shift</label>
-                        <div class="col-sm-1">
+                        <div class="col-sm-4">
                             <select type="text"
                                     class="form-control"
                                     name="shift"
@@ -41,10 +53,6 @@
                                 <option value="1">Shift 1</option>
                                 <option value="2">Shift 2</option>
                             </select>
-                        </div>
-                        <label for="cn-hauler" class="col col-form-label">CN Hauler</label>
-                        <div class="col">
-                            <input type="text" class="form-control" id="cn-hauler" onchange="load();">
                         </div>
                         <button type="button"
                                 class="btn btn-primary me-3"
@@ -269,7 +277,7 @@
 
                 var formGroups = [{
                     label: 'ID',
-                    inputType: "number",
+                    inputType: "hidden",
                     inputValue: item.id,
                     readonly: true
                 }, {
@@ -300,16 +308,17 @@
                 }];
                 formGroups.forEach(group => {
                     var formGroup = form.append("div").attr("class", "mb-0 row");
-                    formGroup.append("label")
-                        .attr("for", group.label.replace(/\s+/g, ''))
-                        .attr("class", "col-sm-3 col-form-label")
-                        .text(group.label);
-
+                    if (group.inputType != "hidden") {
+                        formGroup.append("label")
+                            .attr("for", group.label.replace(/\s+/g, ''))
+                            .attr("class", "col-sm-3 col-form-label")
+                            .text(group.label);
+                    }
                     const inputDiv = formGroup.append("div").attr("class", "col-sm");
                     var input = inputDiv.append("input")
                         .attr("type", group.inputType)
                         .attr("name", group.label)
-                        .attr("class", group.inputValue !== null ? "form-control-plaintext" : "form-control")
+                        .attr("class", group.inputValue !== null ? "form-control-plaintext" : "form-control bg-warning")
                         .attr("id", group.label.replace(/\s+/g, ''))
                         .attr("value", group.inputValue || "")
                         .attr("readonly", group.readonly ? true : null);
