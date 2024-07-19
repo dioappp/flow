@@ -164,6 +164,11 @@
                     width: "3%"
                 }, ]
             }
+            column.forEach(function(c) {
+                c.render = function(data, type, row, meta) {
+                    return data == 0 ? '' : data;
+                };
+            });
         }
 
         function load() {
@@ -282,6 +287,11 @@
                     inputType: "number",
                     inputValue: item.hm_end,
                     readonly: false
+                }, {
+                    label: "HM",
+                    inputType: "number",
+                    inputValue: item.hm_end - item.hm_start,
+                    readonly: true
                 }];
                 formGroups.forEach(group => {
                     var formGroup = form.append("div").attr("class", "mb-0 row");
