@@ -3,14 +3,11 @@ from django.utils import timezone
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponse
-from ritase.models import ritase, cek_ritase, truckID
+from ritase.models import cek_ritase, truckID
 from hm.models import hmOperator, Operator
-from django.db.models import Subquery, OuterRef, Q
-from django.db.models.functions import Coalesce
+from django.db.models import Q
 from datetime import datetime, timedelta
 from pytz import UTC
-import pandas as pd
-import math
 
 # Create your views here.
 material = {
@@ -25,6 +22,10 @@ material = {
 
 def index(request):
     return render(request, "ritase/index.html")
+
+
+def index_loader(request):
+    return render(request, "ritase/index_loader.html")
 
 
 def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:

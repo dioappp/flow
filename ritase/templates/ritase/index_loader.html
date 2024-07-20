@@ -14,24 +14,12 @@
         <a href="#">Ritase</a>
     </li>
     <li class="breadcrumb-item">
-        <a href="{% url 'ritase:index' %}">Hauler</a>
+        <a href="{% url 'ritase:index' %}">Loader</a>
     </li>
 {% endblock breadcrumb %}
 {% block content %}
     <div class="row">
-        <div class="col-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="mb-3 row row-cols-auto justify-content-md-center">
-                        <label for="cn-hauler" class="col-auto col-form-label">CN Hauler</label>
-                        <div class="col-sm-6">
-                            <input type="text" class="form-control" id="cn-hauler" onchange="load();">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-9">
+        <div class="col">
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3 row row-cols-auto justify-content-md-center">
@@ -204,55 +192,6 @@
             })
         };
 
-        function generateCardNonJigsaw(cn) {
-            cn = cn.toUpperCase()
-            var container = d3.select(".pc-content");
-            container.selectAll("#operator-card").remove();
-
-            var row = container.append("div").attr("class", "row").attr("id", "operator-card");
-            var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card");
-            var cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
-            var cardBodyOp = operator.append("div").attr("class", "card-body");
-            var form = cardBodyOp.append("form").attr("id", "operator-form")
-                .attr("method", "POST")
-                .attr("enctype", "multipart/form-data")
-                .attr("action", "{% url 'ritase:create_operator' %}")
-
-            form.append("input").attr("type", "hidden").attr("name", "csrfmiddlewaretoken").attr("value", "{{ csrf_token }}")
-            form.append("input").attr("type", "hidden").attr("name", "date").attr("value", $("#date-select").val())
-            form.append("input").attr("type", "hidden").attr("name", "shift").attr("value", $("#shift-select").val())
-            form.append("input").attr("type", "hidden").attr("name", "unit").attr("value", cn)
-
-            var formGroups = [{
-                label: "NRP",
-                inputType: "number",
-            }, {
-                label: "HM Start",
-                inputType: "number",
-            }, {
-                label: "HM End",
-                inputType: "number",
-            }];
-            formGroups.forEach(group => {
-                var formGroup = form.append("div").attr("class", "mb-0 row");
-                formGroup.append("label")
-                    .attr("for", group.label.replace(/\s+/g, ''))
-                    .attr("class", "col-sm-3 col-form-label")
-                    .text(group.label);
-
-                const inputDiv = formGroup.append("div").attr("class", "col-sm");
-                var input = inputDiv.append("input")
-                    .attr("type", group.inputType)
-                    .attr("name", group.label)
-                    .attr("class", "form-control")
-                    .attr("id", group.label.replace(/\s+/g, ''))
-                    .attr("value", "")
-
-                input.on("change", function() {
-                    handleInputChange(form, "Create");
-                });
-            });
-        }
 
         function generateCard(data) {
             var container = d3.select(".pc-content");
