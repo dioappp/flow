@@ -110,7 +110,7 @@ class Command(BaseCommand):
                     when emat.name in ('Mud') then 'M' 
                     -- when emat.name in ('Spoilled') then 'Spoilled' 
                     when emat.name in ('Dirty Coal','Spoilled') then 'G' 
-                    else emat.name end) end material_id
+                    else 'O' end) end material_id
 
         FROM [jmineops_reporting].[dbo].[shift_dumps] sd
         JOIN [jmineops_reporting].[dbo].[locations] loc ON loc.id=sd.dump_id 
