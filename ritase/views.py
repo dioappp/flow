@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from django.utils import timezone
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.forms.models import model_to_dict
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse, HttpResponse
 from ritase.models import cek_ritase, truckID, material
 from hm.models import hmOperator, Operator
@@ -9,11 +8,13 @@ from django.db.models import Q
 from datetime import datetime, timedelta
 from pytz import UTC
 
+from stb_loader.models import loaderID
+
 
 # Create your views here.
 def index(request):
     options = material.objects.values_list("code", flat=True)
-    loaders = truckID.objects.values_list("jigsaw", flat=True)
+    loaders = loaderID.objects.values_list("unit", flat=True).order_by("unit")
     return render(
         request, "ritase/index.html", {"options": options, "loaders": loaders}
     )
