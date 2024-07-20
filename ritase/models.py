@@ -72,4 +72,4 @@ class cek_ritase(models.Model):
     m = models.SmallIntegerField()  #                06.00 - 06.30
 
     def __str__(self):
-        return self.material
+        return str(self.code_material)

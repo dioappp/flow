@@ -79,9 +79,9 @@
                     data: "loader",
                     width: "10%"
                 }, {
-                    data: "material"
+                    data: "code_material"
                 }, {
-                    data: "remark"
+                    data: "code_material__remark"
                 }, {
                     data: "a",
                     width: "6%"
@@ -128,9 +128,9 @@
                     data: "loader",
                     width: "10%"
                 }, {
-                    data: "material"
+                    data: "code_material"
                 }, {
-                    data: "remark"
+                    data: "code_material__remark"
                 }, {
                     data: "a",
                     width: "6%"
@@ -177,7 +177,7 @@
             }
             column.forEach(function(c) {
                 c.render = function(data, type, row, meta) {
-                    return data == 0 ? '' : data;
+                    return data == 0 || data == 'nan' ? '' : data;
                 };
             });
         }
@@ -412,37 +412,19 @@
             },
             fields: [{
                 name: 'loader',
-                type: 'text'
-            }, {
-                name: 'material',
                 type: 'select',
-                options: [{
-                    label: 'OB'
-                }, {
-                    label: 'Coal'
-                }, {
-                    label: 'Mud'
-                }, {
-                    label: 'IPD'
-                }, {
-                    label: 'Top Soil'
-                }, {
-                    label: 'Gen'
-                }, {
-                    label: 'TD'
-                }, {
-                    label: 'GENS'
-                }, {
-                    label: 'GENK'
-                }, {
-                    label: 'GENFC'
-                }, {
-                    label: 'PAAP'
-                }, {
-                    label: 'GENMC'
-                }, {
-                    label: 'nan'
-                }, ],
+                options:[
+                {% for loader in loaders %}
+                {label: "{{ loader }}"},
+                {% endfor %}],
+                className: 'js-example-basic-single'
+            }, {
+                name: 'code_material',
+                type: 'select',
+                options: [
+                {% for option in options %}
+                {label: "{{ option }}"},
+                {% endfor %}],
                 className: 'form-control'
             }, {
                 name: 'a',
