@@ -131,7 +131,7 @@ def timeline(request):
         "id",
         "time_full",
         "time_empty",
-        "type",
+        "type__material",
         "loader_id__unit",
         "dump_location",
         "truck_id__OB_capacity",
@@ -144,7 +144,7 @@ def timeline(request):
         x["time_empty"] = (
             d["time_empty"].strftime("%Y-%m-%d %H:%M:%S") if d["time_empty"] else "N/A"
         )
-        x["type"] = d["type"]
+        x["type"] = d["type__material"]
         x["loader"] = d["loader_id__unit"]
         x["loc"] = d["dump_location"]
         response["ritase"].append(x)
