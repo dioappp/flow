@@ -48,7 +48,7 @@
                         <button type="button"
                                 class="btn btn-primary me-3"
                                 id="btn_load"
-                                onclick="loadTable()">
+                                onclick="load()">
                             <i class="feather mr-2 icon-loader"></i> Refresh
                         </button>
                     </div>
@@ -62,14 +62,17 @@
     <script type="text/javascript">
         function getHeaders() {
             if ($("#shift-select").val() == 1) {
-                headers = ["Loader", "Material", "Remarks", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "#"];
+                headers = ["Loader","Hauler", "Material", "Remarks", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "#"];
                 column = [{
                     data: "loader",
                     width: "10%"
+                },{
+                    data: "hauler",
+                    width: "10%"
                 }, {
-                    data: "material"
+                    data: "code_material"
                 }, {
-                    data: "remark"
+                    data: "code_material__remark"
                 }, {
                     data: "a",
                     width: "6%"
@@ -111,14 +114,17 @@
                     width: "3%"
                 }, ]
             } else {
-                headers = ["Loader", "Material", "Remarks", "18", "19", "20", "21", "22", "23", "0", "1", "2", "3", "4", "5", "6", "#"];
+                headers = ["Loader","Hauler", "Material", "Remarks", "18", "19", "20", "21", "22", "23", "0", "1", "2", "3", "4", "5", "6", "#"];
                 column = [{
                     data: "loader",
                     width: "10%"
+                },{
+                    data: "hauler",
+                    width: "10%"
                 }, {
-                    data: "material"
+                    data: "code_material"
                 }, {
-                    data: "remark"
+                    data: "code_material__remark"
                 }, {
                     data: "a",
                     width: "6%"
@@ -165,119 +171,24 @@
             }
             column.forEach(function(c) {
                 c.render = function(data, type, row, meta) {
-                    return data == 0 ? '' : data;
+                    return data == 0 || data == 'nan' ? '' : data;
                 };
             });
         }
 
-        function load() {
-            $.ajax({
-                url: "{% url 'ritase:cek_operator'%}",
-                type: "POST",
-                data: {
-                    date: $("#date-select").val(),
-                    shift: $("#shift-select").val(),
-                    hauler: ($("#cn-hauler").val()).toString(),
-                },
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                complete: function(d) {
-                    if (d.responseJSON.data.length == 0) {
-                        generateCardNonJigsaw($("#cn-hauler").val());
-                    } else {
-                        generateCard(d.responseJSON.data);
-                    }
-                }
-            })
-        };
-
-
-        function generateCard(data) {
+        function load(){
             var container = d3.select(".pc-content");
 
             container.selectAll("#operator-card").remove();
-            tables = [];
-            editors = [];
+            
+            var row = container.append("div").attr("class", "row").attr("id", "operator-card");
 
-            data.forEach(function(item, index) {
-                var row = container.append("div").attr("class", "row").attr("id", "operator-card");
-                var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card");
-                var hm = item.hm_end - item.hm_start;
-                if (hm > 13 || hm < 0) {
-                    cardHeaderOp = operator.append("div").attr("class", "card-header bg-danger").append("h5").attr("class", "mb-0 text-white").text("Operator");
-                } else {
-                    cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
-                }
-                var cardBodyOp = operator.append("div").attr("class", "card-body");
-                var form = cardBodyOp.append("form").attr("id", "operator-form")
-                    .attr("method", "POST")
-                    .attr("enctype", "multipart/form-data")
-                    .attr("action", "{% url 'ritase:update_operator' %}")
-
-                form.append("input").attr("type", "hidden").attr("name", "csrfmiddlewaretoken").attr("value", "{{ csrf_token }}")
-
-                var formGroups = [{
-                    label: 'ID',
-                    inputType: "hidden",
-                    inputValue: item.id,
-                    readonly: true
-                }, {
-                    label: "Operator",
-                    inputType: "text",
-                    inputValue: item.NRP__operator,
-                    readonly: true
-                }, {
-                    label: "NRP",
-                    inputType: "number",
-                    inputValue: item.NRP,
-                    readonly: true
-                }, {
-                    label: "HM Start",
-                    inputType: "number",
-                    inputValue: item.hm_start,
-                    readonly: false
-                }, {
-                    label: "HM End",
-                    inputType: "number",
-                    inputValue: item.hm_end,
-                    readonly: false
-                }, {
-                    label: "HM",
-                    inputType: "number",
-                    inputValue: item.hm_end - item.hm_start,
-                    readonly: true
-                }];
-                formGroups.forEach(group => {
-                    var formGroup = form.append("div").attr("class", "mb-0 row");
-                    if (group.inputType != "hidden") {
-                        formGroup.append("label")
-                            .attr("for", group.label.replace(/\s+/g, ''))
-                            .attr("class", "col-sm-3 col-form-label")
-                            .text(group.label);
-                    }
-                    const inputDiv = formGroup.append("div").attr("class", "col-sm");
-                    var input = inputDiv.append("input")
-                        .attr("type", group.inputType)
-                        .attr("name", group.label)
-                        .attr("class", group.inputValue !== null ? "form-control-plaintext" : "form-control bg-warning")
-                        .attr("id", group.label.replace(/\s+/g, ''))
-                        .attr("value", group.inputValue || "")
-                        .attr("readonly", group.readonly ? true : null);
-
-                    if (!group.readonly) {
-                        input.on("change", function() {
-                            handleInputChange(form, "Save Change");
-                        });
-                    }
-                });
-
-                var ritase = row.append("div").attr("class", "col-lg-9").append("div").attr("class", "card");
+            var ritase = row.append("div").attr("class", "col").append("div").attr("class", "card");
                 var cardHeaderRit = ritase.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Ritase");
                 var cardBodyRit = ritase.append("div").attr("class", "card-body")
                     .append("div").attr("class", "card-body table-border-style")
                     .append("div").attr("class", "table-responsive")
-                    .append("table").attr("class", "table table-striped-columns").attr("id", "load-table" + index);
+                    .append("table").attr("class", "table table-striped-columns").attr("id", "load-table");
 
                 var thead = cardBodyRit.append("thead").append("tr");
 
@@ -289,59 +200,25 @@
                         .text(header);
                 });
 
-                cardBodyRit.append("tbody");
-
-                var table = createTable(index, item);
-                tables.push(table);
-
-                var editor = new DatatablesInlineEditor(table, options);
-                editors.push(editor);
-            })
-        }
-
-        function createTable(index, item) {
-            // Initialize DataTable for this specific card
-            return $("#load-table" + index).DataTable({
-                processing: true,
-                serverSide: true,
-                ordering: false,
-                paging: false,
-                searching: false,
-                layout: {
-                    bottomStart: null,
-                    bottomEnd: function() {
-                        let container = d3.select(document.createElement('div'));
-
-                        let button = container.append("button")
-                            .attr('class', 'btn btn-sm btn-primary')
-                            .attr('type', 'button')
-                            .attr('id', 'addRow-' + index)
-                            .attr('data-id', item.id)
-                            .on('click', function() {
-                                addRow(this)
-                            })
-                            .append("i")
-                            .attr("class", "ti ti-plus")
-                            .style("color", "#FFFFFF")
-
-                        return container.node();
-                    }
-                },
-                ajax: {
-                    url: "{% url 'ritase:cek_ritase' %}",
-                    type: "POST",
-                    headers: {
-                        "X-CSRFToken": "{{ csrf_token }}",
+                var table = $("#load-table").DataTable({processing: true,
+                    serverSide: true,
+                    ordering: false,
+                    stateSave: true,
+                    pagingType: "full_numbers",
+                    ajax: {
+                        url: "{% url 'ritase:cek_ritase_loader' %}",
+                        type: "POST",
+                        headers: {
+                            "X-CSRFToken": "{{ csrf_token }}",
+                        },
+                        data: function(d) {
+                            d.date = $("#date-select").val();
+                            d.shift = $("#shift-select").val();
+                        },
                     },
-                    data: function(d) {
-                        d.date = $("#date-select").val();
-                        d.shift = $("#shift-select").val();
-                        d.operator_id = item.id;
-                    },
-                },
-                columns: column,
-                rowId: 'id'
-            });
+                    columns: column,
+                    rowId: 'id'
+                })
         }
 
         var options = {
@@ -429,31 +306,6 @@
                 youSendData: true,
             },
         };
-
-        function addRow(button) {
-            $.ajax({
-                url: "{% url 'ritase:addrow' %}",
-                type: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                data: {
-                    date: $("#date-select").val(),
-                    shift: $("#shift-select").val(),
-                    hauler: $("#cn-hauler").val(),
-                    id: button.getAttribute('data-id')
-                },
-                complete: function() {
-                    loadTable()
-                }
-            })
-        }
-
-        function loadTable() {
-            tables.forEach(function(table) {
-                table.draw()
-            })
-        }
 
         function handleInputChange(form, label_button) {
             // Check if the button already exists

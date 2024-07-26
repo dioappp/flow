@@ -7,7 +7,7 @@ from hm.models import hmOperator, Operator
 from django.db.models import Q
 from datetime import datetime, timedelta
 from pytz import UTC
-
+import math
 from stb_loader.models import loaderID
 
 
@@ -102,6 +102,53 @@ def load_ritase(request):
     response = {
         "draw": request.POST.get("draw"),
         "data": data_return,
+    }
+    return JsonResponse(response)
+
+
+def load_ritase_loader(request):
+    date = request.POST.get("date")
+    shift = request.POST.get("shift")
+
+    cek_ritase_fields = [field.name for field in cek_ritase._meta.fields]
+    cek_ritase_fields.append("code_material__remark")
+
+    maindata = cek_ritase.objects.filter(
+        deleted_at__isnull=True,
+        date=date,
+        shift=shift,
+    ).values(*cek_ritase_fields)
+
+    total = maindata.count()
+
+    search_value = request.POST.get("search[value]")
+    data = maindata.filter(
+        Q(loader__icontains=search_value) | Q(hauler__icontains=search_value)
+    )
+    total_filtered = data.count()
+
+    _start = request.POST.get("start")
+    _length = request.POST.get("length")
+    page = 1
+
+    if _start and _length:
+        start = int(_start)
+        length = int(_length)
+        page = math.ceil(start / length) + 1
+    page_obj = data[start : start + length]
+
+    data_return = []
+    for d in page_obj:
+        d["action"] = createButton(d["id"])
+        data_return.append(d)
+
+    response = {
+        "draw": request.POST.get("draw"),
+        "data": data_return,
+        "page": int(page) if page else 1,
+        "per_page": length,
+        "recordsTotal": total,
+        "recordsFiltered": total_filtered,
     }
     return JsonResponse(response)
 

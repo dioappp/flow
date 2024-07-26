@@ -6,6 +6,7 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("loader/", views.index_loader, name="index_loader"),
     path("load_ritase/", views.load_ritase, name="cek_ritase"),
+    path("load_ritase_loader/", views.load_ritase_loader, name="cek_ritase_loader"),
     path("update/", views.update, name="update"),
     path("load_operator/", views.operator, name="cek_operator"),
     path("addrow/", views.addrow, name="addrow"),
