@@ -1,22 +1,30 @@
-{% extends 'base.html' %} 
-{% load static %} 
+{% extends "base.html" %}
+{% load static %}
+ 
 
-{% block title %} | Loader Shiftly {%endblock%} 
-{% block breadcrumb_title %} Loader Shiftly {%endblock%} 
+{% block title %}
+  | Loader Shiftly
+{% endblock title %}
+{% block breadcrumb_title %}
+  Loader Shiftly
+{% endblock breadcrumb_title %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item">
-  <a href="#">Standby Loader Shiftly</a>
-</li>
-{% endblock breadcrumb %} 
+  <li class="breadcrumb-item">
+    <a href="#">Standby Loader Shiftly</a>
+  </li>
+{% endblock breadcrumb %}
+ 
 
 {% block content %}
-{%include "partials/shiftly.html"%} 
-{% endblock content %} 
+  {% include "partials/shiftly.html" %}
+ 
+{% endblock content %}
+ 
 
 {% block script %}
-{% include 'partials/script.html'%}
-<script type="text/javascript">
+  {% include "partials/script.html" %}
+  <script type="text/javascript">
     var table = $("#load-table").DataTable({
       processing: true,
       serverSide: true,
@@ -152,6 +160,9 @@
           if(datum.label=='STB'){
             $('#updateModal').on('show.bs.modal', function (event) {
               var modal = $(this);
+              var startMinute = new Date(d.starting_time).getMinutes();
+              var startSecond = new Date(d.starting_time).getSeconds();
+
               modal.find('.modal-title').text('Update Data - ' + d.unit + ' - id: ' + d.database_id);
               modal.find('input[name=unit]').val(d.unit);
               modal.find('input[name=date]').val($("#date-select").val());
@@ -161,6 +172,12 @@
               modal.find('input[name=database_id]').val(d.database_id);
               modal.find('input[name=stb]').val(d.label);
               modal.find('input[name=duration]').val(((d.ending_time-d.starting_time)/60000).toFixed(2));
+
+              if (startMinute === 0 && startSecond === 0) {
+                modal.find('#deleteButton').prop('disabled', true);
+              } else {
+                modal.find('#deleteButton').prop('disabled', false);
+              }
             });
             $('#updateModal').modal('show');
           } else {
@@ -176,7 +193,7 @@
               modal.find('input[name=location]').val(d.loc);
               modal.find('input[name=tipe]').val(d.label);
             });
-            $('#ritaseModal').modal('show');  {% endcomment %}
+$('#ritaseModal').modal('show');  {% endcomment %}
           }
         })
         .mouseover(function(d,i,datum){
@@ -219,9 +236,10 @@
         .datum(dataJigsaw)
         .call(chart)  
     }
-</script>
+  </script>
 {% endblock script %}
 
 {% block modals %}
-{%include "stb_loader_shiftly/modal.html"%} 
-{% endblock %}
+  {% include "stb_loader_shiftly/modal.html" %}
+ 
+{% endblock modals %}
