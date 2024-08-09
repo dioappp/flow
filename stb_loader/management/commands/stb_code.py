@@ -57,12 +57,13 @@ standby_codes = {
     "Waiting Washing (Unschedule)": "S19",
     "Accident": "BUS SS",
     "Waiting for Blasting": "S15",
-    "Infal": "S20C",
+    "Infal": "S17",
     "Sholat Grader": "GRADER",
     "Sidak Fatigue": "S16",
     "Waiting Bays (Schedule)": "BS SS",
     "Disposal/ROM Stoppage": "S13",
     "Control SR": "S17",
+    "No Material": "S20A",
 }
 
 RANK = {
