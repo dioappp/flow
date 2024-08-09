@@ -1,30 +1,27 @@
 from django.shortcuts import render
 from django.utils import timezone
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.forms.models import model_to_dict
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse, HttpResponse
-from ritase.models import ritase, cek_ritase
+from ritase.models import cek_ritase, truckID, material
 from hm.models import hmOperator, Operator
-from django.db.models import Subquery, OuterRef, Q
-from django.db.models.functions import Coalesce
+from django.db.models import Q
 from datetime import datetime, timedelta
 from pytz import UTC
-import pandas as pd
 import math
+from stb_loader.models import loaderID
+
 
 # Create your views here.
-material = {
-    "Mud": "Mud",
-    "GENS": "Sekatan",
-    "GENK": "Kocoran",
-    "GENFC": "Fine Coal",
-    "PAAP": "PAAP",
-    "GENMC": "Mud Cair",
-}
-
-
 def index(request):
-    return render(request, "ritase/index.html")
+    options = material.objects.values_list("code", flat=True)
+    loaders = loaderID.objects.values_list("unit", flat=True).order_by("unit")
+    return render(
+        request, "ritase/index.html", {"options": options, "loaders": loaders}
+    )
+
+
+def index_loader(request):
+    return render(request, "ritase/index_loader.html")
 
 
 def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
@@ -43,15 +40,24 @@ def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
 
 
 def operator(request):
-    date = request.POST.get("date")
-    shift = request.POST.get("shift")
-    hauler = request.POST.get("hauler").upper()
+    date_pattern = request.POST.get("date")
+    shift_pattern = request.POST.get("shift")
+    hauler_pattern = request.POST.get("hauler")
 
-    ts, te = get_shift_time(date, shift)
+    ts, te = get_shift_time(date_pattern, shift_pattern)
+    te = te - timedelta(minutes=15)
+
+    if not str(hauler_pattern).startswith("d"):
+        obj = truckID.objects.get(code=hauler_pattern)
+        hauler_jigsaw = obj.jigsaw
+    else:
+        hauler_jigsaw = str(hauler_pattern).upper()
+
+    print(hauler_jigsaw, ts, te, sep="|")
 
     data = (
         hmOperator.objects.filter(
-            Q(equipment=hauler),
+            Q(equipment=hauler_jigsaw),
             Q(login_time__gte=ts, login_time__lt=te)
             | Q(logout_time__gt=ts, logout_time__lte=te),
         )
@@ -79,45 +85,72 @@ def load_ritase(request):
     shift = request.POST.get("shift")
     operator_id = request.POST.get("operator_id")
 
-    try:
-        data = cek_ritase.objects.get(
-            deleted_at__isnull=True,
-            date=date,
-            shift=shift,
-            operator_hauler_id=operator_id,
-        )
-        data = model_to_dict(data)
-        data["action"] = createButton(data["id"])
-        data_return = [data]
+    cek_ritase_fields = [field.name for field in cek_ritase._meta.fields]
+    cek_ritase_fields.append("code_material__remark")
 
-        response = {"draw": request.POST.get("draw"), "data": data_return}
-        return JsonResponse(response)
+    data = cek_ritase.objects.filter(
+        deleted_at__isnull=True,
+        date=date,
+        shift=shift,
+        operator_hauler_id=operator_id,
+    ).values(*cek_ritase_fields)
+    data_return = []
+    for d in data:
+        d["action"] = createButton(d["id"])
+        data_return.append(d)
 
-    except MultipleObjectsReturned:
-        data = cek_ritase.objects.filter(
-            deleted_at__isnull=True,
-            date=date,
-            shift=shift,
-            operator_hauler_id=operator_id,
-        )
-        data_return = []
-        for d in data:
-            x = model_to_dict(d)
-            x["action"] = createButton(x["id"])
-            data_return.append(x)
+    response = {
+        "draw": request.POST.get("draw"),
+        "data": data_return,
+    }
+    return JsonResponse(response)
 
-        response = {
-            "draw": request.POST.get("draw"),
-            "data": data_return,
-        }
-        return JsonResponse(response)
 
-    except ObjectDoesNotExist:
-        response = {
-            "draw": request.POST.get("draw"),
-            "data": [],
-        }
-        return JsonResponse(response)
+def load_ritase_loader(request):
+    date = request.POST.get("date")
+    shift = request.POST.get("shift")
+
+    cek_ritase_fields = [field.name for field in cek_ritase._meta.fields]
+    cek_ritase_fields.append("code_material__remark")
+
+    maindata = cek_ritase.objects.filter(
+        deleted_at__isnull=True,
+        date=date,
+        shift=shift,
+    ).values(*cek_ritase_fields)
+
+    total = maindata.count()
+
+    search_value = request.POST.get("search[value]")
+    data = maindata.filter(
+        Q(loader__icontains=search_value) | Q(hauler__icontains=search_value)
+    )
+    total_filtered = data.count()
+
+    _start = request.POST.get("start")
+    _length = request.POST.get("length")
+    page = 1
+
+    if _start and _length:
+        start = int(_start)
+        length = int(_length)
+        page = math.ceil(start / length) + 1
+    page_obj = data[start : start + length]
+
+    data_return = []
+    for d in page_obj:
+        d["action"] = createButton(d["id"])
+        data_return.append(d)
+
+    response = {
+        "draw": request.POST.get("draw"),
+        "data": data_return,
+        "page": int(page) if page else 1,
+        "per_page": length,
+        "recordsTotal": total,
+        "recordsFiltered": total_filtered,
+    }
+    return JsonResponse(response)
 
 
 def addrow(request):

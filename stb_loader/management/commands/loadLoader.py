@@ -134,7 +134,7 @@ class Command(BaseCommand):
             `shift_breakdown`.`section` = 'PLD'
             and
             (
-                (`shift_breakdown`.`temp_rfu_date` >= cast((now() + interval -(3) day) as date)) 
+                (`shift_breakdown`.`temp_rfu_date` >= cast((now() + interval -(14) day) as date)) 
                 or 
                 (`shift_breakdown`.`rfu_date` = '0000-00-00') 
                 or 

@@ -2,7 +2,7 @@ from django.core.management import BaseCommand
 from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from hm.models import hmOperator
-from ritase.models import ritase, cek_ritase
+from ritase.models import material, ritase, cek_ritase
 import math
 import pandas as pd
 from datetime import datetime, timedelta, time
@@ -118,6 +118,11 @@ class Command(BaseCommand):
         result = result.sort_values("hauler").reset_index()
 
         for i, d in result.iterrows():
+            try:
+                code = material.objects.get(code=d["type"])
+            except:
+                code = None
+
             cek_ritase.objects.create(
                 date=d["report_date"],
                 shift=d["shift"],
@@ -133,7 +138,7 @@ class Command(BaseCommand):
                     if not math.isnan(d["operator_loader_id"])
                     else None
                 ),
-                material=d["type"],
+                code_material=code,
                 a=(
                     d.get(6, 0) if d["shift"] == 1 else d.get(18, 0)
                 ),  # 06.30 - 07.00 | 18.00 - 19.00

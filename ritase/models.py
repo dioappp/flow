@@ -5,6 +5,8 @@ from stb_loader.models import loaderID
 # Create your models here.
 class truckID(models.Model):
     jigsaw = models.CharField(max_length=20)
+    ellipse = models.CharField(max_length=20, null=True)
+    code = models.CharField(max_length=10, null=True)
     OB_capacity = models.IntegerField(null=True)
 
     def __str__(self):
@@ -36,6 +38,12 @@ class ritase(models.Model):
         return self.material
 
 
+class material(models.Model):
+    code = models.CharField(primary_key=True, max_length=5)
+    material = models.CharField(max_length=10)
+    remark = models.CharField(max_length=10, null=True)
+
+
 class cek_ritase(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,8 +56,7 @@ class cek_ritase(models.Model):
     operator_hauler_id = models.BigIntegerField(null=True)
     loader = models.CharField(max_length=10)
     operator_loader_id = models.BigIntegerField(null=True)
-    material = models.CharField(max_length=10)
-    remark = models.CharField(max_length=10, null=True)
+    code_material = models.ForeignKey(material, on_delete=models.CASCADE, null=True)
     a = models.SmallIntegerField()  # 06.30 - 07.00 | 18.00 - 19.00
     b = models.SmallIntegerField()  # 07.00 - 08.00 | 19.00 - 20.00
     c = models.SmallIntegerField()  # 08.00 - 09.00 | 20.00 - 21.00
@@ -65,4 +72,4 @@ class cek_ritase(models.Model):
     m = models.SmallIntegerField()  #                06.00 - 06.30
 
     def __str__(self):
-        return self.material
+        return str(self.code_material)

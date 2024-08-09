@@ -13,10 +13,25 @@
     <li class="breadcrumb-item">
         <a href="#">Ritase</a>
     </li>
+    <li class="breadcrumb-item">
+        <a href="{% url 'ritase:index' %}">Hauler</a>
+    </li>
 {% endblock breadcrumb %}
 {% block content %}
     <div class="row">
-        <div class="col">
+        <div class="col-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3 row row-cols-auto justify-content-md-center">
+                        <label for="cn-hauler" class="col-auto col-form-label">CN Hauler</label>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" id="cn-hauler" onchange="load();">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-9">
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3 row row-cols-auto justify-content-md-center">
@@ -31,7 +46,7 @@
                                    value="{% now "Y-m-d" %}" />
                         </div>
                         <label for="shift-select" class="col col-form-label">Shift</label>
-                        <div class="col-sm-1">
+                        <div class="col-sm-4">
                             <select type="text"
                                     class="form-control"
                                     name="shift"
@@ -42,15 +57,11 @@
                                 <option value="2">Shift 2</option>
                             </select>
                         </div>
-                        <label for="cn-hauler" class="col col-form-label">CN Hauler</label>
-                        <div class="col">
-                            <input type="text" class="form-control" id="cn-hauler" onchange="load();">
-                        </div>
                         <button type="button"
                                 class="btn btn-primary me-3"
                                 id="btn_load"
                                 onclick="loadTable()">
-                            <i class="feather mr-2 icon-loader"></i> Load
+                            <i class="feather mr-2 icon-loader"></i> Refresh
                         </button>
                     </div>
                 </div>
@@ -61,6 +72,10 @@
 {% block script %}
     {% include "partials/script.html" %}
     <script type="text/javascript">
+        $(document).ready(function() {
+            $('.js-example-basic-single').select2();
+        });
+        
         function getHeaders() {
             if ($("#shift-select").val() == 1) {
                 headers = ["Loader", "Material", "Remarks", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "#"];
@@ -68,9 +83,9 @@
                     data: "loader",
                     width: "10%"
                 }, {
-                    data: "material"
+                    data: "code_material"
                 }, {
-                    data: "remark"
+                    data: "code_material__remark"
                 }, {
                     data: "a",
                     width: "6%"
@@ -117,9 +132,9 @@
                     data: "loader",
                     width: "10%"
                 }, {
-                    data: "material"
+                    data: "code_material"
                 }, {
-                    data: "remark"
+                    data: "code_material__remark"
                 }, {
                     data: "a",
                     width: "6%"
@@ -164,6 +179,11 @@
                     width: "3%"
                 }, ]
             }
+            column.forEach(function(c) {
+                c.render = function(data, type, row, meta) {
+                    return data == 0 || data == 'nan' ? '' : data;
+                };
+            });
         }
 
         function load() {
@@ -173,7 +193,7 @@
                 data: {
                     date: $("#date-select").val(),
                     shift: $("#shift-select").val(),
-                    hauler: $("#cn-hauler").val(),
+                    hauler: ($("#cn-hauler").val()).toString(),
                 },
                 headers: {
                     "X-CSRFToken": "{{ csrf_token }}",
@@ -248,7 +268,12 @@
             data.forEach(function(item, index) {
                 var row = container.append("div").attr("class", "row").attr("id", "operator-card");
                 var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card");
-                var cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
+                var hm = item.hm_end - item.hm_start;
+                if (hm > 13 || hm < 0) {
+                    cardHeaderOp = operator.append("div").attr("class", "card-header bg-danger").append("h5").attr("class", "mb-0 text-white").text("Operator");
+                } else {
+                    cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
+                }
                 var cardBodyOp = operator.append("div").attr("class", "card-body");
                 var form = cardBodyOp.append("form").attr("id", "operator-form")
                     .attr("method", "POST")
@@ -259,7 +284,7 @@
 
                 var formGroups = [{
                     label: 'ID',
-                    inputType: "number",
+                    inputType: "hidden",
                     inputValue: item.id,
                     readonly: true
                 }, {
@@ -282,19 +307,25 @@
                     inputType: "number",
                     inputValue: item.hm_end,
                     readonly: false
+                }, {
+                    label: "HM",
+                    inputType: "number",
+                    inputValue: item.hm_end - item.hm_start,
+                    readonly: true
                 }];
                 formGroups.forEach(group => {
                     var formGroup = form.append("div").attr("class", "mb-0 row");
-                    formGroup.append("label")
-                        .attr("for", group.label.replace(/\s+/g, ''))
-                        .attr("class", "col-sm-3 col-form-label")
-                        .text(group.label);
-
+                    if (group.inputType != "hidden") {
+                        formGroup.append("label")
+                            .attr("for", group.label.replace(/\s+/g, ''))
+                            .attr("class", "col-sm-3 col-form-label")
+                            .text(group.label);
+                    }
                     const inputDiv = formGroup.append("div").attr("class", "col-sm");
                     var input = inputDiv.append("input")
                         .attr("type", group.inputType)
                         .attr("name", group.label)
-                        .attr("class", group.inputValue !== null ? "form-control-plaintext" : "form-control")
+                        .attr("class", group.inputValue !== null ? "form-control-plaintext" : "form-control bg-warning")
                         .attr("id", group.label.replace(/\s+/g, ''))
                         .attr("value", group.inputValue || "")
                         .attr("readonly", group.readonly ? true : null);
@@ -385,37 +416,19 @@
             },
             fields: [{
                 name: 'loader',
-                type: 'text'
-            }, {
-                name: 'material',
                 type: 'select',
-                options: [{
-                    label: 'OB'
-                }, {
-                    label: 'Coal'
-                }, {
-                    label: 'Mud'
-                }, {
-                    label: 'IPD'
-                }, {
-                    label: 'Top Soil'
-                }, {
-                    label: 'Gen'
-                }, {
-                    label: 'TD'
-                }, {
-                    label: 'GENS'
-                }, {
-                    label: 'GENK'
-                }, {
-                    label: 'GENFC'
-                }, {
-                    label: 'PAAP'
-                }, {
-                    label: 'GENMC'
-                }, {
-                    label: 'nan'
-                }, ],
+                options:[
+                {% for loader in loaders %}
+                {label: "{{ loader }}"},
+                {% endfor %}],
+                className: 'js-example-basic-single'
+            }, {
+                name: 'code_material',
+                type: 'select',
+                options: [
+                {% for option in options %}
+                {label: "{{ option }}"},
+                {% endfor %}],
                 className: 'form-control'
             }, {
                 name: 'a',

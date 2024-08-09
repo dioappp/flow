@@ -37,13 +37,13 @@ class Command(BaseCommand):
         set @enddate = '{dtime_end}'
 
         SELECT 
-            sl.id as 'load_id',
-            DATEADD("hh",8,sl.[time_full]) AS 'Time-Full',
-            EQP.name as 'Truck',
-            EQP1.name as 'Shovel',
-            enum.name as 'Material',
-            loc.name as 'Blast',
-            loc3.name as 'Grade'
+            sl.id as 'load_id',  -- 0
+            DATEADD("hh",8,sl.[time_full]) AS 'Time-Full', -- 1
+            EQP.name as 'Truck', -- 2
+            EQP1.name as 'Shovel',  -- 3
+            enum.name as 'Material', -- 4
+            loc.name as 'Blast', -- 5
+            loc3.name as 'Grade' -- 6
 
         FROM [jmineops_reporting].[dbo].[shift_loads] sl
         FULL JOIN [jmineops_reporting].[dbo].[equipment] EQP ON EQP.id= sl.truck_id
@@ -82,10 +82,12 @@ class Command(BaseCommand):
                 time_full=dt,
                 truck_id=truck,
                 loader_id=loader,
-                material=d[4],
-                blast=d[5],
-                grade=d[6],
-                report_date=report_date,
+                defaults={
+                    "material": d[4],
+                    "blast": d[5],
+                    "grade": d[6],
+                    "report_date": report_date,
+                },
             )
 
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data loading"))
@@ -97,20 +99,20 @@ class Command(BaseCommand):
         set @enddate = dateadd("HH",12,'{dtime_end}')
 
         SELECT 
-            sl.id as 'load_id',
-            dateadd("HH",8,time_empty) as 'time_empty',
-            loc.name as 'dump_loc',
+            sl.id as 'load_id', -- 0
+            dateadd("HH",8,time_empty) as 'time_empty', -- 1
+            loc.name as 'dump_loc', -- 2
             case 
-                when loc.name like '%PERBAIKAN%' or loc.name like '%INPIT%' or loc.name like '%FRONT%' or loc.name like '%JALAN%' or loc.name like '%MAINT%' or loc.name like '%SUPP%' or loc.name like '%JLN%' then 'IPD' 
-                when loc.name like '%TS%' and emat.name in ('Blasted') then 'TSD'
+                when loc.name like '%PERBAIKAN%' or loc.name like '%INPIT%' or loc.name like '%FRONT%' or loc.name like '%JALAN%' or loc.name like '%MAINT%' or loc.name like '%SUPP%' or loc.name like '%JLN%' then 'I' 
+                when loc.name like '%TS%' and emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'T'
                 else (	case 
-                    when emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'OB'
-                    when emat.name in ('Coal','Coal-Blasted') then 'Coal' 
-                    when emat.name in ('Top Soil') then 'TSD' 
-                    when emat.name in ('Mud') then 'Mud' 
-                    when emat.name in ('Spoilled') then 'Spoilled' 
-                    when emat.name in ('Dirty Coal') then 'General' 
-                    else emat.name end) end material_id
+                    when emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'O'
+                    when emat.name in ('Coal','Coal-Blasted') then 'C' 
+                    when emat.name in ('Top Soil') then 'TD' 
+                    when emat.name in ('Mud') then 'M' 
+                    -- when emat.name in ('Spoilled') then 'Spoilled' 
+                    when emat.name in ('Dirty Coal','Spoilled') then 'G' 
+                    else 'O' end) end material_id -- 3
 
         FROM [jmineops_reporting].[dbo].[shift_dumps] sd
         JOIN [jmineops_reporting].[dbo].[locations] loc ON loc.id=sd.dump_id 
