@@ -43,3 +43,21 @@ class ClusterLoader(models.Model):
     unit = models.ForeignKey(loaderID, on_delete=models.CASCADE)
     cluster = models.CharField(max_length=20, null=True)
     pit = models.CharField(max_length=10, null=True)
+
+
+class LoaderStatusHistory(models.Model):
+    ACTION_CHOICES = (
+        ("add", "Add"),
+        ("update", "Update"),
+        ("delete", "Delete"),
+    )
+
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    loader_status_id = models.IntegerField()
+    data = models.JSONField()  # Store the serialized data of LoaderStatus
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return (
+            f"{self.get_action_display()} - {self.loader_status_id} at {self.timestamp}"
+        )
