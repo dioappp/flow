@@ -82,10 +82,12 @@ class Command(BaseCommand):
                 time_full=dt,
                 truck_id=truck,
                 loader_id=loader,
-                material=d[4],
-                blast=d[5],
-                grade=d[6],
-                report_date=report_date,
+                defaults={
+                    "material": d[4],
+                    "blast": d[5],
+                    "grade": d[6],
+                    "report_date": report_date,
+                },
             )
 
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data loading"))
