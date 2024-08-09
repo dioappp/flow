@@ -247,6 +247,27 @@ def add(request):
         remarks=old.remarks,
         report_date=old.report_date,
     )
+
+    if old.hour == 6:
+        t = f"{old.date} 06:30:00"
+        t = datetime.strptime(t, "%Y-%m-%d %H:%M:%S")
+        try:
+            LoaderStatus.objects.get(
+                timeStart=t,
+                unit=old.unit,
+                date=old.date,
+            )
+        except LoaderStatus.DoesNotExist:
+            LoaderStatus.objects.create(
+                standby_code=stb,
+                timeStart=t,
+                unit=old.unit,
+                hour=old.hour,
+                date=old.date,
+                shift=1,
+                remarks=old.remarks,
+                report_date=old.date,
+            )
     return redirect(request.META.get("HTTP_REFERER"))
 
 
