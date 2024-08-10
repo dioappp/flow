@@ -9,7 +9,7 @@ from stb_loader.management.commands.stb_code import standby_codes, RANK, BDC
 
 
 class Command(BaseCommand):
-    def main(self, dtime):
+    def main(self, dtime: str) -> pd.DataFrame:
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data shift states Hauler"))
 
         ss_sql = f"""
@@ -298,7 +298,7 @@ class Command(BaseCommand):
                     axis=0,
                 )
 
-        result = result.dropna(how="all")
+        result = result.dropna(how="all").reset_index(drop=True)
         result["date"] = pd.to_datetime(result["Time Start"]).dt.date
         result["hour"] = hour
         result["shift"] = 1 if (6 <= hour < 18) else 2
