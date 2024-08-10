@@ -12,4 +12,6 @@ urlpatterns = [
     path("add", views.add, name="add"),
     path("export_excel", views.export_excel, name="export_excel"),
     path("load_data", views.load_data, name="load_data"),
+    path("undo/", views.undo, name="undo"),
+    # path("redo/", views.redo, name="your_redo_view"),
 ]

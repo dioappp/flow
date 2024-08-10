@@ -2,13 +2,14 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.db.models import Sum, Subquery, OuterRef, Q
-from stb_loader.models import LoaderStatus, ClusterLoader
+from stb_loader.models import LoaderStatus, ClusterLoader, LoaderStatusHistory
 from ritase.models import ritase
 from datetime import datetime, timedelta
 import math
 import pandas as pd
 from django.db.models.functions import Coalesce
 import json
+from django.core import serializers
 
 
 # Create your views here.
@@ -219,6 +220,14 @@ def update(request):
 
     stb = LoaderStatus.objects.get(pk=id)
 
+    # Save the current state before updating
+    LoaderStatusHistory.objects.create(
+        action="update",
+        loader_status_id=id,
+        data=serializers.serialize("json", [stb]),
+        token=request.COOKIES.get("csrftoken"),
+    )
+
     ts = f"{stb.date} {ts}"
     ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
@@ -237,7 +246,7 @@ def add(request):
     ts = f"{old.date} {ts}"
     ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
-    LoaderStatus.objects.create(
+    new_instance = LoaderStatus.objects.create(
         standby_code=stb,
         timeStart=ts,
         unit=old.unit,
@@ -246,6 +255,14 @@ def add(request):
         shift=old.shift,
         remarks=old.remarks,
         report_date=old.report_date,
+    )
+
+    # Save the new instance's state
+    LoaderStatusHistory.objects.create(
+        action="add",
+        loader_status_id=new_instance.id,
+        data=serializers.serialize("json", [new_instance]),
+        token=request.COOKIES.get("csrftoken"),
     )
 
     if old.hour == 6:
@@ -258,7 +275,7 @@ def add(request):
                 date=old.date,
             )
         except LoaderStatus.DoesNotExist:
-            LoaderStatus.objects.create(
+            new_instance_630 = LoaderStatus.objects.create(
                 standby_code=stb,
                 timeStart=t,
                 unit=old.unit,
@@ -268,13 +285,29 @@ def add(request):
                 remarks=old.remarks,
                 report_date=old.date,
             )
+            # Save the new instance's state
+            LoaderStatusHistory.objects.create(
+                action="add",
+                loader_status_id=new_instance_630.id,
+                data=serializers.serialize("json", [new_instance_630]),
+                token=request.COOKIES.get("csrftoken"),
+            )
     return redirect(request.META.get("HTTP_REFERER"))
 
 
 def delete(request):
     id = int(request.POST.get("database_id_delete"))
     if "delete" in request.POST:
-        LoaderStatus.objects.get(pk=id).delete()
+        stb = LoaderStatus.objects.get(pk=id)
+
+        # Save the current state before deleting
+        LoaderStatusHistory.objects.create(
+            action="delete",
+            loader_status_id=id,
+            data=serializers.serialize("json", [stb]),
+            token=request.COOKIES.get("csrftoken"),
+        )
+        stb.delete()
     return redirect(request.META.get("HTTP_REFERER"))
 
 
@@ -284,7 +317,15 @@ def split(request):
     ts = datetime.strptime(ts, "%d/%m/%Y, %H:%M:%S")
 
     old = LoaderStatus.objects.get(pk=id)
-    LoaderStatus.objects.create(
+
+    # Save the state of the old instance before the split
+    LoaderStatusHistory.objects.create(
+        action="split",
+        loader_status_id=id,
+        data=serializers.serialize("json", [old]),
+        token=request.COOKIES.get("csrftoken"),
+    )
+    new_instance = LoaderStatus.objects.create(
         standby_code=old.standby_code,
         timeStart=ts,
         unit=old.unit,
@@ -294,6 +335,52 @@ def split(request):
         remarks=old.remarks,
         report_date=old.report_date,
     )
+    # Save the state of the new instance after the split
+    LoaderStatusHistory.objects.create(
+        action="add",
+        loader_status_id=new_instance.id,
+        data=serializers.serialize("json", [new_instance]),
+        token=request.COOKIES.get("csrftoken"),
+    )
+    return redirect(request.META.get("HTTP_REFERER"))
+
+
+def undo(request):
+    last_action = LoaderStatusHistory.objects.filter(
+        token=request.COOKIES.get("csrftoken")
+    ).last()
+
+    if not last_action:
+        return redirect(request.META.get("HTTP_REFERER"))
+
+    if last_action.action == "update":
+        # Revert to previous state
+        obj = list(serializers.deserialize("json", last_action.data))[0]
+        obj.save()
+
+    elif last_action.action == "add":
+        # Delete the last added object
+        LoaderStatus.objects.get(pk=last_action.loader_status_id).delete()
+
+    elif last_action.action == "delete":
+        # Restore the deleted object
+        obj = list(serializers.deserialize("json", last_action.data))[0]
+        obj.save()
+
+    elif last_action.action == "split":
+        # Revert the split by deleting the new instance and restoring the old one
+        added_action = LoaderStatusHistory.objects.filter(
+            action="add", loader_status_id=last_action.loader_status_id
+        ).last()
+        if added_action:
+            LoaderStatus.objects.get(pk=added_action.loader_status_id).delete()
+            added_action.delete()
+        obj = list(serializers.deserialize("json", last_action.data))[0]
+        obj.save()
+
+    # Remove the last action from history
+    last_action.delete()
+
     return redirect(request.META.get("HTTP_REFERER"))
 
 
