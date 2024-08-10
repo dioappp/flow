@@ -23,8 +23,51 @@
                       action="{% url 'exporter:standby' %}">
                     <div class="card-body">
                         {% csrf_token %}
-                        <input type="hidden" id="exportDate" name="date" value="">
-                        <input type="hidden" id="exportShift" name="shift" value="1">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input class="form-control"
+                                   type="date"
+                                   placeholder="Month data.."
+                                   id="date-select"
+                                   name="date"
+                                   value="{% now "Y-m-d" %}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="shift-label" class="col-form-label">Shift</label>
+                            <br />
+                            <select class="form-control" name="shift" id="shift-select">
+                                <option value="1">Shift 1</option>
+                                <option value="2">Shift 2</option>
+                                <option value="3">All Shift</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="format-label" class="col-form-label">Format</label>
+                            <br />
+                            <select class="form-control" name="format" id="format-select">
+                                <option value="SICoPP" selected>SICoPP</option>
+                                <option value="Input Ritasi">Input Ritasi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Production</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST"
+                          enctype="multipart/form-data"
+                          action="{% url 'exporter:production' %}">
+                        {% csrf_token %}
                         <div class="form-group">
                             <label>Date</label>
                             <input class="form-control"
@@ -45,50 +88,11 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <button type="submit" class="btn btn-primary" value='export' name="export">
+                        <button type="submit" class="btn btn-primary">
                             <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-        <div class="col col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Production</h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST"
-                          enctype="multipart/form-data"
-                          action="{% url 'exporter:production' %}">
-                        {% csrf_token %}
-                        <input type="hidden" id="exportDate" name="date" value="">
-                        <input type="hidden" id="exportShift" name="shift" value="1">
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input class="form-control"
-                                   type="date"
-                                   placeholder="Month data.."
-                                   id="date-select"
-                                   name="date"
-                                   value="{% now "Y-m-d" %}" />
-                        </div>
-                        <div class="form-group">
-                            <label for="shift-label" class="col-form-label">Shift</label>
-                            <br />
-                            <select class="form-control" name="shift" id="shift-select">
-                                <option value="1">Shift 1</option>
-                                <option value="2">Shift 2</option>
-                                <option value="3">All Shift</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-                <div class="card-footer">
-                    <button type="submit" class="btn btn-primary" value='export' name="export">
-                        <span class="btn-text"><i class="feather mr-2 icon-download"></i>Download</span>
-                    </button>
-                </div>
             </div>
         </div>
     </div>
