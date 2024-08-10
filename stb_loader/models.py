@@ -56,6 +56,7 @@ class LoaderStatusHistory(models.Model):
     loader_status_id = models.IntegerField()
     data = models.JSONField()  # Store the serialized data of LoaderStatus
     timestamp = models.DateTimeField(auto_now_add=True)
+    token = models.CharField(max_length=20, null=False)
 
     def __str__(self):
         return (

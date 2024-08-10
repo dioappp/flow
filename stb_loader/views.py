@@ -225,6 +225,7 @@ def update(request):
         action="update",
         loader_status_id=id,
         data=serializers.serialize("json", [stb]),
+        token=request.COOKIES.get("csrftoken"),
     )
 
     ts = f"{stb.date} {ts}"
@@ -261,6 +262,7 @@ def add(request):
         action="add",
         loader_status_id=new_instance.id,
         data=serializers.serialize("json", [new_instance]),
+        token=request.COOKIES.get("csrftoken"),
     )
 
     if old.hour == 6:
@@ -288,6 +290,7 @@ def add(request):
                 action="add",
                 loader_status_id=new_instance_630.id,
                 data=serializers.serialize("json", [new_instance_630]),
+                token=request.COOKIES.get("csrftoken"),
             )
     return redirect(request.META.get("HTTP_REFERER"))
 
@@ -302,6 +305,7 @@ def delete(request):
             action="delete",
             loader_status_id=id,
             data=serializers.serialize("json", [stb]),
+            token=request.COOKIES.get("csrftoken"),
         )
         stb.delete()
     return redirect(request.META.get("HTTP_REFERER"))
@@ -319,6 +323,7 @@ def split(request):
         action="split",
         loader_status_id=id,
         data=serializers.serialize("json", [old]),
+        token=request.COOKIES.get("csrftoken"),
     )
     new_instance = LoaderStatus.objects.create(
         standby_code=old.standby_code,
@@ -335,12 +340,18 @@ def split(request):
         action="add",
         loader_status_id=new_instance.id,
         data=serializers.serialize("json", [new_instance]),
+        token=request.COOKIES.get("csrftoken"),
     )
     return redirect(request.META.get("HTTP_REFERER"))
 
 
 def undo(request):
-    last_action = LoaderStatusHistory.objects.last()
+    last_action = LoaderStatusHistory.objects.filter(
+        token=request.COOKIES.get("csrftoken")
+    ).last()
+
+    if not last_action:
+        return redirect(request.META.get("HTTP_REFERER"))
 
     if last_action.action == "update":
         # Revert to previous state
