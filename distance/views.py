@@ -38,7 +38,7 @@ def extract_data_ob(df: DataFrame, date: datetime, lokasi: str) -> DataFrame:
         8: "vertical_distance",
     }
     df = df[df.iloc[:, 0] == date]
-    df = df.iloc[:, [0, 5, 7, 9, 11, 13, 22, 55, 19]]
+    df = df.iloc[:, [0, 5, 7, 9, 14, 13, 22, 55, 19]]
 
     df = df.rename(
         columns={df.columns[idx]: new_name for idx, new_name in column_names.items()}
@@ -48,7 +48,12 @@ def extract_data_ob(df: DataFrame, date: datetime, lokasi: str) -> DataFrame:
     df["vertical_distance"] = df.groupby(["loader"])["vdistance_x_bcm"].transform(
         "sum"
     ) / df.groupby(["loader"])["bcm_survey"].transform("sum")
-    df = df.drop(columns=["vdistance_x_bcm", "bcm_survey"])
+    df["hdistance_x_bcm"] = df["horizontal_distance"] * df["bcm_survey"]
+    df["horizontal_distance"] = df.groupby(["loader"])["hdistance_x_bcm"].transform(
+        "sum"
+    ) / df.groupby(["loader"])["bcm_survey"].transform("sum")
+    df = df.groupby(["loader"], as_index=False).first()
+    df = df.drop(columns=["vdistance_x_bcm", "bcm_survey", "hdistance_x_bcm"])
     return df
 
 
@@ -62,14 +67,40 @@ def extract_data_coal(df: DataFrame, date: datetime, lokasi: str) -> DataFrame:
         5: "elevasi_dumping",
         6: "horizontal_distance",
         7: "vertical_distance",
+        8: "bcm_survey",
     }
     df = df[df.iloc[:, 0] == date]
-    df = df.iloc[:, [0, 5, 7, 9, 14, 13, 21, 17]]
+    df = df.iloc[:, [0, 5, 7, 9, 14, 13, 21, 18, 54]]
     df = df.rename(
         columns={df.columns[idx]: new_name for idx, new_name in column_names.items()}
     )
     df["lokasi_dumping"] = df["lokasi_dumping"].replace("_", " ", regex=True)
     df["lokasi"] = lokasi
+    return df
+
+
+def concat_data_coal(df: DataFrame, date: datetime) -> DataFrame:
+    df = pd.concat(
+        [
+            extract_data_coal(df["Jigsaw SIS Rom 13A CT"], date, "CENTRAL"),
+            extract_data_coal(df["Jigsaw SIS Rom 13B CT"], date, "CENTRAL"),
+            extract_data_coal(df["Jigsaw SIS Rom 17 (CT)"], date, "CENTRAL"),
+            extract_data_coal(df["Jigsaw SIS Rom 19"], date, "CENTRAL"),
+            extract_data_coal(df["Jigsaw SIS Rom 17B"], date, "NORTH"),
+            extract_data_coal(df["Jigsaw SIS Rom 20"], date, "NORTH"),
+        ],
+        ignore_index=True,
+    )
+    df["vdistance_x_bcm"] = df["vertical_distance"] * df["bcm_survey"]
+    df["vertical_distance"] = df.groupby(["loader"])["vdistance_x_bcm"].transform(
+        "sum"
+    ) / df.groupby(["loader"])["bcm_survey"].transform("sum")
+    df["hdistance_x_bcm"] = df["horizontal_distance"] * df["bcm_survey"]
+    df["horizontal_distance"] = df.groupby(["loader"])["hdistance_x_bcm"].transform(
+        "sum"
+    ) / df.groupby(["loader"])["bcm_survey"].transform("sum")
+    df = df.groupby(["loader"], as_index=False).first()
+    df = df.drop(columns=["vdistance_x_bcm", "bcm_survey", "hdistance_x_bcm"])
     return df
 
 
@@ -105,18 +136,7 @@ def import_data(request):
                 [
                     df,
                     extract_data_ob(file_ob["CENTRAL"], date, "CENTRAL"),
-                    extract_data_coal(
-                        file_coal["Jigsaw SIS Rom 13A CT"], date, "CENTRAL"
-                    ),
-                    extract_data_coal(
-                        file_coal["Jigsaw SIS Rom 13B CT"], date, "CENTRAL"
-                    ),
-                    extract_data_coal(
-                        file_coal["Jigsaw SIS Rom 17 (CT)"], date, "CENTRAL"
-                    ),
-                    extract_data_coal(file_coal["Jigsaw SIS Rom 19"], date, "CENTRAL"),
-                    extract_data_coal(file_coal["Jigsaw SIS Rom 17B"], date, "NORTH"),
-                    extract_data_coal(file_coal["Jigsaw SIS Rom 20"], date, "NORTH"),
+                    concat_data_coal(file_coal, date),
                 ],
                 ignore_index=True,
             )
