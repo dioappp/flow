@@ -329,6 +329,10 @@
                         .attr("id", group.label.replace(/\s+/g, ''))
                         .attr("value", group.inputValue || "")
                         .attr("readonly", group.readonly ? true : null);
+                        
+                    if (group.inputType == "number"){
+                        input.attr("step", "any")
+                    }
 
                     if (!group.readonly) {
                         input.on("change", function() {

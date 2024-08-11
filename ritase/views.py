@@ -45,7 +45,8 @@ def operator(request):
     hauler_pattern = request.POST.get("hauler")
 
     ts, te = get_shift_time(date_pattern, shift_pattern)
-    te = te - timedelta(minutes=15)
+    ts = ts - timedelta(minutes=30)
+    te = te - timedelta(minutes=30)
 
     if not str(hauler_pattern).startswith("d"):
         obj = truckID.objects.get(code=hauler_pattern)
