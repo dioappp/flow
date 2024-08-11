@@ -27,7 +27,7 @@ standby_codes = {
     "Waiting Maintenance (Unschedule)": "BUS SS",
     "Waiting Mechanic (Schedule)": "BS SS",
     "Waiting Mechanic (Unschedule)": "BUS SS",
-    "General Work": "WH general",
+    "General Work": "WH GEN",
     "Production": "WH",
     "Daily Check/P2H": "S19",
     "Debu": "S4",
@@ -95,7 +95,7 @@ RANK = {
     "S20C": 19,
     "WH OB": 20,
     "WH": 20,
-    "WH general": 19,
+    "WH GEN": 19,
     "Inactive": 20,
     "Stopped": 20,
 }

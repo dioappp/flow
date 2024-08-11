@@ -146,7 +146,7 @@ var colorDict = {
   "S20C":"#a7f2bb",
   "WH OB":"#212121",
   "WH":"#07cceb",
-  "WH general":"darkblue",
+  "WH GEN":"darkblue",
   "IPD": "grey",
   "OB": "green",
   "Mud": "blue",
