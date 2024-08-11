@@ -84,9 +84,14 @@
         headers: {
           "X-CSRFToken": "{{ csrf_token }}",
         },
-        success: function () {
-          location.reload()
+        success: function(response, status, xhr) {
+          if (xhr.status === 204) { // Check if the status code is 204
+              showDetail(data_unit);
+          }
         },
+        error: function(xhr, status, error) {
+            console.error('Form submission failed:', error);
+        }
       });
     } 
 
@@ -302,6 +307,56 @@ $('#ritaseModal').modal('show');  {% endcomment %}
           $('#timeend-label, #duration-label').prop('disabled', true);
       });
 
+      $('#addForm').on('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        var form = $(this);
+
+        var formData = new FormData(this); // Collect form data
+
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response, status, xhr) {
+                if (xhr.status === 204) { // Check if the status code is 204
+                    $('#addModal').modal('hide');
+                    showDetail(data_unit);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Form submission failed:', error);
+            }
+        });
+    });
+      
+      $('#deleteForm').on('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        var form = $(this);
+
+        var formData = new FormData(this); // Collect form data
+        formData.append("delete", "delete");
+
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response, status, xhr) {
+                if (xhr.status === 204) { // Check if the status code is 204
+                    $('#confirmModal').modal('hide');
+                    showDetail(data_unit);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Form submission failed:', error);
+            }
+        });
+});
 
   </script>
 {% endblock script %}

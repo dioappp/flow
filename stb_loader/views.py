@@ -309,7 +309,7 @@ def add(request):
                 data=serializers.serialize("json", [new_instance_630]),
                 token=request.COOKIES.get("csrftoken"),
             )
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def delete(request):
@@ -325,7 +325,7 @@ def delete(request):
             token=request.COOKIES.get("csrftoken"),
         )
         stb.delete()
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def split(request):
@@ -359,7 +359,7 @@ def split(request):
         data=serializers.serialize("json", [new_instance]),
         token=request.COOKIES.get("csrftoken"),
     )
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def undo(request):
