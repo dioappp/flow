@@ -37,7 +37,7 @@ def index(request):
         "S11",
         "S20C",
         "WH",
-        "WH general",
+        "WH GEN",
     ]
     tipe_ritase = ["OB", "General", "Coal", "Top Soil", "IPD", "Mud", "Spoil"]
     return render(
