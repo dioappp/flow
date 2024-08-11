@@ -53,8 +53,6 @@ def operator(request):
     else:
         hauler_jigsaw = str(hauler_pattern).upper()
 
-    print(hauler_jigsaw, ts, te, sep="|")
-
     data = (
         hmOperator.objects.filter(
             Q(equipment=hauler_jigsaw),
