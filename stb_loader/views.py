@@ -141,6 +141,11 @@ def reportDataSTB(request):
     return JsonResponse(response)
 
 
+def is_nempel_ke_jam_kritis(stb: str, prev: str, next: str) -> bool:
+    jam_kritis = ["S6", "S5A", "S8"]
+    return stb == "S12" and (prev in jam_kritis or next in jam_kritis)
+
+
 def timeline(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
@@ -167,11 +172,23 @@ def timeline(request):
             if i == len(maindata) - 1
             else maindata[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
         )
-        if not show_hanging:
-            x["label"] = "WH" if d["standby_code"] == "S12" else d["standby_code"]
-        else:
+        # Check the previous and next records if they exist
+        prev_code = maindata[i - 1]["standby_code"] if i > 0 else None
+        next_code = maindata[i + 1]["standby_code"] if i < len(maindata) - 1 else None
+
+        hanging_jam_kritis = is_nempel_ke_jam_kritis(
+            d["standby_code"], prev_code, next_code
+        )
+
+        if show_hanging or hanging_jam_kritis or d["standby_code"] != "S12":
             x["label"] = d["standby_code"]
+            response["state"].append(x)
+            continue
+
+        # If neither the previous nor the next code is S6, change S12 to WH
+        x["label"] = "WH"
         response["state"].append(x)
+        continue
 
     ritasedata = ritase.objects.filter(
         date=date_pattern, hour=hour_pattern, loader_id__unit=unit_pattern
