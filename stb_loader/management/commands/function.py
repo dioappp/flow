@@ -1,6 +1,7 @@
 from typing import Any
 import pandas as pd
 from pandas import DataFrame, Timestamp
+from .stb_code import RANK
 import warnings
 
 # Disable future warnings
@@ -303,6 +304,36 @@ def split30min(data: DataFrame) -> DataFrame:
             result.loc[l] = row
 
     return result
+
+
+def split_at(
+    data: DataFrame,
+    minute: int,
+    change_status: bool = False,
+    stb: str = "WH",
+    dur: int = 10,
+) -> DataFrame:
+    split_time = data["Time Start"].min() + pd.Timedelta(minute, "minutes")
+    column_name = data.columns.values
+    result = pd.DataFrame(columns=column_name)
+    for _, row in data.iterrows():
+        l = len(result)
+        if row["Time Start"] < split_time <= row["Time End"]:
+            new_row = row.copy()
+            last_row = row.copy()
+            row["Time End"] = split_time
+            new_row["Time Start"] = split_time
+            if change_status:
+                new_row["Standby Code"] = stb
+                new_row["Rank"] = RANK[stb]
+                new_row["Time End"] = split_time + pd.Timedelta(minutes=dur)
+                last_row["Time Start"] = new_row["Time End"]
+                result.loc[l + 2] = last_row
+            result.loc[l] = row
+            result.loc[l + 1] = new_row
+        else:
+            result.loc[l] = row
+    return result.sort_values("Time Start")
 
 
 def statusBDC(remark: str) -> str:

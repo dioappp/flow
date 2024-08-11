@@ -249,6 +249,9 @@ class Command(BaseCommand):
                     ["Standby Code", "Rank"],
                 ] = ["WH", 20]
 
+                if hour == 6 and str(loader).startswith(("X1", "X2", "EX")):
+                    data = f.split_at(data, 25, change_status=True, stb="S6", dur=10)
+
                 if hour == 6:
                     data = f.split30min(data)
 
