@@ -251,7 +251,7 @@ def update(request):
     stb.standby_code = stb_code
     stb.timeStart = ts
     stb.save()
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def add(request):

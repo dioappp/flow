@@ -4,7 +4,8 @@
      role="dialog"
      aria-labelledby="updateModalLabel"
      aria-hidden="true">
-  <form method="POST"
+  <form id="updateForm"
+        method="POST"
         enctype="multipart/form-data"
         action="{% url 'stb_loader:update' %}">
     <div class="modal-dialog modal-dialog-centered" role="document">
