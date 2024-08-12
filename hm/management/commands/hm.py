@@ -69,7 +69,7 @@ class Command(BaseCommand):
             nrp, _ = Operator.objects.get_or_create(
                 NRP=d[2], defaults={"operator": d[1]}
             )
-            hmOperator.objects.get_or_create(
+            hmOperator.objects.update_or_create(
                 equipment=d[0],
                 NRP=nrp,
                 login_time=tz.localize(d[3]),
