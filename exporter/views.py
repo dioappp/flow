@@ -13,6 +13,27 @@ def index(request):
     return render(request, "exporter/index.html")
 
 
+def is_in_jam_kritis(id: int, df: pd.DataFrame) -> bool:
+    jam_kritis = ["S6", "S5A", "S8"]
+    unit = df.loc[id, "unit"]
+
+    if id == 0:
+        check_before = True
+    else:
+        stb_before = df.loc[id - 1, "standby_code"]
+        unit_before = df.loc[id - 1, "unit"]
+        check_before = (stb_before in jam_kritis) and (unit_before == unit)
+
+    if id == len(df) - 1:
+        check_after = True
+    else:
+        stb_after = df.loc[id + 1, "standby_code"]
+        unit_after = df.loc[id + 1, "unit"]
+        check_after = (stb_after in jam_kritis) and (unit_after == unit)
+
+    return check_before or check_after
+
+
 def standby(request):
     date = request.POST.get("date")
     shift = int(request.POST.get("shift"))
@@ -64,8 +85,13 @@ def standby(request):
         df["durasi"] = df["timeEnd"] - df["timeStart"]
         df["durasi"] = pd.to_timedelta(df["durasi"]).dt.total_seconds() / 60
 
-        cond = ~df["hour"].isin([6, 11, 13]) & (df["standby_code"] == "S12")
-        df.loc[cond, "standby_code"] = "WH"
+        df = df.reset_index(drop=True)
+
+        ids = df.index[df.standby_code == "S12"].tolist()
+
+        for id in ids:
+            if not is_in_jam_kritis(id, df):
+                df.loc[id, "standby_code"] = "WH"
 
         result = df.groupby(["hour", "unit", "standby_code"], as_index=False).agg(
             {
