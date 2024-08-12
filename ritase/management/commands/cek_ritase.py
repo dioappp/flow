@@ -175,5 +175,7 @@ class Command(BaseCommand):
                 l=(
                     d.get(17, 0) if d["shift"] == 1 else d.get(5, 0)
                 ),  # 17.00 - 18.00 | 05.00 - 06.00
-                m=0 if d["shift"] == 1 else d.get(6, 0),  #                06.00 - 06.30
+                m=(
+                    0 if d["shift"] == 1 else d.get(6, 0)
+                ),  #                 06.00 - 06.30
             )
