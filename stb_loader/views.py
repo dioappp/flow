@@ -335,13 +335,6 @@ def split(request):
 
     old = LoaderStatus.objects.get(pk=id)
 
-    # Save the state of the old instance before the split
-    LoaderStatusHistory.objects.create(
-        action="split",
-        loader_status_id=id,
-        data=serializers.serialize("json", [old]),
-        token=request.COOKIES.get("csrftoken"),
-    )
     new_instance = LoaderStatus.objects.create(
         standby_code=old.standby_code,
         timeStart=ts,
@@ -370,6 +363,9 @@ def undo(request):
     if not last_action:
         return redirect(request.META.get("HTTP_REFERER"))
 
+    obj = list(serializers.deserialize("json", last_action.data))[0]
+    unit = obj.object.unit.unit
+
     if last_action.action == "update":
         # Revert to previous state
         obj = list(serializers.deserialize("json", last_action.data))[0]
@@ -384,21 +380,10 @@ def undo(request):
         obj = list(serializers.deserialize("json", last_action.data))[0]
         obj.save()
 
-    elif last_action.action == "split":
-        # Revert the split by deleting the new instance and restoring the old one
-        added_action = LoaderStatusHistory.objects.filter(
-            action="add", loader_status_id=last_action.loader_status_id
-        ).last()
-        if added_action:
-            LoaderStatus.objects.get(pk=added_action.loader_status_id).delete()
-            added_action.delete()
-        obj = list(serializers.deserialize("json", last_action.data))[0]
-        obj.save()
-
     # Remove the last action from history
     last_action.delete()
 
-    return redirect(request.META.get("HTTP_REFERER"))
+    return JsonResponse({"unit": unit}, status=200)
 
 
 def export_excel(request):
