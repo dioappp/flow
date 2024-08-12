@@ -24,6 +24,7 @@
 {% block script %}
   {% include "partials/script.html" %}
   <script type="text/javascript">
+    var undobtn = d3.select("#btn-container").append("button").attr("id","undoBtn").attr("class","ms-0 btn btn-warning").text("undo")
     let selectedLabels = [];
 
     var table = $("#load-table").DataTable({
