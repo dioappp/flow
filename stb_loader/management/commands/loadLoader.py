@@ -216,6 +216,25 @@ class Command(BaseCommand):
         # shift_activity_df.to_parquet(f'raw/ac-{str(ts)[:13]}.parquet.gzip')
         # breakdown_df.to_parquet(f'raw/bd-{str(ts)[:13]}.parquet.gzip')
 
+        data_change_shift = {
+            "hours": [6, 17, 18],
+            "Time Start": [
+                ts + pd.Timedelta(minutes=25),
+                ts + pd.Timedelta(minutes=55),
+                ts,
+            ],
+            "Time End": [
+                ts + pd.Timedelta(minutes=35),
+                te,
+                ts + pd.Timedelta(minutes=5),
+            ],
+            "Standby Code": "S6",
+            "Rank": RANK["S6"],
+        }
+        change_shift_df = pd.DataFrame(data=data_change_shift)
+
+        change_shift_df = change_shift_df[change_shift_df.hours == hour]
+
         # format output final data
         result = pd.DataFrame(
             columns=["Time Start", "Time End", "Equipment", "Standby Code", "remarks"]
@@ -240,6 +259,11 @@ class Command(BaseCommand):
                     data["src"] = "ss"
                     data["remarks"] = None
 
+                if not change_shift_df.empty and str(loader).startswith(
+                    ("X1", "X2", "EX")
+                ):
+                    data = f.combine_cs(data, change_shift_df)
+
                 if not loader_bd.empty:
                     # Data BD
                     data = f.combine_bd(data, loader_bd)
@@ -248,9 +272,6 @@ class Command(BaseCommand):
                     data["Standby Code"].astype(str).str.contains("SS", case=True),
                     ["Standby Code", "Rank"],
                 ] = ["WH", 20]
-
-                if hour == 6 and str(loader).startswith(("X1", "X2", "EX")):
-                    data = f.split_at(data, 25, change_status=True, stb="S6", dur=10)
 
                 if hour == 6:
                     data = f.split30min(data)

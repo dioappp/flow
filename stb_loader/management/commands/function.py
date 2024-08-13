@@ -225,6 +225,56 @@ def split(s12: DataFrame, ss: DataFrame) -> DataFrame:
     return s12_splited
 
 
+def combine_cs(df: DataFrame, cs: DataFrame) -> DataFrame:
+    intersect_in_start = (df["Time Start"] <= cs["Time Start"].iloc[0]) & (
+        cs["Time Start"].iloc[0] <= df["Time End"]
+    )
+    idx_in_start = df.index[intersect_in_start].to_list()
+
+    intersect_in_end = (df["Time Start"] <= cs["Time End"].iloc[0]) & (
+        cs["Time End"].iloc[0] <= df["Time End"]
+    )
+    idx_in_end = df.index[intersect_in_end].to_list()
+
+    intersect_inside = (
+        (cs["Time Start"].iloc[0] <= df["Time Start"])
+        & (df["Time Start"] <= cs["Time End"].iloc[0])
+        & (cs["Time Start"].iloc[0] <= df["Time End"])
+        & (df["Time End"] <= cs["Time End"].iloc[0])
+    )
+    idx_inside = df.index[intersect_inside].to_list()
+    l = len(df)
+
+    if idx_in_start == idx_in_end:
+        row = df.loc[idx_in_start].copy()
+        df.loc[idx_in_start, "Time End"] = cs["Time Start"].iloc[0]
+        df = pd.concat([df, row]).reset_index(drop=True)
+        df.loc[l, "Time Start"] = cs["Time Start"].iloc[0]
+        df.loc[l, "Time End"] = cs["Time End"].iloc[0]
+        df.loc[l, "Standby Code"] = cs["Standby Code"].iloc[0]
+        df.loc[l, "Rank"] = cs["Rank"].iloc[0]
+        df = pd.concat([df, row]).reset_index(drop=True)
+        df.loc[l + 1, "Time Start"] = cs["Time End"].iloc[0]
+        return df.sort_values("Time Start").reset_index(drop=True)
+
+    if intersect_in_start.any():
+        df.loc[idx_in_start, "Time End"] = cs["Time Start"].iloc[0]
+        row = df.loc[idx_in_start].copy()
+        df = pd.concat([df, row]).reset_index(drop=True)
+        df.loc[l, "Time Start"] = cs["Time Start"].iloc[0]
+        df.loc[l, "Time End"] = cs["Time End"].iloc[0]
+        df.loc[l, "Standby Code"] = cs["Standby Code"].iloc[0]
+        df.loc[l, "Rank"] = cs["Rank"].iloc[0]
+
+    if intersect_in_end.any():
+        df.loc[idx_in_end, "Time Start"] = cs["Time End"].iloc[0]
+
+    if intersect_inside.any():
+        df = df.drop(index=idx_inside)
+
+    return df.sort_values("Time Start").reset_index(drop=True)
+
+
 def combine_bd(ss: DataFrame, bd: DataFrame) -> DataFrame:
     data = pd.concat([ss, bd], axis=0)
     data = data.sort_values("Time Start").reset_index(drop=True)
@@ -304,36 +354,6 @@ def split30min(data: DataFrame) -> DataFrame:
             result.loc[l] = row
 
     return result
-
-
-def split_at(
-    data: DataFrame,
-    minute: int,
-    change_status: bool = False,
-    stb: str = "WH",
-    dur: int = 10,
-) -> DataFrame:
-    split_time = data["Time Start"].min() + pd.Timedelta(minute, "minutes")
-    column_name = data.columns.values
-    result = pd.DataFrame(columns=column_name)
-    for _, row in data.iterrows():
-        l = len(result)
-        if row["Time Start"] < split_time <= row["Time End"]:
-            new_row = row.copy()
-            last_row = row.copy()
-            row["Time End"] = split_time
-            new_row["Time Start"] = split_time
-            if change_status:
-                new_row["Standby Code"] = stb
-                new_row["Rank"] = RANK[stb]
-                new_row["Time End"] = split_time + pd.Timedelta(minutes=dur)
-                last_row["Time Start"] = new_row["Time End"]
-                result.loc[l + 2] = last_row
-            result.loc[l] = row
-            result.loc[l + 1] = new_row
-        else:
-            result.loc[l] = row
-    return result.sort_values("Time Start")
 
 
 def statusBDC(remark: str) -> str:
