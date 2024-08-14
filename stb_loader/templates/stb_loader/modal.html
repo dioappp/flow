@@ -25,7 +25,7 @@
           <div class="form-group">
             <label for="stb-label" class="col-form-label">Standby Code</label>
             <input type="text"
-                   class="form-control"
+                   class="form-control text-uppercase"
                    name="stb"
                    id="stb-label"
                    value=""
@@ -103,7 +103,7 @@
           <div class="form-group">
             <label for="stb-label" class="col-form-label">Standby Code</label>
             <input type="text"
-                   class="form-control"
+                   class="form-control text-uppercase"
                    name="stb"
                    id="stb-label"
                    value=""
@@ -131,82 +131,7 @@
     </div>
   </form>
 </div>
-<div class="modal fade"
-     id="ritaseModal"
-     tabindex="-1"
-     role="dialog"
-     aria-labelledby="ritaseModalLabel"
-     aria-hidden="true">
-  <form method="POST"
-        enctype="multipart/form-data"
-        action="{% url 'stb_loader:update' %}">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Update Data Ritase - unit</h5>
-          <button type="button"
-                  class="close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          {% csrf_token %}
-          <input type="hidden" name="unit" id="unit-label" value="">
-          <input type="hidden" name="date" id="date-label" value="">
-          <input type="hidden" name="hour" id="hour-label" value="">
-          <input type="hidden" name="database_id" id="database_id-label" value="">
-          <div class="form-group">
-            <label for="ritase-label" class="col-form-label">Tipe</label>
-            <input type="text"
-                   class="form-control"
-                   name="tipe"
-                   id="tipe-label"
-                   value=""
-                   list="type"
-                   required>
-            <datalist id="type">
-              {% for i in ritase %}<option value="{{ i }}"></option>{% endfor %}
-            </datalist>
-          </div>
-          <div class="form-group">
-            <label for="timestart-label" class="col-form-label">Time Loading (hh:mm:ss)</label>
-            <input type="time"
-                   class="form-control"
-                   name="timestart"
-                   id="timestart-label"
-                   value=""
-                   required>
-          </div>
-          <div class="form-group">
-            <label for="timeend-label" class="col-form-label">Time Dumping (hh:mm:ss)</label>
-            <input type="time"
-                   class="form-control"
-                   name="timeend"
-                   id="timeend-label"
-                   value=""
-                   disabled>
-          </div>
-          <div class="form-group">
-            <label for="location-label" class="col-form-label">Dumping Location</label>
-            <input type="text"
-                   class="form-control"
-                   name="location"
-                   id="location-label"
-                   value=""
-                   disabled>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-danger" value='delete' name="delete">Delete</button>
-          <button type="submit" class="btn btn-primary" value='update' name="update">Update</button>
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
+
 
 <div class="modal fade"
      id="confirmModal"

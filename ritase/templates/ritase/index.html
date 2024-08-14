@@ -25,7 +25,7 @@
                     <div class="mb-3 row row-cols-auto justify-content-md-center">
                         <label for="cn-hauler" class="col-auto col-form-label">CN Hauler</label>
                         <div class="col-sm-6">
-                            <input type="text" class="form-control" id="cn-hauler" onchange="load();">
+                            <input type="text" class="form-control" id="cn-hauler">
                         </div>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
         $(document).ready(function() {
             $('.js-example-basic-single').select2();
         });
-        
+
         function getHeaders() {
             if ($("#shift-select").val() == 1) {
                 headers = ["Loader", "Material", "Remarks", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "#"];
@@ -329,8 +329,8 @@
                         .attr("id", group.label.replace(/\s+/g, ''))
                         .attr("value", group.inputValue || "")
                         .attr("readonly", group.readonly ? true : null);
-                        
-                    if (group.inputType == "number"){
+
+                    if (group.inputType == "number") {
                         input.attr("step", "any")
                     }
 
@@ -552,5 +552,13 @@
                 }
             })
         }
+        $("#cn-hauler").on("keydown",
+            function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    load();
+                    $(this).select()
+                }
+            })
     </script>
 {% endblock script %}

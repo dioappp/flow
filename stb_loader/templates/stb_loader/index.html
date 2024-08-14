@@ -214,7 +214,7 @@
                             }
                         });
                         $('#updateModal').modal('show');
-                    }
+                                            }
                 })
                 .mouseover(function(d, i, datum) {
                     Tooltip
@@ -373,6 +373,22 @@
                 }
             })
         })
+
+        $('#updateModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
+
+        $('#addModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
+
+        function focusAndSelectInput() {
+            var input = $("#stb-label");
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }
     </script>
 {% endblock script %}
 {% block modals %}
