@@ -8,7 +8,9 @@ from django.db.models import Q
 from datetime import datetime, timedelta
 from pytz import UTC
 import math
+from stb_hauler.models import HaulerStatus
 from stb_loader.models import loaderID
+import pandas as pd
 
 
 # Create your views here.
@@ -46,7 +48,6 @@ def operator(request):
 
     ts, te = get_shift_time(date_pattern, shift_pattern)
     ts = ts - timedelta(minutes=30)
-    te = te - timedelta(minutes=30)
 
     if not str(hauler_pattern).startswith("d"):
         obj = truckID.objects.get(code=hauler_pattern)
@@ -57,14 +58,50 @@ def operator(request):
     data = (
         hmOperator.objects.filter(
             Q(equipment=hauler_jigsaw),
-            Q(login_time__gte=ts, login_time__lt=te)
-            | Q(logout_time__gt=ts, logout_time__lte=te),
+            Q(login_time__gte=ts, login_time__lt=te),
+            # | Q(logout_time__gt=ts, logout_time__lte=te),
         )
         .values("id", "NRP__operator", "NRP", "hm_start", "hm_end")
         .order_by("hm_start")
     )
+    wh = HaulerStatus.objects.filter(
+        report_date=date_pattern,
+        shift=shift_pattern,
+        unit__jigsaw=hauler_jigsaw,
+    ).values(
+        "timeStart",
+        "standby_code",
+    )
 
-    response = {"data": list(data)}
+    df = pd.DataFrame(list(wh))
+    df = df.sort_values("timeStart")
+    df["timeStart"] = pd.to_datetime(df["timeStart"])
+
+    s = 60 - df["timeStart"].max().second
+    if shift_pattern == 2 and df["timeStart"].max().hour == 6:
+        m = 29 - df["timeStart"].max().minute
+    else:
+        m = 59 - df["timeStart"].max().minute
+
+    te = df["timeStart"].max() + pd.Timedelta(minutes=m, seconds=s)
+
+    df["timeEnd"] = df["timeStart"].shift(-1)
+    df["timeEnd"] = df["timeEnd"].fillna(te)
+
+    df["durasi"] = df["timeEnd"] - df["timeStart"]
+    df["durasi"] = pd.to_timedelta(df["durasi"]).dt.total_seconds() / 3600
+
+    df = df.reset_index(drop=True)
+
+    df = df.groupby(["standby_code"], as_index=False).agg(
+        {
+            "durasi": "sum",
+        }
+    )
+    df = df.set_index("standby_code")
+    stb = df.to_dict()
+
+    response = {"data": list(data), "equipment": hauler_jigsaw, "stb": stb}
     return JsonResponse(response)
 
 

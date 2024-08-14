@@ -202,7 +202,7 @@
                     if (d.responseJSON.data.length == 0) {
                         generateCardNonJigsaw($("#cn-hauler").val());
                     } else {
-                        generateCard(d.responseJSON.data);
+                        generateCard(d.responseJSON.data, d.responseJSON.equipment, d.responseJSON.stb.durasi);
                     }
                 }
             })
@@ -258,7 +258,7 @@
             });
         }
 
-        function generateCard(data) {
+        function generateCard(data, cn, durasi) {
             var container = d3.select(".pc-content");
 
             container.selectAll("#operator-card").remove();
@@ -311,6 +311,11 @@
                     label: "HM",
                     inputType: "number",
                     inputValue: item.hm_end - item.hm_start,
+                    readonly: true
+                }, {
+                    label:"WH",
+                    inputType: "number",
+                    inputValue: durasi.WH,
                     readonly: true
                 }];
                 formGroups.forEach(group => {
@@ -366,6 +371,14 @@
                 var editor = new DatatablesInlineEditor(table, options);
                 editors.push(editor);
             })
+
+            var row = container.append("div").attr("class", "row").attr("id", "operator-card")
+                .append("div").attr("class", "col")
+                .append("div").attr("class", "card")
+                .append("div").attr("class", "card-body")
+                .append("div").attr("id","data-"+cn);
+
+            showDetail(cn)
         }
 
         function createTable(index, item) {
@@ -480,6 +493,147 @@
                 youSendData: true,
             },
         };
+
+        function showDetail(id) {
+            $.ajax({
+                url: "{% url 'stb_hauler_shiftly:timeline' %}",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                data: {
+                    date: $("#date-select").val(),
+                    shift: $("#shift-select").val(),
+                    unit_id: id,
+                },
+                success: function(data) {
+                    generateToSVG(id, data);
+                },
+            });
+        }
+
+        function generateToSVG(id_element, data) {
+            let standbyData = [];
+            let ritasiData = [];
+            for (let i = 0; i < data["state"].length; i++) {
+                const element = data["state"][i];
+                element.timeStart = toTimestamp(element.timeStart);
+                element.timeEnd = toTimestamp(element.timeEnd);
+                standbyData.push({
+                    label: element.label,
+                    starting_time: element.timeStart,
+                    ending_time: element.timeEnd,
+                    unit: element.unit,
+                    database_id: element.database_id,
+                });
+            };
+            for (let i = 0; i < data["ritase"].length; i++) {
+                const element = data["ritase"][i];
+                element.time_full = toTimestamp(element.time_full);
+                element.time_empty = toTimestamp(element.time_empty);
+                ritasiData.push({
+                    display: "circle",
+                    starting_time: element.time_full,
+                    loader: element.loader,
+                    database_id: element.database_id,
+                    label: element.type,
+                    loc: element.loc,
+                    time_empty: element.time_empty,
+                });
+            };
+            var dataJigsaw = [{
+                label: "STB",
+                times: standbyData,
+            }, {
+                label: "rit",
+                times: ritasiData,
+            }, ];
+
+            var chart = d3
+                .timeline()
+                .showTimeAxisTick()
+                .tickFormat({
+                    format: d3.time.format("%-H:%M"),
+                    tickTime: d3.time.hour,
+                    tickInterval: 1,
+                    tickSize: 1,
+                })
+                .margin({
+                    left: 20,
+                    right: 20,
+                    top: 0,
+                    bottom: 0
+                })
+                .itemHeight(40)
+                .colors(colorScale)
+                .colorProperty("label")
+                .click(function(d, i, datum) {
+                    if (datum.label == 'STB') {
+                        $('#updateModal').on('show.bs.modal', function(event) {
+                            var modal = $(this);
+                            var startMinute = new Date(d.starting_time).getMinutes();
+                            var startSecond = new Date(d.starting_time).getSeconds();
+
+                            modal.find('.modal-title').text('Update Data - ' + d.unit + ' - id: ' + d.database_id);
+                            modal.find('input[name=unit]').val(d.unit);
+                            modal.find('input[name=date]').val($("#date-select").val());
+                            modal.find('input[name=hour]').val($("#hour-select").val());
+                            modal.find('input[name=timestart]').val(toDateString(d.starting_time).slice(-8));
+                            modal.find('input[name=timeend]').val(toDateString(d.ending_time).slice(-8));
+                            modal.find('input[name=database_id]').val(d.database_id);
+                            modal.find('input[name=stb]').val(d.label);
+                            modal.find('input[name=duration]').val(((d.ending_time - d.starting_time) / 60000).toFixed(2));
+
+                            if (startMinute === 0 && startSecond === 0) {
+                                modal.find('#deleteButton').prop('disabled', true);
+                            } else {
+                                modal.find('#deleteButton').prop('disabled', false);
+                            }
+                        });
+                        $('#updateModal').modal('show');
+                                            }
+                })
+                .mouseover(function(d, i, datum) {
+                    Tooltip
+                        .style("opacity", 1);
+                    var x = d3.select(d3.event.currentTarget)
+                    x.style('stroke', 'black')
+                })
+                .hover(function(d, i, datum) {
+                    if (datum.label == 'STB') {
+                        mouse = d3.mouse(d3.event.currentTarget);
+                        _data_time = toDateString(xScale.invert(mouse[0]).getTime())
+
+                        Tooltip
+                            .html(d.label + "<br> <b>" + ((d.ending_time - d.starting_time) / 60000).toFixed(2) + " menit </b><br>" + _data_time.slice(-8));
+
+                        data_databese_id = d.database_id
+                        data_stb = d.label
+                        data_unit = d.unit
+                    } else {
+                        if (d.label == null) {
+                            x = "belum dumping"
+                        } else {
+                            x = d.label
+                        }
+                        Tooltip
+                            .html(d.loader + "<br><b>" + x + "</b>: " + d.loc)
+                    }
+                })
+                .mouseout(function(d, i, datum) {
+                    Tooltip
+                        .style("opacity", 0);
+                    var x = d3.select(d3.event.currentTarget)
+                    x.style('stroke', 'none')
+                });
+            var container = d3.select("#data-" + id_element);
+            container.select("svg").remove();
+            var svg = container
+                .append("svg")
+                .attr("width", 1546.250)
+                .datum(dataJigsaw)
+                .call(chart)
+        }
 
         function addRow(button) {
             $.ajax({
