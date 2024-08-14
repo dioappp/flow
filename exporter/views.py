@@ -138,8 +138,63 @@ def standby(request):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         result.to_excel(response, index=False)
         return response
+
     elif format == "Input Ritasi":
-        return HttpResponse("Format yang Input Ritasi belum tersedia")
+        data = LoaderStatus.objects.filter(report_date=date, shift=shift).values(
+            "timeStart",
+            "standby_code",
+            "unit__unit",
+        )
+        if not data:
+            return HttpResponse(
+                f"Data Standby tanggal: {date}, Shift {shift} belum tersedia"
+            )
+
+        df = pd.DataFrame(list(data))
+        df = df.rename(columns={"unit__unit": "unit"})
+        df = df.sort_values(by=["unit", "timeStart"])
+        df["timeStart"] = pd.to_datetime(df["timeStart"])
+
+        s = 60 - df["timeStart"].max().second
+        if shift == 2 and df["timeStart"].max().hour == 6:
+            m = 29 - df["timeStart"].max().minute
+        else:
+            m = 59 - df["timeStart"].max().minute
+
+        te = df["timeStart"].max() + pd.Timedelta(minutes=m, seconds=s)
+
+        df["timeEnd"] = df.groupby("unit")["timeStart"].shift(-1)
+        df["timeEnd"] = df["timeEnd"].fillna(te)
+
+        df["durasi"] = df["timeEnd"] - df["timeStart"]
+        df["durasi"] = pd.to_timedelta(df["durasi"]).dt.total_seconds() / 60
+
+        df = df.reset_index(drop=True)
+
+        ids = df.index[df.standby_code == "S12"].tolist()
+
+        for id in ids:
+            if not is_in_jam_kritis(id, df):
+                df.loc[id, "standby_code"] = "WH"
+
+        result = df.groupby(["unit", "standby_code"], as_index=False).agg(
+            {
+                "durasi": "sum",
+            }
+        )
+        result = (
+            result.pivot(index="unit", columns="standby_code", values="durasi")
+            .fillna(0)
+            .reset_index()
+        )
+        filename = f"standby-{date}-shift{shift}-pivot.xlsx"
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        result.to_excel(response, index=False)
+
+        return response
     else:
         return HttpResponse("Format yang ada pilih belum tersedia")
 
