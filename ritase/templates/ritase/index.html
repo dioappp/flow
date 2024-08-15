@@ -72,9 +72,9 @@
 {% block script %}
     {% include "partials/script.html" %}
     <script type="text/javascript">
-        $(document).ready(function() {
-            $('.js-example-basic-single').select2();
-        });
+        //$(document).ready(function() {
+        //    $('.js-example-basic-single').select2();
+        //});
 
         function getHeaders() {
             if ($("#shift-select").val() == 1) {
@@ -282,6 +282,8 @@
 
                 form.append("input").attr("type", "hidden").attr("name", "csrfmiddlewaretoken").attr("value", "{{ csrf_token }}")
 
+                var durasi_hm = item.hm_end - item.hm_start;
+
                 var formGroups = [{
                     label: 'ID',
                     inputType: "hidden",
@@ -310,7 +312,7 @@
                 }, {
                     label: "HM",
                     inputType: "number",
-                    inputValue: item.hm_end - item.hm_start,
+                    inputValue: durasi_hm,
                     readonly: true
                 }, {
                     label: "WH",
@@ -605,7 +607,7 @@
                         _data_time = toDateString(xScale.invert(mouse[0]).getTime())
 
                         Tooltip
-                            .html(d.label + "<br> <b>" + ((d.ending_time - d.starting_time) / 60000).toFixed(2) + " menit </b><br>" + _data_time.slice(-8));
+                            .html(d.label + "<br> <b>" + ((d.ending_time - d.starting_time) / 3600000).toFixed(2) + " Jam </b><br>" + _data_time.slice(-8));
 
                         data_databese_id = d.database_id
                         data_stb = d.label
