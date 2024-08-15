@@ -282,8 +282,6 @@
 
                 form.append("input").attr("type", "hidden").attr("name", "csrfmiddlewaretoken").attr("value", "{{ csrf_token }}")
 
-                var durasi_hm = item.hm_end - item.hm_start;
-
                 var formGroups = [{
                     label: 'ID',
                     inputType: "hidden",
@@ -302,22 +300,22 @@
                 }, {
                     label: "HM Start",
                     inputType: "number",
-                    inputValue: item.hm_start,
+                    inputValue: item.hm_start.toFixed(2),
                     readonly: false
                 }, {
                     label: "HM End",
                     inputType: "number",
-                    inputValue: item.hm_end,
+                    inputValue: item.hm_end.toFixed(2),
                     readonly: false
                 }, {
                     label: "HM",
                     inputType: "number",
-                    inputValue: durasi_hm,
+                    inputValue: hm.toFixed(2),
                     readonly: true
                 }, {
                     label: "WH",
                     inputType: "number",
-                    inputValue: durasi.WH,
+                    inputValue: durasi.WH.toFixed(2),
                     readonly: true
                 }];
                 formGroups.forEach(group => {
@@ -436,18 +434,26 @@
             fields: [{
                 name: 'loader',
                 type: 'select',
-                options:[
-                {% for loader in loaders %}
-                {label: "{{ loader }}"},
-                {% endfor %}],
+                options: [{
+                    %
+                    for loader in loaders %
+                } {
+                    label: "{{ loader }}"
+                }, {
+                    % endfor %
+                }],
                 className: 'js-example-basic-single'
             }, {
                 name: 'code_material',
                 type: 'select',
-                options: [
-                {% for option in options %}
-                {label: "{{ option }}"},
-                {% endfor %}],
+                options: [{
+                    %
+                    for option in options %
+                } {
+                    label: "{{ option }}"
+                }, {
+                    % endfor %
+                }],
                 className: 'form-control'
             }, {
                 name: 'a',
@@ -715,6 +721,112 @@
                     load();
                     $(this).select()
                 }
-            })
+            });
+        $('#updateForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            var form = $(this);
+
+            // Enable disabled fields if needed
+            $('#timeend-label, #duration-label').prop('disabled', false);
+
+            var formData = new FormData(this); // Collect form data
+
+            $.ajax({
+                type: 'POST',
+                url: form.attr('action'),
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response, status, xhr) {
+                    if (xhr.status === 204) { // Check if the status code is 204
+                        $('#updateModal').modal('hide');
+                        showDetail(data_unit);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Form submission failed:', error);
+                }
+            });
+
+            // Re-disable the fields if they were enabled
+            $('#timeend-label, #duration-label').prop('disabled', true);
+        });
+
+        $('#addForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            var form = $(this);
+
+            var formData = new FormData(this); // Collect form data
+
+            $.ajax({
+                type: 'POST',
+                url: form.attr('action'),
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response, status, xhr) {
+                    if (xhr.status === 204) { // Check if the status code is 204
+                        $('#addModal').modal('hide');
+                        showDetail(data_unit);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Form submission failed:', error);
+                }
+            });
+        });
+
+        $('#deleteForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            var form = $(this);
+
+            var formData = new FormData(this); // Collect form data
+            formData.append("delete", "delete");
+
+            $.ajax({
+                type: 'POST',
+                url: form.attr('action'),
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response, status, xhr) {
+                    if (xhr.status === 204) { // Check if the status code is 204
+                        $('#confirmModal').modal('hide');
+                        showDetail(data_unit);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Form submission failed:', error);
+                }
+            });
+        });
+
+        function split() {
+            $.ajax({
+                url: "{% url 'stb_loader:split'%}",
+                type: 'POST',
+                data: {
+                    database_id: data_databese_id,
+                    timestart: data_time,
+                },
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                success: function(response, status, xhr) {
+                    if (xhr.status === 204) { // Check if the status code is 204
+                        showDetail(data_unit);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Form submission failed:', error);
+                }
+            });
+        }
     </script>
 {% endblock script %}
+{% block modals %}
+    {% include "stb_hauler/modal.html" %}
+{% endblock modals %}

@@ -176,7 +176,7 @@ def update(request):
     stb.standby_code = stb_code
     stb.timeStart = ts
     stb.save()
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def add(request):
@@ -198,14 +198,14 @@ def add(request):
         remarks=old.remarks,
         report_date=old.report_date,
     )
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def delete(request):
     id = int(request.POST.get("database_id_delete"))
     if "delete" in request.POST:
         HaulerStatus.objects.get(pk=id).delete()
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def split(request):
@@ -224,7 +224,7 @@ def split(request):
         remarks=old.remarks,
         report_date=old.report_date,
     )
-    return redirect(request.META.get("HTTP_REFERER"))
+    return HttpResponse(status=204)
 
 
 def export_excel(request):
