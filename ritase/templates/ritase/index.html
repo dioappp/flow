@@ -374,7 +374,7 @@
 
             var row = container.append("div").attr("class", "row").attr("id", "operator-card")
                 .append("div").attr("class", "col")
-                .append("div").attr("class", "card")
+                .append("div").attr("class", "card").attr("id","table-card")
                 .append("div").attr("class", "card-body")
                 .append("div").attr("id", "data-" + cn);
 
@@ -798,7 +798,7 @@
 
         function split() {
             $.ajax({
-                url: "{% url 'stb_loader:split'%}",
+                url: "{% url 'stb_hauler:split'%}",
                 type: 'POST',
                 data: {
                     database_id: data_databese_id,
