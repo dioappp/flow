@@ -166,7 +166,7 @@ def load_data(request):
 def update(request):
     ts = request.POST.get("timestart")
     id = int(request.POST.get("database_id"))
-    stb_code = request.POST.get("stb")
+    stb_code = str(request.POST.get("stb")).upper()
 
     stb = HaulerStatus.objects.get(pk=id)
 
@@ -181,7 +181,7 @@ def update(request):
 
 def add(request):
     id = int(request.POST.get("database_id"))
-    stb = request.POST.get("stb")
+    stb = str(request.POST.get("stb")).upper()
     old = HaulerStatus.objects.get(pk=id)
 
     ts = request.POST.get("timestart")
