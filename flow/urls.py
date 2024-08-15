@@ -25,7 +25,6 @@ urlpatterns = [
     path("stb/loader/shiftly/", include("stb_loader_shiftly.urls")),
     path("stb/hauler/hourly/", include("stb_hauler.urls")),
     path("stb/hauler/shiftly/", include("stb_hauler_shiftly.urls")),
-    path("reports/", include("report.urls")),
     path("", include("ritase.urls")),
     path("distance/", include("distance.urls")),
     path("exporter/", include("exporter.urls")),
