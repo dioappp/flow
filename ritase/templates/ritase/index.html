@@ -73,6 +73,12 @@
     <script src="{% static 'js/web-session-management.js' %}"></script>
     <script src="{% static 'js/modal-form-handler.js' %}"></script>
     <script src="{% static 'js/standby.js' %}"></script>
+    <script type="text/javascript">
+        var deleteUrl =  "{% url 'ritase:delete_row' %}"
+        var csrf_token = "{{ csrf_token }}"
+        var addUrl =  "{% url 'ritase:addrow' %}"
+        var whUrl = "{% url 'ritase:wh' %}"
+    </script>
     <script src="{% static 'js/ritase.js' %}"></script>
     <script type="text/javascript">
         //$(document).ready(function() {
@@ -97,7 +103,8 @@
                     if (d.responseJSON.data.length == 0) {
                         generateCardNonJigsaw($("#cn-hauler").val());
                     } else {
-                        generateCard(d.responseJSON.data, d.responseJSON.equipment, d.responseJSON.stb.durasi);
+                        generateCard(d.responseJSON.data, d.responseJSON.equipment);
+                        loadWh();
                     }
                 }
             })
@@ -153,7 +160,7 @@
             });
         }
 
-        function generateCard(data, cn, durasi) {
+        function generateCard(data, cn) {
             var container = d3.select(".pc-content");
 
             container.selectAll("#operator-card").remove();
@@ -210,7 +217,7 @@
                 }, {
                     label: "WH",
                     inputType: "number",
-                    inputValue: durasi.WH.toFixed(2),
+                    inputValue: 0,
                     readonly: true
                 }];
                 formGroups.forEach(group => {
@@ -403,6 +410,7 @@
                 },
                 success: function(data) {
                     generateToSVG(id, data);
+                    loadWh()
                 },
             });
         }
