@@ -286,7 +286,7 @@
 
             $.ajax({
                 type: 'POST',
-                url: form.attr('action'),
+                url: "{% url 'stb_loader:update'%}",
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -314,7 +314,7 @@
 
             $.ajax({
                 type: 'POST',
-                url: form.attr('action'),
+                url: "{% url 'stb_loader:add'%}",
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -340,7 +340,7 @@
 
             $.ajax({
                 type: 'POST',
-                url: form.attr('action'),
+                url: "{% url 'stb_loader:delete'%}",
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -392,5 +392,5 @@
     </script>
 {% endblock script %}
 {% block modals %}
-    {% include "stb_loader/modal.html" %}
+    {% include "partials/modal.html" %}
 {% endblock modals %}
