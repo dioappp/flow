@@ -14,12 +14,12 @@
     </li>
 {% endblock breadcrumb %}
 {% block content %}
- 
     {% include "partials/hourly.html" %}
 {% endblock content %}
 {% block script %}
  
     {% include "partials/script.html" %}
+    <script src="{% static 'js/modal.js' %}"></script>
     <script type="text/javascript">
         var undobtn = d3.select("#btn-container").append("button").attr("id", "undoBtn").attr("class", "ms-0 btn btn-warning").text("undo")
         let selectedLabels = [];
@@ -214,7 +214,7 @@
                             }
                         });
                         $('#updateModal').modal('show');
-                                            }
+                    }
                 })
                 .mouseover(function(d, i, datum) {
                     Tooltip
@@ -255,7 +255,7 @@
                 .append("svg")
                 .attr("width", width)
                 .datum(dataJigsaw)
-                .call(chart)
+                .call(chart);
         }
 
         function labelFilter() {
@@ -273,88 +273,6 @@
                 }
             });
         }
-
-        $('#updateForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-
-            var form = $(this);
-
-            // Enable disabled fields if needed
-            $('#timeend-label, #duration-label').prop('disabled', false);
-
-            var formData = new FormData(this); // Collect form data
-
-            $.ajax({
-                type: 'POST',
-                url: "{% url 'stb_loader:update'%}",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        $('#updateModal').modal('hide');
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-
-            // Re-disable the fields if they were enabled
-            $('#timeend-label, #duration-label').prop('disabled', true);
-        });
-
-        $('#addForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-
-            var form = $(this);
-
-            var formData = new FormData(this); // Collect form data
-
-            $.ajax({
-                type: 'POST',
-                url: "{% url 'stb_loader:add'%}",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        $('#addModal').modal('hide');
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-        });
-
-        $('#deleteForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-
-            var form = $(this);
-
-            var formData = new FormData(this); // Collect form data
-            formData.append("delete", "delete");
-
-            $.ajax({
-                type: 'POST',
-                url: "{% url 'stb_loader:delete'%}",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        $('#confirmModal').modal('hide');
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-        });
 
         $("#undoBtn").on('click', function() {
             $.ajax({
@@ -378,9 +296,27 @@
             focusAndSelectInput()
         })
 
+        $('#updateForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this); // Collect form data
+            handleUpdateFormSubmission("{% url 'stb_loader:update'%}", data_unit, formData)
+        })
+
         $('#addModal').on('shown.bs.modal', function(event) {
             focusAndSelectInput()
         })
+
+        $('#addForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var formData = new FormData(this); // Collect form data
+            handleAddFormSubmission("{% url 'stb_loader:add'%}", data_unit, formData)
+        });
+
+        $('#deleteForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var formData = new FormData(this); // Collect form data
+            handleDeleteSubmission("{% url 'stb_loader:delete'%}", data_unit, formData)
+        });
 
         function focusAndSelectInput() {
             var input = $("#stb-label");
