@@ -1,263 +1,260 @@
 {% extends "base.html" %}
 {% load static %}
- 
-
 {% block title %}
-  | Hauler Hourly
+    | Hauler Hourly
 {% endblock title %}
- 
 {% block breadcrumb_title %}
-  Hauler Hourly
+    Hauler Hourly
 {% endblock breadcrumb_title %}
- 
-
 {% block breadcrumb %}
-  <li class="breadcrumb-item">
-    <a href="#">Standby</a>
-  </li>
-  <li class="breadcrumb-item">
-    <a href="#">Hauler Hourly</a>
-  </li>
+    <li class="breadcrumb-item">
+        <a href="#">Standby</a>
+    </li>
+    <li class="breadcrumb-item">
+        <a href="#">Hauler Hourly</a>
+    </li>
 {% endblock breadcrumb %}
- 
-
 {% block content %}
-  {% include "partials/hourly.html" %}
+    {% include "partials/hourly.html" %}
 {% endblock content %}
- 
-
 {% block script %}
-  {% include "partials/script.html" %}
-  <script type="text/javascript">
+    <script src="{% static 'js/web-session-management.js' %}"></script>
+    <script src="{% static 'js/modal-form-handler.js' %}"></script>
+    <script src="{% static 'js/standby.js' %}"></script>
+    <script type="text/javascript">
+        let colorScale = getColorData()
+        var width = 1400;
+
         var table = $("#load-table").DataTable({
-          processing: true,
-          serverSide: true,
-          stateSave: true,
-          ordering: false,
-          pagingType: "full_numbers",
-          ajax: {
-            url: "{% url 'stb_hauler:report' %}",
-            type: "POST",
-            headers: {
-              "X-CSRFToken": "{{ csrf_token }}",
+            processing: true,
+            serverSide: true,
+            stateSave: true,
+            ordering: false,
+            pagingType: "full_numbers",
+            ajax: {
+                url: "{% url 'stb_hauler:report' %}",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                data: function(d) {
+                    d.date = $("#date-select").val();
+                    d.hour = $("#hour-select").val();
+                },
+                complete: function(d) {
+                    checkTimeLineUnit();
+                },
             },
-            data: function(d){
-              d.date= $("#date-select").val();
-              d.hour= $("#hour-select").val();
-            },
-            complete: function (d) {
-              checkTimeLineUnit();
-            },
-          },
-          columns:[
-            {data: "unit", orderable: false, searchable: false},
-            {data: "action", orderable: false, searchable: false},
-            {data: "produksi", orderable: false, searchable: false},
-          ],
-          language:{
-            emptyTable: '<b>Data belum di ambil dari server Jigsaw.</b> Tekan tombol disamping untuk memuat data <button class="btn btn-warning event-btnx m-2" onclick="load_data()"><b>Load</b></button>'
-          }
+            columns: [{
+                data: "unit",
+                orderable: false,
+                searchable: false,
+                width: "7%"
+            }, {
+                data: "action",
+                orderable: false,
+                searchable: false
+            }, {
+                data: "produksi",
+                orderable: false,
+                searchable: false,
+                width: "5%"
+            }, ],
+            language: {
+                emptyTable: '<b>Data belum di ambil dari server Jigsaw.</b> Tekan tombol disamping untuk memuat data <button class="btn btn-warning event-btnx m-2" onclick="load_data()"><b>Load</b></button>'
+            }
         });
 
-        function load_data(){
-          $(".event-btnx").prop("disabled",true);
-          alert("Data sedang diolah dan membutuhkan waktu sekitar 3 menit. Mohon untuk menunggu")
-          $.ajax({
-            url: "{% url 'stb_hauler:load_data' %}",
-            type: 'POST',
-            data: {
-              date: $("#date-select").val(),
-              hour: $("#hour-select").val(),
-            },
-            headers: {
-              "X-CSRFToken": "{{ csrf_token }}",
-            },
-          })
+        function load_data() {
+            $(".event-btnx").prop("disabled", true);
+            alert("Data sedang diolah dan membutuhkan waktu sekitar 3 menit. Mohon untuk menunggu")
+            $.ajax({
+                url: "{% url 'stb_hauler:load_data' %}",
+                type: 'POST',
+                data: {
+                    date: $("#date-select").val(),
+                    hour: $("#hour-select").val(),
+                },
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+            })
         };
 
-        function split(){
-          $.ajax({
-            url: "{% url 'stb_hauler:split'%}",
-            type: 'POST',
-            data: { 
-              database_id: data_databese_id,
-              timestart : data_time,
-            },
-            headers: {
-              "X-CSRFToken": "{{ csrf_token }}",
-            },
-            success: function () {
-              location.reload()
-            },
-          });
-        } 
-
         function load() {
-          table.draw();
+            table.draw();
         }
 
         function checkTimeLineUnit() {
-          $(".d3-timeline").each(function () {
-            var id = $(this).data("id");
-            showDetail(id);
-          });
+            $(".d3-timeline").each(function() {
+                var id = $(this).data("id");
+                showDetail(id);
+            });
         }
 
         function showDetail(id) {
-          $.ajax({
-            url: "{% url 'stb_hauler:timeline' %}",
-            type: "POST",
-            headers: {
-              "X-CSRFToken": "{{ csrf_token }}",
-            },
-            data: {
-              date: $("#date-select").val(),
-              hour: $("#hour-select").val(),
-              unit_id: id,
-              hanging: $("#hanging")[0].checked,
-            },
-            success: function (data) {
-              generateToSVG(id, data);
-            },
-          });
+            $.ajax({
+                url: "{% url 'stb_hauler:timeline' %}",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                data: {
+                    date: $("#date-select").val(),
+                    hour: $("#hour-select").val(),
+                    unit_id: id,
+                    hanging: $("#hanging")[0].checked,
+                },
+                success: function(data) {
+                    generateToSVG(id, data);
+                },
+            });
         }
-      
+
         function generateToSVG(id_element, data) {
-          let standbyData = [];
-          let ritasiData = [];
-          for (let i = 0; i < data["state"].length; i++) {
-            const element = data["state"][i];
-            element.timeStart = toTimestamp(element.timeStart);
-            element.timeEnd = toTimestamp(element.timeEnd);
-            standbyData.push({
-              label: element.label,
-              starting_time: element.timeStart,
-              ending_time: element.timeEnd,
-              unit: element.unit,
-              database_id: element.database_id,
-            });
-          };
-          for (let i = 0; i < data["ritase"].length; i++) {
-            const element = data["ritase"][i];
-            element.time_full = toTimestamp(element.time_full);
-            element.time_empty = toTimestamp(element.time_empty);
-            ritasiData.push({
-              display: "circle",
-              starting_time: element.time_full,
-              loader: element.loader,
-              database_id: element.database_id,
-              label: element.type,
-              loc: element.loc,
-              time_empty: element.time_empty,
-            });
-          };
-          var dataJigsaw = [
-            {
-              label: "STB",
-              times: standbyData,
-            },
-            {
-              label: "rit",
-              times: ritasiData,
-            },
-          ];
-
-          var chart = d3
-            .timeline()
-            //.showLabels()
-            .showTimeAxisTick()
-            .tickFormat({
-              format: d3.time.format("%-H:%M"),
-              tickTime: d3.time.minutes,
-              tickInterval: 5,
-              tickSize: 1,
-            })
-            .margin({ left: 20, right: 20, top: 0, bottom: 0 })
-            .itemHeight(40)
-            .colors(colorScale)
-            .colorProperty("label")
-            .click(function (d, i, datum) {
-              if(datum.label=='STB'){
-                $('#updateModal').on('show.bs.modal', function (event) {
-                  var modal = $(this);
-                  var startMinute = new Date(d.starting_time).getMinutes();
-                  var startSecond = new Date(d.starting_time).getSeconds();
-
-                  modal.find('.modal-title').text('Update Data - ' + d.unit + ' - id: ' + d.database_id);
-                  modal.find('input[name=unit]').val(d.unit);
-                  modal.find('input[name=date]').val($("#date-select").val());
-                  modal.find('input[name=hour]').val($("#hour-select").val());
-                  modal.find('input[name=timestart]').val(toDateString(d.starting_time).slice(-8));
-                  modal.find('input[name=timeend]').val(toDateString(d.ending_time).slice(-8));
-                  modal.find('input[name=database_id]').val(d.database_id);
-                  modal.find('input[name=stb]').val(d.label);
-                  modal.find('input[name=duration]').val(((d.ending_time-d.starting_time)/60000).toFixed(2));
-
-                  if (startMinute === 0 && startSecond === 0) {
-                    modal.find('#deleteButton').prop('disabled', true);
-                  } else {
-                    modal.find('#deleteButton').prop('disabled', false);
-                  }
+            let standbyData = [];
+            let ritasiData = [];
+            for (let i = 0; i < data["state"].length; i++) {
+                const element = data["state"][i];
+                element.timeStart = toTimestamp(element.timeStart);
+                element.timeEnd = toTimestamp(element.timeEnd);
+                standbyData.push({
+                    label: element.label,
+                    starting_time: element.timeStart,
+                    ending_time: element.timeEnd,
+                    unit: element.unit,
+                    database_id: element.database_id,
                 });
-                $('#updateModal').modal('show');
-              } else {
-                {% comment %} $('#ritaseModal').on('show.bs.modal', function (event) {
-                  var modal = $(this);
-                  modal.find('.modal-title').text('Update Data Ritase- ' + d.hauler + ' - id: ' + d.database_id);
-                  modal.find('input[name=unit]').val(d.hauler);
-                  modal.find('input[name=date]').val($("#date-select").val());
-                  modal.find('input[name=hour]').val($("#hour-select").val());
-                  modal.find('input[name=timestart]').val(toDateString(d.starting_time).slice(-8));
-                  modal.find('input[name=timeend]').val(toDateString(d.time_empty).slice(-8));
-                  modal.find('input[name=database_id]').val(d.database_id);
-                  modal.find('input[name=location]').val(d.loc);
-                  modal.find('input[name=tipe]').val(d.label);
+            };
+            for (let i = 0; i < data["ritase"].length; i++) {
+                const element = data["ritase"][i];
+                element.time_full = toTimestamp(element.time_full);
+                element.time_empty = toTimestamp(element.time_empty);
+                ritasiData.push({
+                    display: "circle",
+                    starting_time: element.time_full,
+                    loader: element.loader,
+                    database_id: element.database_id,
+                    label: element.type,
+                    loc: element.loc,
+                    time_empty: element.time_empty,
                 });
-$('#ritaseModal').modal('show');  {% endcomment %}
-              }
-            })
-            .mouseover(function(d,i,datum){
-              Tooltip
-                .style("opacity", 1);  
-              var x = d3.select(d3.event.currentTarget)
-                x.style('stroke','black')
-            })
-            .hover(function(d,i,datum) {
-              if(datum.label == 'STB'){
-                mouse = d3.mouse(d3.event.currentTarget);       
-                _data_time = toDateString(xScale.invert(mouse[0]).getTime())
+            };
+            var dataJigsaw = [{
+                label: "STB",
+                times: standbyData,
+            }, {
+                label: "rit",
+                times: ritasiData,
+            }, ];
 
-                Tooltip
-                  .html(d.label + "<br> <b>"+ ((d.ending_time-d.starting_time)/60000).toFixed(2)+" menit </b><br>" + _data_time.slice(-8));
+            var chart = d3
+                .timeline()
+                .showTimeAxisTick()
+                .tickFormat({
+                    format: d3.time.format("%-H:%M"),
+                    tickTime: d3.time.minutes,
+                    tickInterval: 5,
+                    tickSize: 1,
+                })
+                .margin({
+                    left: 20,
+                    right: 20,
+                    top: 0,
+                    bottom: 0
+                })
+                .itemHeight(40)
+                .colors(colorScale)
+                .colorProperty("label")
+                .click(function(d, i, datum) {
+                    if (datum.label == 'STB') {
+                        $('#updateModal').on('show.bs.modal', function(event) {
+                            var modal = $(this);
+                            populateUpdateForm(modal, d)
+                        });
+                        $('#updateModal').modal('show');
+                    }
+                })
+                .mouseover(function(d, i, datum) {
+                    Tooltip
+                        .style("opacity", 1);
+                    var x = d3.select(d3.event.currentTarget)
+                    x.style('stroke', 'black')
+                })
+                .hover(function(d, i, datum) {
+                    if (datum.label == 'STB') {
+                        mouse = d3.mouse(d3.event.currentTarget);
+                        _data_time = toDateString(xScale.invert(mouse[0]).getTime())
 
-                data_databese_id = d.database_id
-                data_stb = d.label 
-                data_unit = d.unit
-                } else {
-                  if(d.label == null){x = "belum dumping"} else {x = d.label}
-                Tooltip
-                  .html(d.loader + "<br><b>" + x +"</b>: "+d.loc)
-                }  
-            })
-            .mouseout(function(d,i,datum) {
-              Tooltip
-                .style("opacity", 0);
-                var x = d3.select(d3.event.currentTarget)
-                x.style('stroke','none')
-            })
-            ;
+                        Tooltip
+                            .html(d.label + "<br> <b>" + ((d.ending_time - d.starting_time) / 60000).toFixed(2) + " menit </b><br>" + _data_time.slice(-8));
 
-          var svg = d3
-            .select("#data-" + id_element)
-            .append("svg")
-            .attr("width", width)
-            .datum(dataJigsaw)
-            .call(chart)  
+                        data_databese_id = d.database_id
+                        data_stb = d.label
+                        data_unit = d.unit
+                    } else {
+                        if (d.label == null) {
+                            x = "belum dumping"
+                        } else {
+                            x = d.label
+                        }
+                        Tooltip
+                            .html(d.loader + "<br><b>" + x + "</b>: " + d.loc)
+                    }
+                })
+                .mouseout(function(d, i, datum) {
+                    Tooltip
+                        .style("opacity", 0);
+                    var x = d3.select(d3.event.currentTarget)
+                    x.style('stroke', 'none')
+                });
+
+            var container = d3.select("#data-" + id_element);
+            container.select("svg").remove();
+            var svg = container
+                .append("svg")
+                .attr("width", width)
+                .datum(dataJigsaw)
+                .call(chart);
         }
-  </script>
-{% endblock script %}
 
+        $('#updateModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
+        $('#updateForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            handleUpdateFormSubmission("{% url 'stb_hauler:update'%}", data_unit, formData)
+        })
+        $('#addModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateAddForm(modal);
+        });
+        $('#addModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
+        $('#addForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            handleAddFormSubmission("{% url 'stb_hauler:add'%}", data_unit, formData)
+        });
+
+        function split() {
+            handleSplitSubmission("{% url 'stb_hauler:split'%}", data_unit, data_databese_id, data_time, "{{ csrf_token }}")
+        }
+
+        $('#confirmModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateDeleteForm(modal)
+        });
+
+        $('#deleteForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            handleDeleteSubmission("{% url 'stb_hauler:delete'%}", data_unit, formData)
+        });
+    </script>
+{% endblock script %}
 {% block modals %}
-  {% include "stb_hauler/modal.html" %}
- 
+    {% include "partials/modal.html" %}
 {% endblock modals %}
