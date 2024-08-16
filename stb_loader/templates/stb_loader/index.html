@@ -17,10 +17,13 @@
     {% include "partials/hourly.html" %}
 {% endblock content %}
 {% block script %}
- 
-    {% include "partials/script.html" %}
-    <script src="{% static 'js/modal.js' %}"></script>
+    <script src="{% static 'js/web-session-management.js' %}"></script>
+    <script src="{% static 'js/modal-form-handler.js' %}"></script>
+    <script src="{% static 'js/standby.js' %}"></script>
     <script type="text/javascript">
+        let colorScale = getColorData()
+        var width = 1400;
+
         var undobtn = d3.select("#btn-container").append("button").attr("id", "undoBtn").attr("class", "ms-0 btn btn-warning").text("undo")
         let selectedLabels = [];
 
@@ -80,28 +83,6 @@
                 },
             })
         };
-
-        function split() {
-            $.ajax({
-                url: "{% url 'stb_loader:split'%}",
-                type: 'POST',
-                data: {
-                    database_id: data_databese_id,
-                    timestart: data_time,
-                },
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-        }
 
         function load() {
             labelFilter()
@@ -194,24 +175,8 @@
                     if (datum.label == 'STB') {
                         $('#updateModal').on('show.bs.modal', function(event) {
                             var modal = $(this);
-                            var startMinute = new Date(d.starting_time).getMinutes();
-                            var startSecond = new Date(d.starting_time).getSeconds();
-
-                            modal.find('.modal-title').text('Update Data - ' + d.unit + ' - id: ' + d.database_id);
-                            modal.find('input[name=unit]').val(d.unit);
-                            modal.find('input[name=date]').val($("#date-select").val());
-                            modal.find('input[name=hour]').val($("#hour-select").val());
-                            modal.find('input[name=timestart]').val(toDateString(d.starting_time).slice(-8));
-                            modal.find('input[name=timeend]').val(toDateString(d.ending_time).slice(-8));
-                            modal.find('input[name=database_id]').val(d.database_id);
-                            modal.find('input[name=stb]').val(d.label);
-                            modal.find('input[name=duration]').val(((d.ending_time - d.starting_time) / 60000).toFixed(2));
-
-                            if (startMinute === 0 && startSecond === 0) {
-                                modal.find('#deleteButton').prop('disabled', true);
-                            } else {
-                                modal.find('#deleteButton').prop('disabled', false);
-                            }
+                            populateUpdateForm(modal, d)
+                            focusAndSelectInput()
                         });
                         $('#updateModal').modal('show');
                     }
@@ -282,7 +247,7 @@
                 },
                 url: "{% url 'stb_loader:undo' %}",
                 success: function(response, data, xhr) {
-                    if (xhr.status === 200) { // Check if the status code is 204
+                    if (xhr.status === 200) {
                         showDetail(response.unit);
                     }
                 },
@@ -292,29 +257,34 @@
             })
         })
 
-        $('#updateModal').on('shown.bs.modal', function(event) {
-            focusAndSelectInput()
-        })
-
         $('#updateForm').on('submit', function(event) {
             event.preventDefault();
-            var formData = new FormData(this); // Collect form data
+            var formData = new FormData(this);
             handleUpdateFormSubmission("{% url 'stb_loader:update'%}", data_unit, formData)
         })
-
-        $('#addModal').on('shown.bs.modal', function(event) {
-            focusAndSelectInput()
-        })
+        $('#addModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateAddForm(modal);
+        });
 
         $('#addForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-            var formData = new FormData(this); // Collect form data
+            event.preventDefault();
+            var formData = new FormData(this);
             handleAddFormSubmission("{% url 'stb_loader:add'%}", data_unit, formData)
         });
 
+        function split() {
+            handleSplitSubmission("{% url 'stb_loader:split'%}", data_unit, data_databese_id, data_time, "{{ csrf_token }}")
+        }
+
+        $('#confirmModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateDeleteForm(modal)
+        });
+
         $('#deleteForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-            var formData = new FormData(this); // Collect form data
+            event.preventDefault();
+            var formData = new FormData(this);
             handleDeleteSubmission("{% url 'stb_loader:delete'%}", data_unit, formData)
         });
 
