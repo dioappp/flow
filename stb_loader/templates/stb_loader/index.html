@@ -254,7 +254,9 @@
                 }
             })
         })
-
+        $('#updateModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
         $('#updateForm').on('submit', function(event) {
             event.preventDefault();
             var formData = new FormData(this);
@@ -264,7 +266,9 @@
             var modal = $(this);
             populateAddForm(modal);
         });
-
+        $('#addModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
         $('#addForm').on('submit', function(event) {
             event.preventDefault();
             var formData = new FormData(this);
