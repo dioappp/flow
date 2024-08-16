@@ -1,5 +1,6 @@
 // formHandler.js
 function populateUpdateForm(modal, d) {
+  var startHour = new Date(d.starting_time).getHours();
   var startMinute = new Date(d.starting_time).getMinutes();
   var startSecond = new Date(d.starting_time).getSeconds();
   modal
@@ -18,7 +19,10 @@ function populateUpdateForm(modal, d) {
     .find("input[name=duration]")
     .val(((d.ending_time - d.starting_time) / 60000).toFixed(2));
 
-  if (startMinute === 0 && startSecond === 0) {
+  if (
+    (startMinute === 0 && startSecond === 0) ||
+    (startHour === 6 && startMinute === 30 && startSecond === 0)
+  ) {
     modal.find("#deleteButton").prop("disabled", true);
   } else {
     modal.find("#deleteButton").prop("disabled", false);
