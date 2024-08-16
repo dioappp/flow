@@ -1,12 +1,8 @@
-from django.shortcuts import render, redirect
-from django.db.models import Count
+from django.shortcuts import render
 from stb_loader.models import LoaderStatus
-from ritase.models import ritase
-from django.http import JsonResponse, HttpResponse
-from django.core.management import call_command
-from datetime import datetime, timedelta
+from django.http import JsonResponse
+from datetime import timedelta
 import math
-import pandas as pd
 
 
 # Create your views here.
