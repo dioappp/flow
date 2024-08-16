@@ -137,3 +137,11 @@ function handleSplitSubmission(
     },
   });
 }
+
+function focusAndSelectInput() {
+  var input = $("#stb-label");
+  if (input) {
+    input.focus();
+    input.select();
+  }
+}

@@ -10,7 +10,6 @@
  
     <li class="breadcrumb-item">
         <a href="#">Standby Loader Hourly</a>
- 
     </li>
 {% endblock breadcrumb %}
 {% block content %}
@@ -176,7 +175,6 @@
                         $('#updateModal').on('show.bs.modal', function(event) {
                             var modal = $(this);
                             populateUpdateForm(modal, d)
-                            focusAndSelectInput()
                         });
                         $('#updateModal').modal('show');
                     }
@@ -287,14 +285,6 @@
             var formData = new FormData(this);
             handleDeleteSubmission("{% url 'stb_loader:delete'%}", data_unit, formData)
         });
-
-        function focusAndSelectInput() {
-            var input = $("#stb-label");
-            if (input) {
-                input.focus();
-                input.select();
-            }
-        }
     </script>
 {% endblock script %}
 {% block modals %}
