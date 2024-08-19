@@ -1,4 +1,5 @@
 from datetime import timedelta
+import math
 from django.http import JsonResponse
 from django.shortcuts import render
 from hm.models import hmOperator
@@ -18,7 +19,7 @@ def operator(request):
     ts, te = get_shift_time(date_pattern, shift_pattern)
     ts = ts - timedelta(minutes=30)
 
-    data = (
+    maindata = (
         hmOperator.objects.filter(
             Q(equipment__startswith="X") | Q(equipment__startswith="G"),
             Q(login_time__gte=ts, login_time__lt=te),
@@ -27,5 +28,26 @@ def operator(request):
         .values("equipment", "NRP__operator", "NRP", "hm_start", "hm_end")
         .order_by("equipment", "hm_start")
     )
-    response = {"data": list(data)}
+
+    total = maindata.count()
+    data = maindata.filter(equipment__icontains=request.POST.get("search[value]"))
+    total_filtered = data.count()
+    _start = request.POST.get("start")
+    _length = request.POST.get("length")
+    page = 1
+
+    if _start and _length:
+        start = int(_start)
+        length = int(_length)
+        page = math.ceil(start / length) + 1
+    page_obj = data[start : start + length]
+
+    response = {
+        "draw": request.POST.get("draw"),
+        "data": list(page_obj),
+        "page": int(page) if page else 1,
+        "per_page": length,
+        "recordsTotal": total,
+        "recordsFiltered": total_filtered,
+    }
     return JsonResponse(response)
