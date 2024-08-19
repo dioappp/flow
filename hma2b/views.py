@@ -25,7 +25,7 @@ def operator(request):
             Q(login_time__gte=ts, login_time__lt=te),
             # | Q(logout_time__gt=ts, logout_time__lte=te),
         )
-        .values("equipment", "NRP__operator", "NRP", "hm_start", "hm_end")
+        .values("id", "equipment", "NRP__operator", "NRP", "hm_start", "hm_end")
         .order_by("equipment", "hm_start")
     )
 
@@ -50,4 +50,14 @@ def operator(request):
         "recordsTotal": total,
         "recordsFiltered": total_filtered,
     }
+    return JsonResponse(response)
+
+
+def update(request):
+    id = request.POST.get("id")
+    col = request.POST.get("fieldName")
+    val = request.POST.get("value")
+    hmOperator.objects.filter(pk=id).update(**{col: val})
+
+    response = {}
     return JsonResponse(response)

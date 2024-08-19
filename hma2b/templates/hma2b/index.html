@@ -53,34 +53,14 @@
             </div>
         </div>
     </div>
-    <div class="row" id="hm-card">
-        <div class="col">
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-body table-border-style">
-                        <div class="table-responsice">
-                            <table class="table table-striped-columns table-hover" id="load-table">
-                                <thead>
-                                    <tr>
-                                        <th class="align-middle bg-primary text-white">Equipment</th>
-                                        <th class="align-middle bg-primary text-white">NRP</th>
-                                        <th class="align-middle bg-primary text-white">Operator</th>
-                                        <th class="align-middle bg-primary text-white">HM Start</th>
-                                        <th class="align-middle bg-primary text-white">HM End</th>
-                                        <th class="align-middle bg-primary text-white">HM</th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 {% endblock content %}
 {% block script %}
     <script src="{% static 'js/web-session-management.js' %}"></script>
     <script type="text/javascript">
+        $(document).ready(function() {
+            load()
+        })
+
         $("#cn-hauler").on("keydown",
             function(event) {
                 if (event.key === "Enter") {
@@ -90,7 +70,35 @@
                 }
             });
 
+        var headers = [
+            "Equipment",
+            "NRP",
+            "Operator",
+            "HM Start",
+            "HM End",
+            "HM",
+        ]
+
         function load() {
+            var container = d3.select(".pc-content");
+
+            container.selectAll("#hm-card").remove();
+
+            var row = container.append("div").attr("class", "row").attr("id", "hm-card");
+
+            var ritase = row.append("div").attr("class", "col").append("div").attr("class", "card");
+            var cardBodyRit = ritase.append("div").attr("class", "card-body")
+                .append("div").attr("class", "card-body table-border-style")
+                .append("div").attr("class", "table-responsive")
+                .append("table").attr("class", "table table-striped-columns").attr("id", "load-table");
+
+            var thead = cardBodyRit.append("thead").append("tr");
+
+            headers.forEach(header => {
+                thead.append("th")
+                    .attr("class", "align-middle bg-primary text-white")
+                    .text(header);
+            });
             var table = $("#load-table").DataTable({
                 processing: true,
                 serverSide: true,
@@ -117,11 +125,11 @@
                     data: "NRP__operator",
                 }, {
                     data: "hm_start",
-                    width: "6%",
+                    width: "10%",
                     render: $.fn.dataTable.render.number('', '.', 2, '')
                 }, {
                     data: "hm_end",
-                    width: "6%",
+                    width: "10%",
                     render: $.fn.dataTable.render.number('', '.', 2, '')
                 }, {
                     data: null,
@@ -130,7 +138,75 @@
                         return (row.hm_end - row.hm_start).toFixed(2)
                     }
                 }],
+                rowId: "id",
+                layout: {
+                    topStart: 'pageLength',
+                    topEnd: 'search',
+                    bottomStart: "paging",
+                    bottomEnd: function() {
+                        let container = d3.select(document.createElement('div'));
+
+                        let button = container.append("button")
+                            .attr('class', 'btn btn-sm btn-primary')
+                            .attr('type', 'button')
+                            .attr('id', 'addRow')
+                            .on('click', function() {
+                                addRow()
+                            })
+                            .append("i")
+                            .attr("class", "ti ti-plus")
+                            .style("color", "#FFFFFF")
+
+                        return container.node();
+                    }
+                },
             })
+            var editor = new DatatablesInlineEditor(table, options);
+        }
+        var options = {
+            cellSelector: 'tbody td',
+            headers: {
+                "X-CSRFToken": "{{csrf_token}}"
+            },
+            fields: [{
+                name: 'equipment',
+                type: 'text'
+            }, {
+                name: 'NRP',
+                type: 'number'
+            }, {
+                name: 'hm_start',
+                type: 'numeric'
+            }, {
+                name: 'hm_end',
+                type: 'numeric'
+            }],
+            url: "{% url 'hma2b:update'%}",
+            method: 'POST',
+            data: {
+                youSendData: true,
+            },
+        };
+
+
+
+        function addRow() {
+            $.ajax({
+                url: "{% url 'hma2b:addRow' %}",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": csrf_token,
+                },
+                data: {
+                    date: $("#date-select").val(),
+                    shift: $("#shift-select").val(),
+                    hauler: $("#cn-hauler").val(),
+                    id: button.getAttribute("data-id"),
+                },
+                complete: function() {
+                    loadTable();
+                },
+            });
         }
     </script>
 {% endblock script %}
