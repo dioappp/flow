@@ -28,4 +28,5 @@ urlpatterns = [
     path("", include("ritase.urls")),
     path("distance/", include("distance.urls")),
     path("exporter/", include("exporter.urls")),
+    path("hm/", include("hma2b.urls")),
 ]

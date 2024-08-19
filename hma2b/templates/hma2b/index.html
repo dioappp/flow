@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    | HM A2B
+{% endblock title %}
+{% block breadcrumb_title %}
+    HM A2B
+{% endblock breadcrumb_title %}
+{% block breadcrumb %}
+    <li class="breadcrumb-item">
+        <a href="#">Produksi</a>
+    </li>
+    <li class="breadcrumb-item">
+        <a href="#">HM A2B</a>
+    </li>
+{% endblock breadcrumb %}
+{% block content %}
+    <div class="row">
+        <div class="col-5">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3 row row-cols-auto justify-content-md-center">
+                        <label for="eqtype" class="col-auto col-form-label">Equipment Type</label>
+                        <div class="col">
+                            <select name="eqtype" id="eqtype" class="form-control ">
+                                <option value="0">Loader</option>
+                                <option value="1">Grader</option>
+                                <option value="2">Dozer</option>
+                                <option value="3">Compactor</option>
+                            </select>
+                        </div>
+                        <label for="cn-hauler" class="col-auto col-form-label">CN</label>
+                        <div class="col">
+                            <input type="text" class="form-control" id="cn-hauler">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-7">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3 row row-cols-auto justify-content-md-center">
+                        <label for="date-select" class="col col-form-label">Tanggal</label>
+                        <div class="col">
+                            <input class="form-control"
+                                   type="date"
+                                   placeholder="Month data.."
+                                   onchange="load()"
+                                   id="date-select"
+                                   name="date"
+                                   value="{% now "Y-m-d" %}" />
+                        </div>
+                        <label for="shift-select" class="col col-form-label">Shift</label>
+                        <div class="col-sm-4">
+                            <select type="text"
+                                    class="form-control"
+                                    name="shift"
+                                    id="shift-select"
+                                    onchange="load()"
+                                    required>
+                                <option value="1">Shift 1</option>
+                                <option value="2">Shift 2</option>
+                            </select>
+                        </div>
+                        <button type="button"
+                                class="btn btn-primary me-3"
+                                id="btn_load"
+                                onclick="loadTable()">
+                            <i class="feather mr-2 icon-loader"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block script %}
+    <script src="{% static 'js/web-session-management.js' %}"></script>
+    <script type="text/javascript"></script>
+{% endblock script %}
