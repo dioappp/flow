@@ -23,10 +23,10 @@
                         <label for="eqtype" class="col-auto col-form-label">Equipment Type</label>
                         <div class="col">
                             <select name="eqtype" id="eqtype" class="form-control ">
-                                <option value="0">Loader</option>
-                                <option value="1">Grader</option>
-                                <option value="2">Dozer</option>
-                                <option value="3">Compactor</option>
+                                <option value="X">Loader</option>
+                                <option value="G">Grader</option>
+                                <option value="D">Dozer</option>
+                                <option value="C">Compactor</option>
                             </select>
                         </div>
                         <label for="cn-hauler" class="col-auto col-form-label">CN</label>
@@ -77,5 +77,36 @@
 {% endblock content %}
 {% block script %}
     <script src="{% static 'js/web-session-management.js' %}"></script>
-    <script type="text/javascript"></script>
+    <script type="text/javascript">
+        function load() {
+            $.ajax({
+                url: "{% url 'hma2b:cek_operator'%}",
+                type: "POST",
+                data: {
+                    eqtype: $("#eqtype").val(),
+                    date: $("#date-select").val(),
+                    shift: $("#shift-select").val(),
+                    cn: ($("#cn-hauler").val()).toString(),
+                },
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                /*complete: function(d) {
+                    if (d.responseJSON.data.length == 0) {
+                        generateCardNonJigsaw($("#cn-hauler").val());
+                    } else {
+                        generateCard(d.responseJSON.data, d.responseJSON.equipment);
+                    }
+                }*/
+            })
+        };
+        $("#cn-hauler").on("keydown",
+            function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    load();
+                    $(this).select()
+                }
+            });
+    </script>
 {% endblock script %}
