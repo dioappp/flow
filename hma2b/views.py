@@ -18,6 +18,7 @@ def operator(request):
 
     ts, te = get_shift_time(date_pattern, shift_pattern)
     ts = ts - timedelta(minutes=30)
+    te = te - timedelta(hours=1)
 
     maindata = (
         hmOperator.objects.filter(
@@ -25,7 +26,16 @@ def operator(request):
             Q(login_time__gte=ts, login_time__lt=te),
             # | Q(logout_time__gt=ts, logout_time__lte=te),
         )
-        .values("id", "equipment", "NRP__operator", "NRP", "hm_start", "hm_end")
+        .values(
+            "id",
+            "equipment",
+            "NRP__operator",
+            "NRP",
+            "hm_start",
+            "hm_end",
+            "login_time",
+            "logout_time",
+        )
         .order_by("equipment", "hm_start")
     )
 

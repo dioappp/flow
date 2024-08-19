@@ -74,6 +74,8 @@
             "Equipment",
             "NRP",
             "Operator",
+            "Login",
+            "Logout",
             "HM Start",
             "HM End",
             "HM",
@@ -90,7 +92,7 @@
             var cardBodyRit = ritase.append("div").attr("class", "card-body")
                 .append("div").attr("class", "card-body table-border-style")
                 .append("div").attr("class", "table-responsive")
-                .append("table").attr("class", "table table-striped-columns").attr("id", "load-table");
+                .append("table").attr("class", "table table-striped-columns table-hover").attr("id", "load-table");
 
             var thead = cardBodyRit.append("thead").append("tr");
 
@@ -124,6 +126,13 @@
                 }, {
                     data: "NRP__operator",
                 }, {
+                    data: "login_time",
+                    render: $.fn.DataTable.render.datetime("D-MM-YYYY HH:mm")
+                }, {
+                    data: "logout_time",
+                    render: $.fn.DataTable.render.datetime("D-MM-YYYY HH:mm")
+
+                }, {
                     data: "hm_start",
                     width: "10%",
                     render: $.fn.dataTable.render.number('', '.', 2, '')
@@ -139,29 +148,22 @@
                     }
                 }],
                 rowId: "id",
-                layout: {
-                    topStart: 'pageLength',
-                    topEnd: 'search',
-                    bottomStart: "paging",
-                    bottomEnd: function() {
-                        let container = d3.select(document.createElement('div'));
-
-                        let button = container.append("button")
-                            .attr('class', 'btn btn-sm btn-primary')
-                            .attr('type', 'button')
-                            .attr('id', 'addRow')
-                            .on('click', function() {
-                                addRow()
-                            })
-                            .append("i")
-                            .attr("class", "ti ti-plus")
-                            .style("color", "#FFFFFF")
-
-                        return container.node();
+                rowCallback: function(row, data) {
+                    var hm = data.hm_end - data.hm_start
+                    if (hm <= 0 || hm > 15) {
+                        $('td:eq(7)', row).addClass("bg-danger text-white");
                     }
-                },
+                }
             })
             var editor = new DatatablesInlineEditor(table, options);
+
+            editor.on("cell.completeEdit", function() {
+                load()
+            })
+
+            editor.on("cell.click", function(input) {
+                console.log(input)
+            })
         }
         var options = {
             cellSelector: 'tbody td',
@@ -187,26 +189,5 @@
                 youSendData: true,
             },
         };
-
-
-
-        function addRow() {
-            $.ajax({
-                url: "{% url 'hma2b:addRow' %}",
-                type: "POST",
-                headers: {
-                    "X-CSRFToken": csrf_token,
-                },
-                data: {
-                    date: $("#date-select").val(),
-                    shift: $("#shift-select").val(),
-                    hauler: $("#cn-hauler").val(),
-                    id: button.getAttribute("data-id"),
-                },
-                complete: function() {
-                    loadTable();
-                },
-            });
-        }
     </script>
 {% endblock script %}
