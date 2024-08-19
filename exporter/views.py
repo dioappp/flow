@@ -1,9 +1,11 @@
+from itertools import chain
 from django.shortcuts import render, redirect
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, F
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from hm.models import Operator, hmOperator
 from ritase.models import cek_ritase
+from stb_hauler.models import HaulerStatus
 from stb_loader.models import ClusterLoader, LoaderStatus
 import pandas as pd
 
@@ -15,20 +17,20 @@ def index(request):
 
 def is_in_jam_kritis(id: int, df: pd.DataFrame) -> bool:
     jam_kritis = ["S6", "S5A", "S8"]
-    unit = df.loc[id, "unit"]
+    unit = df.loc[id, "equipment"]
 
     if id == 0:
         check_before = True
     else:
         stb_before = df.loc[id - 1, "standby_code"]
-        unit_before = df.loc[id - 1, "unit"]
+        unit_before = df.loc[id - 1, "equipment"]
         check_before = (stb_before in jam_kritis) and (unit_before == unit)
 
     if id == len(df) - 1:
         check_after = True
     else:
         stb_after = df.loc[id + 1, "standby_code"]
-        unit_after = df.loc[id + 1, "unit"]
+        unit_after = df.loc[id + 1, "equipment"]
         check_after = (stb_after in jam_kritis) and (unit_after == unit)
 
     return check_before or check_after
@@ -43,10 +45,11 @@ def standby(request):
         subquery = ClusterLoader.objects.filter(
             date=OuterRef("date"), hour=OuterRef("hour"), unit=OuterRef("unit")
         )
-        data = (
+        data_loader = (
             LoaderStatus.objects.filter(report_date=date, shift=shift)
             .annotate(
                 pit=Coalesce(Subquery(subquery.values("pit")[:1]), None),
+                equipment=F("unit__ellipse"),
             )
             .values(
                 "report_date",
@@ -54,20 +57,36 @@ def standby(request):
                 "shift",
                 "timeStart",
                 "standby_code",
-                "unit__ellipse",
+                "equipment",
                 "remarks",
+                "date",
                 "pit",
             )
         )
+        data_hauler = (
+            HaulerStatus.objects.filter(report_date=date, shift=shift)
+            .annotate(equipment=F("unit__jigsaw"))
+            .values(
+                "report_date",
+                "hour",
+                "shift",
+                "timeStart",
+                "standby_code",
+                "equipment",
+                "remarks",
+                "date",
+            )
+        )
+
+        data = list(chain(list(data_loader), list(data_hauler)))
 
         if not data:
             return HttpResponse(
                 f"Data Standby tanggal: {date}, Shift {shift} belum tersedia"
             )
 
-        df = pd.DataFrame(list(data))
-        df = df.rename(columns={"unit__ellipse": "unit"})
-        df = df.sort_values(by=["unit", "timeStart"])
+        df = pd.DataFrame(data)
+        df = df.sort_values(by=["equipment", "timeStart"])
         df["timeStart"] = pd.to_datetime(df["timeStart"])
 
         s = 60 - df["timeStart"].max().second
@@ -78,7 +97,7 @@ def standby(request):
 
         te = df["timeStart"].max() + pd.Timedelta(minutes=m, seconds=s)
 
-        df["timeEnd"] = df.groupby("unit")["timeStart"].shift(-1)
+        df["timeEnd"] = df.groupby("equipment")["timeStart"].shift(-1)
         df["timeEnd"] = df["timeEnd"].fillna(te)
 
         df["durasi"] = df["timeEnd"] - df["timeStart"]
@@ -92,11 +111,12 @@ def standby(request):
             if not is_in_jam_kritis(id, df):
                 df.loc[id, "standby_code"] = "WH"
 
-        result = df.groupby(["hour", "unit", "standby_code"], as_index=False).agg(
+        result = df.groupby(["hour", "equipment", "standby_code"], as_index=False).agg(
             {
                 "report_date": "first",
                 "durasi": "sum",
                 "remarks": "first",
+                "date": "first",
                 "pit": "first",
             }
         )
@@ -117,7 +137,7 @@ def standby(request):
             "report_date",
             "Project",
             "Location",
-            "unit",
+            "equipment",
             "date",
             "hour",
             "BD Status",
@@ -127,10 +147,11 @@ def standby(request):
             "remarks",
         ]
         result = result.reindex(columns=column_order)
-        result = result.sort_values(by=["unit", "date", "hour"])
-        result = result[~result["standby_code"].str.startswith("WH")].reset_index(
-            drop=True
-        )
+        result = result.sort_values(by=["equipment", "date", "hour"])
+        result = result.drop(columns="date")
+        # result = result[~result["standby_code"].str.startswith("WH")].reset_index(
+        #     drop=True
+        # )
 
         filename = f"standby-{date}-shift{shift}.xlsx"
         response = HttpResponse(
