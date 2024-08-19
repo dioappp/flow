@@ -23,7 +23,11 @@ def index(request):
 
 
 def index_loader(request):
-    return render(request, "ritase/index_loader.html")
+    options = material.objects.values_list("code", flat=True)
+    loaders = loaderID.objects.values_list("unit", flat=True).order_by("unit")
+    return render(
+        request, "ritase/index_loader.html", {"options": options, "loaders": loaders}
+    )
 
 
 def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
@@ -41,6 +45,15 @@ def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
     return ts, te
 
 
+def get_cn_jigsaw(hauler_pattern: str) -> str:
+    if not str(hauler_pattern).startswith("d"):
+        obj = truckID.objects.get(code=hauler_pattern)
+        hauler_jigsaw = obj.jigsaw
+    else:
+        hauler_jigsaw = str(hauler_pattern).upper()
+    return hauler_jigsaw
+
+
 def operator(request):
     date_pattern = request.POST.get("date")
     shift_pattern = request.POST.get("shift")
@@ -49,11 +62,7 @@ def operator(request):
     ts, te = get_shift_time(date_pattern, shift_pattern)
     ts = ts - timedelta(minutes=30)
 
-    if not str(hauler_pattern).startswith("d"):
-        obj = truckID.objects.get(code=hauler_pattern)
-        hauler_jigsaw = obj.jigsaw
-    else:
-        hauler_jigsaw = str(hauler_pattern).upper()
+    hauler_jigsaw = get_cn_jigsaw(hauler_pattern)
 
     data = (
         hmOperator.objects.filter(
@@ -64,6 +73,18 @@ def operator(request):
         .values("id", "NRP__operator", "NRP", "hm_start", "hm_end")
         .order_by("hm_start")
     )
+
+    response = {"data": list(data), "equipment": hauler_jigsaw}
+    return JsonResponse(response)
+
+
+def calculate_wh(request):
+    date_pattern = request.POST.get("date")
+    shift_pattern = request.POST.get("shift")
+    hauler_pattern = request.POST.get("hauler")
+
+    hauler_jigsaw = get_cn_jigsaw(hauler_pattern)
+
     wh = HaulerStatus.objects.filter(
         report_date=date_pattern,
         shift=shift_pattern,
@@ -100,8 +121,7 @@ def operator(request):
     )
     df = df.set_index("standby_code")
     stb = df.to_dict()
-
-    response = {"data": list(data), "equipment": hauler_jigsaw, "stb": stb}
+    response = {"data": stb}
     return JsonResponse(response)
 
 
@@ -149,11 +169,15 @@ def load_ritase_loader(request):
     cek_ritase_fields = [field.name for field in cek_ritase._meta.fields]
     cek_ritase_fields.append("code_material__remark")
 
-    maindata = cek_ritase.objects.filter(
-        deleted_at__isnull=True,
-        date=date,
-        shift=shift,
-    ).values(*cek_ritase_fields)
+    maindata = (
+        cek_ritase.objects.filter(
+            deleted_at__isnull=True,
+            date=date,
+            shift=shift,
+        )
+        .values(*cek_ritase_fields)
+        .order_by("loader", "hauler")
+    )
 
     total = maindata.count()
 

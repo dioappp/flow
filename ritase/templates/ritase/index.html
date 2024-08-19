@@ -70,121 +70,22 @@
     </div>
 {% endblock content %}
 {% block script %}
-    {% include "partials/script.html" %}
+    <script src="{% static 'js/web-session-management.js' %}"></script>
+    <script src="{% static 'js/modal-form-handler.js' %}"></script>
+    <script src="{% static 'js/standby.js' %}"></script>
+    <script type="text/javascript">
+        var deleteUrl =  "{% url 'ritase:delete_row' %}"
+        var csrf_token = "{{ csrf_token }}"
+        var addUrl =  "{% url 'ritase:addrow' %}"
+        var whUrl = "{% url 'ritase:wh' %}"
+    </script>
+    <script src="{% static 'js/ritase.js' %}"></script>
     <script type="text/javascript">
         //$(document).ready(function() {
         //    $('.js-example-basic-single').select2();
         //});
-
-        function getHeaders() {
-            if ($("#shift-select").val() == 1) {
-                headers = ["Loader", "Material", "Remarks", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "#"];
-                column = [{
-                    data: "loader",
-                    width: "10%"
-                }, {
-                    data: "code_material"
-                }, {
-                    data: "code_material__remark"
-                }, {
-                    data: "a",
-                    width: "6%"
-                }, {
-                    data: "b",
-                    width: "6%"
-                }, {
-                    data: "c",
-                    width: "6%"
-                }, {
-                    data: "d",
-                    width: "6%"
-                }, {
-                    data: "e",
-                    width: "6%"
-                }, {
-                    data: "f",
-                    width: "6%"
-                }, {
-                    data: "g",
-                    width: "6%"
-                }, {
-                    data: "h",
-                    width: "6%"
-                }, {
-                    data: "i",
-                    width: "6%"
-                }, {
-                    data: "j",
-                    width: "6%"
-                }, {
-                    data: "k",
-                    width: "6%"
-                }, {
-                    data: "l",
-                    width: "6%"
-                }, {
-                    data: "action",
-                    width: "3%"
-                }, ]
-            } else {
-                headers = ["Loader", "Material", "Remarks", "18", "19", "20", "21", "22", "23", "0", "1", "2", "3", "4", "5", "6", "#"];
-                column = [{
-                    data: "loader",
-                    width: "10%"
-                }, {
-                    data: "code_material"
-                }, {
-                    data: "code_material__remark"
-                }, {
-                    data: "a",
-                    width: "6%"
-                }, {
-                    data: "b",
-                    width: "6%"
-                }, {
-                    data: "c",
-                    width: "6%"
-                }, {
-                    data: "d",
-                    width: "6%"
-                }, {
-                    data: "e",
-                    width: "6%"
-                }, {
-                    data: "f",
-                    width: "6%"
-                }, {
-                    data: "g",
-                    width: "6%"
-                }, {
-                    data: "h",
-                    width: "6%"
-                }, {
-                    data: "i",
-                    width: "6%"
-                }, {
-                    data: "j",
-                    width: "6%"
-                }, {
-                    data: "k",
-                    width: "6%"
-                }, {
-                    data: "l",
-                    width: "6%"
-                }, {
-                    data: "m",
-                    width: "6%"
-                }, {
-                    data: "action",
-                    width: "3%"
-                }, ]
-            }
-            column.forEach(function(c) {
-                c.render = function(data, type, row, meta) {
-                    return data == 0 || data == 'nan' ? '' : data;
-                };
-            });
-        }
+        let colorScale = getColorData()
+        var width = 1546.250;
 
         function load() {
             $.ajax({
@@ -202,7 +103,8 @@
                     if (d.responseJSON.data.length == 0) {
                         generateCardNonJigsaw($("#cn-hauler").val());
                     } else {
-                        generateCard(d.responseJSON.data, d.responseJSON.equipment, d.responseJSON.stb.durasi);
+                        generateCard(d.responseJSON.data, d.responseJSON.equipment);
+                        loadWh();
                     }
                 }
             })
@@ -258,7 +160,7 @@
             });
         }
 
-        function generateCard(data, cn, durasi) {
+        function generateCard(data, cn) {
             var container = d3.select(".pc-content");
 
             container.selectAll("#operator-card").remove();
@@ -315,7 +217,7 @@
                 }, {
                     label: "WH",
                     inputType: "number",
-                    inputValue: durasi.WH.toFixed(2),
+                    inputValue: 0,
                     readonly: true
                 }];
                 formGroups.forEach(group => {
@@ -508,6 +410,7 @@
                 },
                 success: function(data) {
                     generateToSVG(id, data);
+                    loadWh()
                 },
             });
         }
@@ -571,24 +474,7 @@
                     if (datum.label == 'STB') {
                         $('#updateModal').on('show.bs.modal', function(event) {
                             var modal = $(this);
-                            var startMinute = new Date(d.starting_time).getMinutes();
-                            var startSecond = new Date(d.starting_time).getSeconds();
-
-                            modal.find('.modal-title').text('Update Data - ' + d.unit + ' - id: ' + d.database_id);
-                            modal.find('input[name=unit]').val(d.unit);
-                            modal.find('input[name=date]').val($("#date-select").val());
-                            modal.find('input[name=hour]').val($("#hour-select").val());
-                            modal.find('input[name=timestart]').val(toDateString(d.starting_time).slice(-8));
-                            modal.find('input[name=timeend]').val(toDateString(d.ending_time).slice(-8));
-                            modal.find('input[name=database_id]').val(d.database_id);
-                            modal.find('input[name=stb]').val(d.label);
-                            modal.find('input[name=duration]').val(((d.ending_time - d.starting_time) / 60000).toFixed(2));
-
-                            if (startMinute === 0 && startSecond === 0) {
-                                modal.find('#deleteButton').prop('disabled', true);
-                            } else {
-                                modal.find('#deleteButton').prop('disabled', false);
-                            }
+                            populateUpdateForm(modal,d)
                         });
                         $('#updateModal').modal('show');
                     }
@@ -630,82 +516,11 @@
             container.select("svg").remove();
             var svg = container
                 .append("svg")
-                .attr("width", 1546.250)
+                .attr("width", width)
                 .datum(dataJigsaw)
                 .call(chart)
         }
 
-        function addRow(button) {
-            $.ajax({
-                url: "{% url 'ritase:addrow' %}",
-                type: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                data: {
-                    date: $("#date-select").val(),
-                    shift: $("#shift-select").val(),
-                    hauler: $("#cn-hauler").val(),
-                    id: button.getAttribute('data-id')
-                },
-                complete: function() {
-                    loadTable()
-                }
-            })
-        }
-
-        function loadTable() {
-            tables.forEach(function(table) {
-                table.draw()
-            })
-        }
-
-        function handleInputChange(form, label_button) {
-            // Check if the button already exists
-            if (!form.select("button#save-button").node() && !form.select("button#cancel-button").node()) {
-                // Add a button at the bottom of the card
-                var cardFooter = form.append("div").attr("class", "mb-0 mt-2 row d-flex justify-content-end")
-                cardFooter.append("button")
-                    .attr("id", "cancel-button")
-                    .attr("type", "button")
-                    .attr("class", "btn btn-secondary me-3")
-                    .attr("style", "width: auto")
-                    .text("Cancel")
-                    .on("click", function() {
-                        load()
-                    });
-                cardFooter.append("button")
-                    .attr("id", "save-button")
-                    .attr("type", "submit")
-                    .attr("class", "btn btn-primary")
-                    .attr("style", "width: auto")
-                    .text(label_button)
-                    .on("click", function() {
-                        setTimeout(function() {
-                            // Remove the cardFooter after submission
-                            cardFooter.remove();
-                            load()
-                        }, 1000);
-
-                    });
-            }
-        }
-
-        function deleteRow(button) {
-            $.ajax({
-                url: "{% url 'ritase:delete_row' %}",
-                type: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                data: {
-                    id: button.getAttribute('data-id')
-                },
-                complete: function() {
-                    loadTable()
-                }
-            })
-        }
         $("#cn-hauler").on("keydown",
             function(event) {
                 if (event.key === "Enter") {
@@ -714,126 +529,48 @@
                     $(this).select()
                 }
             });
-        $('#updateForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
 
-            var form = $(this);
-
-            // Enable disabled fields if needed
-            $('#timeend-label, #duration-label').prop('disabled', false);
-
-            var formData = new FormData(this); // Collect form data
-
-            $.ajax({
-                type: 'POST',
-                url: form.attr('action'),
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        $('#updateModal').modal('hide');
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-
-            // Re-disable the fields if they were enabled
-            $('#timeend-label, #duration-label').prop('disabled', true);
-        });
-
-        $('#addForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-
-            var form = $(this);
-
-            var formData = new FormData(this); // Collect form data
-
-            $.ajax({
-                type: 'POST',
-                url: form.attr('action'),
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        $('#addModal').modal('hide');
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-        });
-
-        $('#deleteForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
-
-            var form = $(this);
-
-            var formData = new FormData(this); // Collect form data
-            formData.append("delete", "delete");
-
-            $.ajax({
-                type: 'POST',
-                url: form.attr('action'),
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        $('#confirmModal').modal('hide');
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-        });
-
-        function split() {
-            $.ajax({
-                url: "{% url 'stb_hauler:split'%}",
-                type: 'POST',
-                data: {
-                    database_id: data_databese_id,
-                    timestart: data_time,
-                },
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                success: function(response, status, xhr) {
-                    if (xhr.status === 204) { // Check if the status code is 204
-                        showDetail(data_unit);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Form submission failed:', error);
-                }
-            });
-        }
         $('#updateModal').on('shown.bs.modal', function(event) {
             focusAndSelectInput()
         })
+
+        $('#updateForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var formData = new FormData(this); // Collect form data
+            handleUpdateFormSubmission("{% url 'stb_hauler:update'%}", data_unit, formData)
+        });
+
+        $('#addModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateAddForm(modal);
+        });
 
         $('#addModal').on('shown.bs.modal', function(event) {
             focusAndSelectInput()
         })
 
-        function focusAndSelectInput() {
-            var input = $("#stb-label");
-            if (input) {
-                input.focus();
-                input.select();
-            }
+        $('#addForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            handleAddFormSubmission("{% url 'stb_hauler:add'%}", data_unit, formData)
+        });
+
+        function split() {
+            handleSplitSubmission("{% url 'stb_hauler:split'%}", data_unit, data_databese_id, data_time, "{{ csrf_token }}")
         }
+
+        $('#confirmModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateDeleteForm(modal)
+        });
+
+        $('#deleteForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            handleDeleteSubmission("{% url 'stb_hauler:delete'%}", data_unit, formData)
+        });
     </script>
 {% endblock script %}
 {% block modals %}
-    {% include "stb_hauler/modal.html" %}
+    {% include "partials/modal.html" %}
 {% endblock modals %}

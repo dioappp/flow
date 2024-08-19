@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "hm",
     "distance",
     "exporter",
+    "hma2b",
 ]
 
 MIDDLEWARE = [

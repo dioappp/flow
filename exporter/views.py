@@ -54,9 +54,8 @@ def standby(request):
                 "shift",
                 "timeStart",
                 "standby_code",
-                "unit__unit",
+                "unit__ellipse",
                 "remarks",
-                "date",
                 "pit",
             )
         )
@@ -67,7 +66,7 @@ def standby(request):
             )
 
         df = pd.DataFrame(list(data))
-        df = df.rename(columns={"unit__unit": "unit"})
+        df = df.rename(columns={"unit__ellipse": "unit"})
         df = df.sort_values(by=["unit", "timeStart"])
         df["timeStart"] = pd.to_datetime(df["timeStart"])
 
@@ -98,7 +97,6 @@ def standby(request):
                 "report_date": "first",
                 "durasi": "sum",
                 "remarks": "first",
-                "date": "first",
                 "pit": "first",
             }
         )
@@ -130,6 +128,9 @@ def standby(request):
         ]
         result = result.reindex(columns=column_order)
         result = result.sort_values(by=["unit", "date", "hour"])
+        result = result[~result["standby_code"].str.startswith("WH")].reset_index(
+            drop=True
+        )
 
         filename = f"standby-{date}-shift{shift}.xlsx"
         response = HttpResponse(
