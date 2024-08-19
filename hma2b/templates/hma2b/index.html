@@ -16,28 +16,7 @@
 {% endblock breadcrumb %}
 {% block content %}
     <div class="row">
-        <div class="col-5">
-            <div class="card">
-                <div class="card-body">
-                    <div class="mb-3 row row-cols-auto justify-content-md-center">
-                        <label for="eqtype" class="col-auto col-form-label">Equipment Type</label>
-                        <div class="col">
-                            <select name="eqtype" id="eqtype" class="form-control ">
-                                <option value="X">Loader</option>
-                                <option value="G">Grader</option>
-                                <option value="D">Dozer</option>
-                                <option value="C">Compactor</option>
-                            </select>
-                        </div>
-                        <label for="cn-hauler" class="col-auto col-form-label">CN</label>
-                        <div class="col">
-                            <input type="text" class="form-control" id="cn-hauler">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-7">
+        <div class="col">
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3 row row-cols-auto justify-content-md-center">
@@ -66,9 +45,33 @@
                         <button type="button"
                                 class="btn btn-primary me-3"
                                 id="btn_load"
-                                onclick="loadTable()">
+                                onclick="load()">
                             <i class="feather mr-2 icon-loader"></i> Refresh
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="hm-card">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-body table-border-style">
+                        <div class="table-responsice">
+                            <table class="table table-striped-columns table-hover" id="load-table">
+                                <thead>
+                                    <tr>
+                                        <th class="align-middle bg-primary text-white">Equipment</th>
+                                        <th class="align-middle bg-primary text-white">NRP</th>
+                                        <th class="align-middle bg-primary text-white">Operator</th>
+                                        <th class="align-middle bg-primary text-white">HM Start</th>
+                                        <th class="align-middle bg-primary text-white">HM End</th>
+                                        <th class="align-middle bg-primary text-white">HM</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -78,28 +81,6 @@
 {% block script %}
     <script src="{% static 'js/web-session-management.js' %}"></script>
     <script type="text/javascript">
-        function load() {
-            $.ajax({
-                url: "{% url 'hma2b:cek_operator'%}",
-                type: "POST",
-                data: {
-                    eqtype: $("#eqtype").val(),
-                    date: $("#date-select").val(),
-                    shift: $("#shift-select").val(),
-                    cn: ($("#cn-hauler").val()).toString(),
-                },
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                /*complete: function(d) {
-                    if (d.responseJSON.data.length == 0) {
-                        generateCardNonJigsaw($("#cn-hauler").val());
-                    } else {
-                        generateCard(d.responseJSON.data, d.responseJSON.equipment);
-                    }
-                }*/
-            })
-        };
         $("#cn-hauler").on("keydown",
             function(event) {
                 if (event.key === "Enter") {
@@ -108,5 +89,48 @@
                     $(this).select()
                 }
             });
+
+        function load() {
+            var table = $("#load-table").DataTable({
+                processing: true,
+                serverSide: true,
+                ordering: false,
+                stateSave: true,
+                pagingType: "full_numbers",
+                ajax: {
+                    url: "{% url 'hma2b:cek_operator' %}",
+                    type: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                    },
+                    data: function(d) {
+                        d.date = $("#date-select").val();
+                        d.shift = $("#shift-select").val();
+                    },
+                },
+                columns: [{
+                    data: "equipment",
+                    width: "10%",
+                }, {
+                    data: "NRP",
+                }, {
+                    data: "NRP__operator",
+                }, {
+                    data: "hm_start",
+                    width: "6%",
+                    render: $.fn.dataTable.render.number('', '.', 2, '')
+                }, {
+                    data: "hm_end",
+                    width: "6%",
+                    render: $.fn.dataTable.render.number('', '.', 2, '')
+                }, {
+                    data: null,
+                    width: "6%",
+                    render: function(data, type, row) {
+                        return (row.hm_end - row.hm_start).toFixed(2)
+                    }
+                }],
+            })
+        }
     </script>
 {% endblock script %}
