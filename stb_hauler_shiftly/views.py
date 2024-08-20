@@ -137,7 +137,7 @@ def timeline(request):
             response["state"].append(x)
 
     ritasedata = ritase.objects.filter(
-        date=date_pattern, shift=shift_pattern, truck_id__jigsaw=unit_pattern
+        report_date=date_pattern, shift=shift_pattern, truck_id__jigsaw=unit_pattern
     ).order_by("time_full")
     ritasedata = ritasedata.values(
         "id",

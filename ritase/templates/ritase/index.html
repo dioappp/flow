@@ -74,9 +74,9 @@
     <script src="{% static 'js/modal-form-handler.js' %}"></script>
     <script src="{% static 'js/standby.js' %}"></script>
     <script type="text/javascript">
-        var deleteUrl =  "{% url 'ritase:delete_row' %}"
+        var deleteUrl = "{% url 'ritase:delete_row' %}"
         var csrf_token = "{{ csrf_token }}"
-        var addUrl =  "{% url 'ritase:addrow' %}"
+        var addUrl = "{% url 'ritase:addrow' %}"
         var whUrl = "{% url 'ritase:wh' %}"
     </script>
     <script src="{% static 'js/ritase.js' %}"></script>
@@ -86,7 +86,7 @@
         //});
         let colorScale = getColorData()
         var width = 1546.250;
-        
+
 
         function load() {
             $.ajax({
@@ -105,7 +105,6 @@
                         generateCardNonJigsaw($("#cn-hauler").val());
                     } else {
                         generateCard(d.responseJSON.data, d.responseJSON.equipment);
-                        loadWh();
                     }
                 }
             })
@@ -277,10 +276,10 @@
 
             var row = container.append("div").attr("class", "row").attr("id", "operator-card")
                 .append("div").attr("class", "col")
-                .append("div").attr("class", "card").attr("id","table-card")
+                .append("div").attr("class", "card").attr("id", "table-card")
                 .append("div").attr("class", "card-body")
                 .append("div").attr("id", "data-" + cn);
-            
+
             setTimeFrameShiftly()
             showDetail(cn)
         }
@@ -338,18 +337,26 @@
             fields: [{
                 name: 'loader',
                 type: 'select',
-                options:[
-                {% for loader in loaders %}
-                {label: "{{ loader }}"},
-                {% endfor %}],
+                options: [{
+                    %
+                    for loader in loaders %
+                } {
+                    label: "{{ loader }}"
+                }, {
+                    % endfor %
+                }],
                 className: 'js-example-basic-single'
             }, {
                 name: 'code_material',
                 type: 'select',
-                options: [
-                {% for option in options %}
-                {label: "{{ option }}"},
-                {% endfor %}],
+                options: [{
+                    %
+                    for option in options %
+                } {
+                    label: "{{ option }}"
+                }, {
+                    % endfor %
+                }],
                 className: 'form-control'
             }, {
                 name: 'a',
@@ -476,7 +483,7 @@
                     if (datum.label == 'STB') {
                         $('#updateModal').on('show.bs.modal', function(event) {
                             var modal = $(this);
-                            populateUpdateForm(modal,d)
+                            populateUpdateForm(modal, d)
                         });
                         $('#updateModal').modal('show');
                     }
