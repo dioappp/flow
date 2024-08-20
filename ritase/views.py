@@ -61,6 +61,7 @@ def operator(request):
 
     ts, te = get_shift_time(date_pattern, shift_pattern)
     ts = ts - timedelta(minutes=30)
+    te = te - timedelta(hours=1)
 
     hauler_jigsaw = get_cn_jigsaw(hauler_pattern)
 

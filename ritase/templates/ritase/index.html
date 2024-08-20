@@ -86,6 +86,7 @@
         //});
         let colorScale = getColorData()
         var width = 1546.250;
+        
 
         function load() {
             $.ajax({
@@ -279,7 +280,8 @@
                 .append("div").attr("class", "card").attr("id","table-card")
                 .append("div").attr("class", "card-body")
                 .append("div").attr("id", "data-" + cn);
-
+            
+            setTimeFrameShiftly()
             showDetail(cn)
         }
 
@@ -511,7 +513,9 @@
                         .style("opacity", 0);
                     var x = d3.select(d3.event.currentTarget)
                     x.style('stroke', 'none')
-                });
+                })
+                .beginning(ts)
+                .ending(te);
             var container = d3.select("#data-" + id_element);
             container.select("svg").remove();
             var svg = container
