@@ -1,7 +1,8 @@
+import asyncio
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
-from django.db.models import Sum, Subquery, OuterRef, Q
+from django.db.models import Sum, Subquery, OuterRef
 from stb_loader.models import LoaderStatus, ClusterLoader, LoaderStatusHistory
 from ritase.models import ritase
 from datetime import datetime, timedelta
@@ -218,16 +219,18 @@ def timeline(request):
     return JsonResponse(response, safe=False)
 
 
-def load_data(request):
+async def load_data(request):
     date = request.POST.get("date")
     hour = int(request.POST.get("hour"))
 
     date_str = f"{date} {hour:02d}:00"  # YYYY-MM-DD HH:MM
 
-    call_command("ritase", date=date_str)
-    call_command("loadLoader", date=date_str)
-    call_command("loadHauler", date=date_str)
-    return redirect(request.META.get("HTTP_REFERER"))
+    def run_command():
+        call_command("loadLoader", date=date_str)
+
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, run_command)
+    return HttpResponse(status=204)
 
 
 def update(request):
