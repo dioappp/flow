@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.db import connections
+from django.db import OperationalError, connections
 from hm.models import hmOperator, Operator
 from datetime import datetime, timedelta, time
 import pytz
@@ -58,8 +58,12 @@ class Command(BaseCommand):
 
         exec [jmineops_reporting].[dbo].[mdi_login_hm] @startdate, @enddate
         """
+        try:
+            csr = connections["jigsaw"].cursor()
+        except OperationalError as e:
+            self.stderr.write(f"Operational Error: {e}")
+            return
 
-        csr = connections["jigsaw"].cursor()
         csr.execute(query)
         data = csr.fetchall()
 

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.db import connections
+from django.db import OperationalError, connections
 from stb_loader.models import loaderID, LoaderStatus, ClusterLoader
 from stb_loader.management.commands.stb_code import standby_codes, RANK, BDC
 import stb_loader.management.commands.function as f
@@ -37,7 +37,12 @@ class Command(BaseCommand):
         """
 
         # Shift States
-        cursor_jigsaw = connections["jigsaw"].cursor()
+        try:
+            cursor_jigsaw = connections["jigsaw"].cursor()
+        except OperationalError as e:
+            self.stderr.write(f"Operational Error: {e}")
+            return
+
         cursor_jigsaw.execute(ss_sql)
         data = cursor_jigsaw.fetchall()
         shift_states_df = pd.DataFrame(
@@ -144,7 +149,12 @@ class Command(BaseCommand):
         order by `shift_breakdown`.`id` desc
         """
         # Data Breakdown
-        cursor_mcr = connections["MCRBD"].cursor()
+        try:
+            cursor_mcr = connections["MCRBD"].cursor()
+        except OperationalError as e:
+            self.stderr.write(f"Operational Error: {e}")
+            return
+
         cursor_mcr.execute(bd_sql)
         data = cursor_mcr.fetchall()
         breakdown_df = pd.DataFrame(

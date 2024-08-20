@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from stb_loader.models import loaderID
 from ritase.models import truckID, ritase
-from django.db import connections
+from django.db import OperationalError, connections
 from datetime import timedelta, datetime
 import pytz
 
@@ -54,7 +54,12 @@ class Command(BaseCommand):
         WHERE sl.deleted_at is NULL AND dateadd("HH",8,time_full) between @start_date and @enddate
         ORDER BY time_full asc
         """
-        cursor_jigsaw = connections["jigsaw"].cursor()
+        try:
+            cursor_jigsaw = connections["jigsaw"].cursor()
+        except OperationalError as e:
+            self.stderr.write(f"Operational Error: {e}")
+            return
+
         cursor_jigsaw.execute(sql_load)
         data = cursor_jigsaw.fetchall()
 

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.db import connections
+from django.db import OperationalError, connections
 from stb_hauler.models import HaulerStatus
 from ritase.models import truckID
 import stb_loader.management.commands.function as f
@@ -38,7 +38,12 @@ class Command(BaseCommand):
         WHERE sfi.deleted_at is NULL AND sfi.id is not NULL and eqp.name like 'D%%'
         """
         # Shift States
-        cursor_jigsaw = connections["jigsaw"].cursor()
+        try:
+            cursor_jigsaw = connections["jigsaw"].cursor()
+        except OperationalError as e:
+            self.stderr.write(f"Operational Error: {e}")
+            return
+
         cursor_jigsaw.execute(ss_sql)
         data = cursor_jigsaw.fetchall()
         shift_states_df = pd.DataFrame(
@@ -96,7 +101,11 @@ class Command(BaseCommand):
         ) 
         order by `shift_breakdown`.`id` desc
         """
-        cursor_mcr = connections["MCRBD"].cursor()
+        try:
+            cursor_mcr = connections["MCRBD"].cursor()
+        except OperationalError as e:
+            self.stderr.write(f"Operational Error: {e}")
+            return
         cursor_mcr.execute(bd_sql)
         data = cursor_mcr.fetchall()
         breakdown_df = pd.DataFrame(
