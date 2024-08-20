@@ -1,9 +1,9 @@
 from itertools import chain
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.db.models import OuterRef, Subquery, F
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
-from hm.models import Operator, hmOperator
+from hm.models import hmOperator
 from ritase.models import cek_ritase
 from stb_hauler.models import HaulerStatus
 from stb_loader.models import ClusterLoader, LoaderStatus
@@ -228,7 +228,7 @@ def production(request):
     subquery = hmOperator.objects.filter(id=OuterRef("operator_hauler_id"))
 
     data = (
-        cek_ritase.objects.filter(date=date, shift=shift)
+        cek_ritase.objects.filter(date=date, shift=shift, code_material__isnull=False)
         .annotate(
             nrp=Coalesce(Subquery(subquery.values("NRP")[:1]), None),
             operator_hauler=Coalesce(
@@ -236,10 +236,15 @@ def production(request):
             ),
             hm_start=Coalesce(Subquery(subquery.values("hm_start")[:1]), None),
             hm_end=Coalesce(Subquery(subquery.values("hm_end")[:1]), None),
+            material=F("code_material__material"),
+            remark=F("code_material__remark"),
         )
         .values(
+            "date",
+            "shift",
             "loader",
-            "code_material",
+            "material",
+            "remark",
             "hauler",
             "nrp",
             "operator_hauler",
@@ -261,7 +266,33 @@ def production(request):
         )
     )
     df = pd.DataFrame(list(data))
-    filename = "ritase.xlsx"
+    column_order = [
+        "date",
+        "shift",
+        "hauler",
+        "nrp",
+        "hm_start",
+        "hm_end",
+        "loader",
+        "material",
+        "remark",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "operator_hauler",
+    ]
+    df = df.reindex(columns=column_order)
+    filename = f"ritase-{date}-{shift}.xlsx"
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
