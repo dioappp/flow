@@ -337,26 +337,18 @@
             fields: [{
                 name: 'loader',
                 type: 'select',
-                options: [{
-                    %
-                    for loader in loaders %
-                } {
-                    label: "{{ loader }}"
-                }, {
-                    % endfor %
-                }],
+                options:[
+                {% for loader in loaders %}
+                {label: "{{ loader }}"},
+                {% endfor %}],
                 className: 'js-example-basic-single'
             }, {
                 name: 'code_material',
                 type: 'select',
-                options: [{
-                    %
-                    for option in options %
-                } {
-                    label: "{{ option }}"
-                }, {
-                    % endfor %
-                }],
+                options: [
+                {% for option in options %}
+                {label: "{{ option }}"},
+                {% endfor %}],
                 className: 'form-control'
             }, {
                 name: 'a',
