@@ -8,4 +8,5 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("cek_operator/", views.operator, name="cek_operator"),
     path("update/", views.update, name="update"),
+    path("add/", views.add, name="add"),
 ]

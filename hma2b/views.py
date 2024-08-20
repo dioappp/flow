@@ -71,3 +71,7 @@ def update(request):
 
     response = {}
     return JsonResponse(response)
+
+
+def add(request):
+    return

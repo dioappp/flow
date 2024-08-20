@@ -53,12 +53,14 @@
             </div>
         </div>
     </div>
+ 
 {% endblock content %}
 {% block script %}
     <script src="{% static 'js/web-session-management.js' %}"></script>
     <script type="text/javascript">
         $(document).ready(function() {
             load()
+            formCard()
         })
 
         $("#cn-hauler").on("keydown",
@@ -189,5 +191,76 @@
                 youSendData: true,
             },
         };
+
+        function formCard() {
+            var container = d3.select(".pc-content");
+            var row = container.append("div").attr("class", "row").attr("id", "form-card");
+
+            var formcard = row.append("div").attr("class", "col-lg-5").append("div").attr("class", "card");
+            var cardHeader = formcard.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Form Input HM Operator (BELUM BISA)");
+            var cardBody = formcard.append("div").attr("class", "card-body");
+
+            var form = cardBody.append("form").attr("id", "hm-form")
+                .attr("method", "POST")
+                .attr("enctype", "multipart/form-data")
+                .attr("action", "{% url 'hma2b:add' %}")
+            form.append("input").attr("type", "hidden").attr("name", "csrfmiddlewaretoken").attr("value", "{{ csrf_token }}")
+
+            var formGroups = [{
+                label: 'Equipment',
+                inputType: "text",
+                inputValue: null,
+            }, {
+                label: "NRP",
+                inputType: "number",
+                inputValue: null,
+            }, {
+                label: "HM Start",
+                inputType: "number",
+                inputValue: null,
+            }, {
+                label: "HM End",
+                inputType: "number",
+                inputValue: null,
+            }];
+
+            formGroups.forEach(group => {
+                var formGroup = form.append("div").attr("class", "mb-0 row");
+                formGroup.append("label")
+                    .attr("for", group.label.replace(/\s+/g, ''))
+                    .attr("class", "col-sm-3 col-form-label")
+                    .text(group.label);
+                const inputDiv = formGroup.append("div").attr("class", "col-sm");
+                var input = inputDiv.append("input")
+                    .attr("type", group.inputType)
+                    .attr("name", group.label)
+                    .attr("class", "form-control")
+                    .attr("id", group.label.replace(/\s+/g, ''))
+                    .attr("value", group.inputValue || "")
+                    .attr("readonly", group.readonly ? true : null);
+
+                if (group.inputType == "number") {
+                    input.attr("step", "any")
+                }
+            })
+            var cardFooter = form
+                .append("div")
+                .attr("class", "mb-0 mt-2 row d-flex justify-content-end");
+            cardFooter
+                .append("button")
+                .attr("id", "cancel-button")
+                .attr("type", "button")
+                .attr("class", "btn btn-secondary me-3")
+                .attr("style", "width: auto")
+                .text("Cancel")
+
+            cardFooter
+                .append("button")
+                .attr("id", "save-button")
+                .attr("type", "submit")
+                .attr("class", "btn btn-primary")
+                .attr("style", "width: auto")
+                .text("Add Data")
+        }
     </script>
 {% endblock script %}
