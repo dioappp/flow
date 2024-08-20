@@ -461,5 +461,8 @@ function loadWh() {
     success: function (data) {
       $("#WH").val(data.data.durasi.WH.toFixed(2));
     },
+    error: function (error) {
+      console.error(error);
+    },
   });
 }

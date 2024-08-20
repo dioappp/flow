@@ -94,6 +94,10 @@ def calculate_wh(request):
         "standby_code",
     )
 
+    if not wh:
+        response = {"error": f"tidak ada data WH untuk unit {hauler_jigsaw}"}
+        return JsonResponse(response, status=405)
+
     df = pd.DataFrame(list(wh))
     df = df.sort_values("timeStart")
     df["timeStart"] = pd.to_datetime(df["timeStart"])
