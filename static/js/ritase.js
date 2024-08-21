@@ -459,7 +459,13 @@ function loadWh() {
       "X-CSRFToken": csrf_token,
     },
     success: function (data) {
-      $("#WH").val(data.data.durasi.WH.toFixed(2));
+      var wh = data.data.durasi.WH;
+      var hm = $("#HM").val();
+      $("#WH").val(wh.toFixed(2));
+
+      if (wh > hm) {
+        d3.select("#WH").classed("bg-warning", true);
+      }
     },
     error: function (error) {
       console.error(error);

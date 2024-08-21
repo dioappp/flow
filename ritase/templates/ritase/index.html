@@ -169,13 +169,9 @@
 
             data.forEach(function(item, index) {
                 var row = container.append("div").attr("class", "row").attr("id", "operator-card");
-                var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card");
-                var hm = item.hm_end - item.hm_start;
-                if (hm > 13 || hm < 0) {
-                    cardHeaderOp = operator.append("div").attr("class", "card-header bg-danger").append("h5").attr("class", "mb-0 text-white").text("Operator");
-                } else {
-                    cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
-                }
+                var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card").attr("id", "operator");
+                hm = item.hm_end - item.hm_start;
+                cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
                 var cardBodyOp = operator.append("div").attr("class", "card-body");
                 var form = cardBodyOp.append("form").attr("id", "operator-form")
                     .attr("method", "POST")
@@ -273,13 +269,17 @@
                 editors.push(editor);
             })
 
+            if (hm > 13 || hm < 0) {
+                d3.select("#HM").classed("bg-warning",true)
+            }
+
+            setTimeFrameShiftly()
+
             var row = container.append("div").attr("class", "row").attr("id", "operator-card")
                 .append("div").attr("class", "col")
                 .append("div").attr("class", "card").attr("id", "table-card")
                 .append("div").attr("class", "card-body")
                 .append("div").attr("id", "data-" + cn);
-
-            setTimeFrameShiftly()
             showDetail(cn)
         }
 
