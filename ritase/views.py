@@ -82,7 +82,7 @@ def operator(request):
 def calculate_wh(request):
     date_pattern = request.POST.get("date")
     shift_pattern = request.POST.get("shift")
-    hauler_pattern = request.POST.get("hauler")
+    hauler_pattern = str(request.POST.get("hauler")).upper()
 
     hauler_jigsaw = get_cn_jigsaw(hauler_pattern)
 
@@ -281,7 +281,9 @@ def create_operator(request):
     nrp = int(request.POST.get("NRP"))
     hm_start = float(request.POST.get("HM Start"))
     hm_end = float(request.POST.get("HM End"))
-    unit = request.POST.get("unit")
+    unit = str(request.POST.get("unit")).upper()
+
+    unit = get_cn_jigsaw(unit)
 
     login, logout = get_shift_time(date, shift)
     try:
