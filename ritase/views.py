@@ -97,7 +97,7 @@ def calculate_wh(request):
 
     if not wh:
         response = {"error": f"tidak ada data WH untuk unit {hauler_jigsaw}"}
-        return JsonResponse(response, status=405)
+        return JsonResponse(response, status=404)
 
     df = pd.DataFrame(list(wh))
     df = df.sort_values("timeStart")
