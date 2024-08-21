@@ -465,6 +465,8 @@ function loadWh() {
 
       if (wh > hm) {
         d3.select("#WH").classed("bg-warning", true);
+      } else {
+        d3.select("#WH").classed("bg-warning", false);
       }
     },
     error: function (error) {
