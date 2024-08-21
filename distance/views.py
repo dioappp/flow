@@ -1,6 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, JsonResponse
-from django.urls import reverse
+from django.http import JsonResponse
 from django.utils import timezone
 from distance.models import distance
 from stb_loader.models import loaderID
