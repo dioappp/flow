@@ -173,8 +173,8 @@ def standby(request):
             )
 
         df = pd.DataFrame(list(data))
-        df = df.rename(columns={"unit__unit": "unit"})
-        df = df.sort_values(by=["unit", "timeStart"])
+        df = df.rename(columns={"unit__unit": "equipment"})
+        df = df.sort_values(by=["equipment", "timeStart"])
         df["timeStart"] = pd.to_datetime(df["timeStart"])
 
         s = 60 - df["timeStart"].max().second
@@ -185,7 +185,7 @@ def standby(request):
 
         te = df["timeStart"].max() + pd.Timedelta(minutes=m, seconds=s)
 
-        df["timeEnd"] = df.groupby("unit")["timeStart"].shift(-1)
+        df["timeEnd"] = df.groupby("equipment")["timeStart"].shift(-1)
         df["timeEnd"] = df["timeEnd"].fillna(te)
 
         df["durasi"] = df["timeEnd"] - df["timeStart"]
@@ -199,13 +199,13 @@ def standby(request):
             if not is_in_jam_kritis(id, df):
                 df.loc[id, "standby_code"] = "WH"
 
-        result = df.groupby(["unit", "standby_code"], as_index=False).agg(
+        result = df.groupby(["equipment", "standby_code"], as_index=False).agg(
             {
                 "durasi": "sum",
             }
         )
         result = (
-            result.pivot(index="unit", columns="standby_code", values="durasi")
+            result.pivot(index="equipment", columns="standby_code", values="durasi")
             .fillna(0)
             .reset_index()
         )
