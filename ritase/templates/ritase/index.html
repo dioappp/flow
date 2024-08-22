@@ -160,6 +160,10 @@
                 input.on("change", function() {
                     handleInputChange(form, "Create");
                 });
+
+                if (group.inputType == "number") {
+                    input.attr("step", "any")
+                }
             });
         }
 
