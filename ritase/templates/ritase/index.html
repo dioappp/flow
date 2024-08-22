@@ -100,12 +100,15 @@
                 headers: {
                     "X-CSRFToken": "{{ csrf_token }}",
                 },
-                complete: function(d) {
-                    if (d.responseJSON.data.length == 0) {
+                success: function(d) {
+                    if (d.data.length == 0) {
                         generateCardNonJigsaw($("#cn-hauler").val());
                     } else {
-                        generateCard(d.responseJSON.data, d.responseJSON.equipment);
+                        generateCard(d.data, d.equipment);
                     }
+                },
+                error: function(d){
+                    alert(d.responseJSON.error)
                 }
             })
         };
@@ -171,7 +174,7 @@
                 var row = container.append("div").attr("class", "row").attr("id", "operator-card");
                 var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card").attr("id", "operator");
                 hm = item.hm_end - item.hm_start;
-                cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator");
+                cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator - "+cn);
                 var cardBodyOp = operator.append("div").attr("class", "card-body");
                 var form = cardBodyOp.append("form").attr("id", "operator-form")
                     .attr("method", "POST")
@@ -198,12 +201,12 @@
                 }, {
                     label: "HM Start",
                     inputType: "number",
-                    inputValue: item.hm_start.toFixed(2),
+                    inputValue: item.hm_start !== null ? item.hm_start.toFixed(2): null,
                     readonly: false
                 }, {
                     label: "HM End",
                     inputType: "number",
-                    inputValue: item.hm_end.toFixed(2),
+                    inputValue: item.hm_end !== null ? item.hm_end.toFixed(2): null,
                     readonly: false
                 }, {
                     label: "HM",
@@ -348,7 +351,7 @@
                 {% for option in options %}
                 {label: "{{ option }}"},
                 {% endfor %}],
-                className: 'form-control'
+                className: 'js-example-basic-single'
             }, {
                 name: 'a',
                 type: 'numeric'

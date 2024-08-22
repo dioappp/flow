@@ -194,6 +194,8 @@ class DatatablesInlineEditor {
                 if (field && field.type === 'numeric')
                     this.setNumericTypeToField(inputElement);
                 this.cellObj = inputElement;
+
+                $(".js-example-basic-single").select2()
             }
         }
     }

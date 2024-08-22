@@ -15,7 +15,9 @@ import pandas as pd
 
 # Create your views here.
 def index(request):
-    options = material.objects.values_list("code", flat=True)
+    code = material.objects.values_list("code", flat=True)
+    options = list(code)
+    options.append("")
     loaders = loaderID.objects.values_list("unit", flat=True).order_by("unit")
     return render(
         request, "ritase/index.html", {"options": options, "loaders": loaders}
@@ -47,8 +49,11 @@ def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
 
 def get_cn_jigsaw(hauler_pattern: str) -> str:
     if not str(hauler_pattern).startswith("d"):
-        obj = truckID.objects.get(code=hauler_pattern)
-        hauler_jigsaw = obj.jigsaw
+        try:
+            obj = truckID.objects.get(code=hauler_pattern)
+            hauler_jigsaw = obj.jigsaw
+        except ObjectDoesNotExist:
+            hauler_jigsaw = None
     else:
         hauler_jigsaw = str(hauler_pattern).upper()
     return hauler_jigsaw
@@ -65,6 +70,12 @@ def operator(request):
 
     hauler_jigsaw = get_cn_jigsaw(hauler_pattern)
 
+    if hauler_jigsaw == None:
+        return JsonResponse(
+            {"error": "Unit belum tersedia, update di unit di halaman admin"},
+            status=404,
+        )
+
     data = (
         hmOperator.objects.filter(
             Q(equipment=hauler_jigsaw),
@@ -76,7 +87,7 @@ def operator(request):
     )
 
     response = {"data": list(data), "equipment": hauler_jigsaw}
-    return JsonResponse(response)
+    return JsonResponse(response, status=200)
 
 
 def calculate_wh(request):
