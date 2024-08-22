@@ -232,8 +232,10 @@ def load_ritase_loader(request):
 def addrow(request):
     date = request.POST.get("date")
     shift = int(request.POST.get("shift"))
-    hauler = request.POST.get("hauler").upper()
+    hauler = str(request.POST.get("hauler")).upper()
     operator_id = int(request.POST.get("id"))
+
+    hauler = get_cn_jigsaw(hauler)
 
     cek_ritase.objects.create(
         date=datetime.strptime(date, "%Y-%m-%d"),
@@ -262,12 +264,8 @@ def update(request):
     col = request.POST.get("fieldName")
     val = request.POST.get("value")
 
-    if col == "material":
+    if col == "code_material":
         val = str(val).upper()
-        remark = material.get(val, None)
-        csr = cek_ritase.objects.get(pk=id)
-        csr.remark = remark
-        csr.save()
 
     cek_ritase.objects.filter(pk=id).update(**{col: val})
 
