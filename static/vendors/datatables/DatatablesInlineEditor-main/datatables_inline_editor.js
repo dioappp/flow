@@ -166,6 +166,47 @@ class DatatablesInlineEditor {
                         style: 'width: 100%',
                         class: (field.className) ? field.className : 'form-control',
                     });
+                } else if (field.type === 'datalist') {
+                    // Get all cells in the same column
+                    const cellsInColumn = $(cell.node()).closest('table').find('tbody tr td:nth-child(' + ($(cell.node()).index() + 1) + ')');
+                
+                    cellsInColumn.each(function () {
+                        if (!$(this).is(cell)) {
+                            const oldInput = $(this).find('input[list]');
+                            if (oldInput.length > 0) {
+                                const previousValue = oldInput.val();
+                                oldInput.remove();
+                                $(this).text(previousValue);
+                            }
+                        }
+                    });
+                
+                    // Create the new input element with datalist
+                    inputElement = $('<input>', {
+                        type: 'text',
+                        class: (field.className) ? 'custom-editor-input ' + field.className : 'custom-editor-input',
+                        list: 'datalist-' + field.name // Associate the datalist with this input
+                    });
+                
+                    // Create the datalist element
+                    const dataListElement = $('<datalist>', {
+                        id: 'datalist-' + field.name
+                    });
+                
+                    // Populate the datalist with options
+                    field.options.forEach(option => {
+                        let optionElement = $('<option>', {
+                            value: option.value,
+                            text: option.label
+                        });
+                        if (option.label === cellContent) {
+                            inputElement.val(option.label);
+                        }
+                        dataListElement.append(optionElement);
+                    });
+                
+                    // Append the datalist to the document
+                    $('body').append(dataListElement);
                 } else {
                     inputElement = $('<input>', {
                         type: 'text',
@@ -205,6 +246,9 @@ class DatatablesInlineEditor {
         let fieldName = this.table.settings()[0].aoColumns[cellObj.index().column].data;
         let id = parseInt($(cellObj.node()).parent().attr('id'));
         let cellValue = $(cell).val();
+
+        //if (cellValue==='') 
+        //    cellValue = $("tbody td span span span span").attr('title')
 
         this.trigger('cell.preEdit', { e }, 'cell.preEdit');
 

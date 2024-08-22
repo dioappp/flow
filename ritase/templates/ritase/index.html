@@ -331,6 +331,7 @@
             });
         }
 
+
         var options = {
             cellSelector: 'tbody td',
             headers: {
@@ -338,20 +339,20 @@
             },
             fields: [{
                 name: 'loader',
-                type: 'select',
+                type: 'datalist',
                 options:[
                 {% for loader in loaders %}
                 {label: "{{ loader }}"},
                 {% endfor %}],
-                className: 'js-example-basic-single'
+                className: 'form-control text-uppercase'
             }, {
                 name: 'code_material',
-                type: 'select',
+                type: 'datalist',
                 options: [
                 {% for option in options %}
                 {label: "{{ option }}"},
                 {% endfor %}],
-                className: 'js-example-basic-single'
+                className: 'form-control text-uppercase'
             }, {
                 name: 'a',
                 type: 'numeric'

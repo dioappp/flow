@@ -261,13 +261,15 @@ def update(request):
     id = request.POST.get("id")
     col = request.POST.get("fieldName")
     val = request.POST.get("value")
-    cek_ritase.objects.filter(pk=id).update(**{col: val})
 
     if col == "material":
+        val = str(val).upper()
         remark = material.get(val, None)
         csr = cek_ritase.objects.get(pk=id)
         csr.remark = remark
         csr.save()
+
+    cek_ritase.objects.filter(pk=id).update(**{col: val})
 
     response = {}
     return JsonResponse(response)
