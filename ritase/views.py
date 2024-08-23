@@ -291,6 +291,30 @@ def addrow(request):
     return HttpResponse(status=204)
 
 
+def addrowloader(request):
+    # date = request.POST.get("date")
+    # shift = int(request.POST.get("shift"))
+
+    # cek_ritase.objects.create(
+    #     date=datetime.strptime(date, "%Y-%m-%d"),
+    #     shift=shift,
+    #     a=0,
+    #     b=0,
+    #     c=0,
+    #     d=0,
+    #     e=0,
+    #     f=0,
+    #     g=0,
+    #     h=0,
+    #     i=0,
+    #     j=0,
+    #     k=0,
+    #     l=0,
+    #     m=0,
+    # )
+    return NotImplementedError
+
+
 def update(request):
     id = request.POST.get("id")
     col = request.POST.get("fieldName")

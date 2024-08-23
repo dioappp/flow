@@ -424,6 +424,23 @@ function addRow(button) {
   });
 }
 
+function addRowLoader() {
+  $.ajax({
+    url: addLoaderUrl,
+    type: "POST",
+    headers: {
+      "X-CSRFToken": csrf_token,
+    },
+    data: {
+      date: $("#date-select").val(),
+      shift: $("#shift-select").val(),
+    },
+    success: function () {
+      loadTable();
+    },
+  });
+}
+
 function loadTable() {
   tables.forEach(function (table) {
     table.draw();

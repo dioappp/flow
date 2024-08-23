@@ -62,6 +62,7 @@
         var deleteUrl = "{% url 'ritase:delete_row' %}"
         var csrf_token = "{{ csrf_token }}"
         var addUrl = "{% url 'ritase:addrow' %}"
+        var addLoaderUrl = '{% url "ritase:addrowloader" %}'
     </script>
     <script src="{% static 'js/web-session-management.js' %}"></script>
     <script src="{% static 'js/ritase.js' %}"></script>
@@ -97,6 +98,28 @@
                 ordering: false,
                 stateSave: true,
                 pagingType: "full_numbers",
+                layout: {
+                    topStart: 'pageLength',
+                    topEnd: 'search',
+                    bottomStart: 'info',
+                    bottom1End: function() {
+                        let container = d3.select(document.createElement('div'));
+
+                        let button = container.append("button")
+                            .attr('class', 'btn btn-sm btn-primary')
+                            .attr('type', 'button')
+                            .attr('id', 'addRow')
+                            .on('click', function() {
+                                addRowLoader()
+                            })
+                            .append("i")
+                            .attr("class", "ti ti-plus")
+                            .style("color", "#FFFFFF")
+
+                        return container.node();
+                    },
+                    bottomEnd: 'paging',
+                },
                 ajax: {
                     url: "{% url 'ritase:cek_ritase_loader' %}",
                     type: "POST",
