@@ -14,4 +14,5 @@ urlpatterns = [
     path("update_operator/", views.update_operator, name="update_operator"),
     path("delete_row/", views.delete_row, name="delete_row"),
     path("wh/", views.calculate_wh, name="wh"),
+    path("get_options/", views.get_options, name="get_options"),
 ]

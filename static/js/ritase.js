@@ -474,3 +474,25 @@ function loadWh() {
     },
   });
 }
+
+function get_options(callback) {
+  $.ajax({
+    url: optionsUrl,
+    type: "GET",
+    dataType: "json",
+    success: function (data) {
+      var materials = processOptions(data.materials);
+      var loaders = processOptions(data.loaders);
+      if (callback) {
+        callback(loaders, materials);
+      }
+    },
+    error: function (error) {
+      console.error(error);
+    },
+  });
+}
+
+function processOptions(opts) {
+  return opts.map((opt) => ({ label: opt }));
+}

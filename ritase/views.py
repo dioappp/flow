@@ -15,13 +15,16 @@ import pandas as pd
 
 # Create your views here.
 def index(request):
-    code = material.objects.values_list("code", flat=True)
-    options = list(code)
-    options.append("")
-    loaders = loaderID.objects.values_list("unit", flat=True).order_by("unit")
-    return render(
-        request, "ritase/index.html", {"options": options, "loaders": loaders}
-    )
+    return render(request, "ritase/index.html")
+
+
+def get_options(requst):
+    materials = list(material.objects.values_list("code", flat=True))
+    materials.append("")
+    loaders = list(loaderID.objects.values_list("unit", flat=True).order_by("unit"))
+    loaders.append("")
+    response = {"loaders": loaders, "materials": materials}
+    return JsonResponse(response, status=200)
 
 
 def index_loader(request):

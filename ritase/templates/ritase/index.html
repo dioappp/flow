@@ -78,14 +78,77 @@
         var csrf_token = "{{ csrf_token }}"
         var addUrl = "{% url 'ritase:addrow' %}"
         var whUrl = "{% url 'ritase:wh' %}"
+        var optionsUrl = "{% url 'ritase:get_options' %}"
     </script>
     <script src="{% static 'js/ritase.js' %}"></script>
     <script type="text/javascript">
-        //$(document).ready(function() {
-        //    $('.js-example-basic-single').select2();
-        //});
         let colorScale = getColorData()
-        var width = 1546.250;
+
+        function handleOpt(loaders, materials) {
+            options = {
+                cellSelector: 'tbody td',
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                fields: [{
+                    name: 'loader',
+                    type: 'datalist',
+                    options: [...loaders],
+                    className: 'form-control text-uppercase'
+                }, {
+                    name: 'code_material',
+                    type: 'datalist',
+                    options: [...materials],
+                    className: 'form-control text-uppercase'
+                }, {
+                    name: 'a',
+                    type: 'numeric'
+                }, {
+                    name: 'b',
+                    type: 'numeric'
+                }, {
+                    name: 'c',
+                    type: 'numeric'
+                }, {
+                    name: 'd',
+                    type: 'numeric'
+                }, {
+                    name: 'e',
+                    type: 'numeric'
+                }, {
+                    name: 'f',
+                    type: 'numeric'
+                }, {
+                    name: 'g',
+                    type: 'numeric'
+                }, {
+                    name: 'h',
+                    type: 'numeric'
+                }, {
+                    name: 'i',
+                    type: 'numeric'
+                }, {
+                    name: 'j',
+                    type: 'numeric'
+                }, {
+                    name: 'k',
+                    type: 'numeric'
+                }, {
+                    name: 'l',
+                    type: 'numeric'
+                }, {
+                    name: 'm',
+                    type: 'numeric'
+                }, ],
+                url: "{% url 'ritase:update'%}",
+                method: 'POST',
+                data: {
+                    youSendData: true,
+                },
+            };
+        }
+
+        get_options(handleOpt);
 
 
         function load() {
@@ -107,7 +170,7 @@
                         generateCard(d.data, d.equipment);
                     }
                 },
-                error: function(d){
+                error: function(d) {
                     alert(d.responseJSON.error)
                 }
             })
@@ -178,7 +241,7 @@
                 var row = container.append("div").attr("class", "row").attr("id", "operator-card");
                 var operator = row.append("div").attr("class", "col-lg-3").append("div").attr("class", "card").attr("id", "operator");
                 hm = item.hm_end - item.hm_start;
-                cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator - "+cn);
+                cardHeaderOp = operator.append("div").attr("class", "card-header").append("h5").attr("class", "mb-0").text("Operator - " + cn);
                 var cardBodyOp = operator.append("div").attr("class", "card-body");
                 var form = cardBodyOp.append("form").attr("id", "operator-form")
                     .attr("method", "POST")
@@ -205,12 +268,12 @@
                 }, {
                     label: "HM Start",
                     inputType: "number",
-                    inputValue: item.hm_start !== null ? item.hm_start.toFixed(2): null,
+                    inputValue: item.hm_start !== null ? item.hm_start.toFixed(2) : null,
                     readonly: false
                 }, {
                     label: "HM End",
                     inputType: "number",
-                    inputValue: item.hm_end !== null ? item.hm_end.toFixed(2): null,
+                    inputValue: item.hm_end !== null ? item.hm_end.toFixed(2) : null,
                     readonly: false
                 }, {
                     label: "HM",
@@ -277,7 +340,7 @@
             })
 
             if (hm > 13 || hm < 0) {
-                d3.select("#HM").classed("bg-warning",true)
+                d3.select("#HM").classed("bg-warning", true)
             }
 
             setTimeFrameShiftly()
@@ -336,73 +399,6 @@
         }
 
 
-        var options = {
-            cellSelector: 'tbody td',
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            fields: [{
-                name: 'loader',
-                type: 'datalist',
-                options:[
-                {% for loader in loaders %}
-                {label: "{{ loader }}"},
-                {% endfor %}],
-                className: 'form-control text-uppercase'
-            }, {
-                name: 'code_material',
-                type: 'datalist',
-                options: [
-                {% for option in options %}
-                {label: "{{ option }}"},
-                {% endfor %}],
-                className: 'form-control text-uppercase'
-            }, {
-                name: 'a',
-                type: 'numeric'
-            }, {
-                name: 'b',
-                type: 'numeric'
-            }, {
-                name: 'c',
-                type: 'numeric'
-            }, {
-                name: 'd',
-                type: 'numeric'
-            }, {
-                name: 'e',
-                type: 'numeric'
-            }, {
-                name: 'f',
-                type: 'numeric'
-            }, {
-                name: 'g',
-                type: 'numeric'
-            }, {
-                name: 'h',
-                type: 'numeric'
-            }, {
-                name: 'i',
-                type: 'numeric'
-            }, {
-                name: 'j',
-                type: 'numeric'
-            }, {
-                name: 'k',
-                type: 'numeric'
-            }, {
-                name: 'l',
-                type: 'numeric'
-            }, {
-                name: 'm',
-                type: 'numeric'
-            }, ],
-            url: "{% url 'ritase:update'%}",
-            method: 'POST',
-            data: {
-                youSendData: true,
-            },
-        };
 
         function showDetail(id) {
             $.ajax({
@@ -522,6 +518,8 @@
                 })
                 .beginning(ts)
                 .ending(te);
+
+            var width = $("#table-card div").width()
             var container = d3.select("#data-" + id_element);
             container.select("svg").remove();
             var svg = container
@@ -536,7 +534,7 @@
                 if (event.key === "Enter") {
                     event.preventDefault();
                     load();
-                    $(this).select()
+                    $(this).select();
                 }
             });
 
