@@ -39,10 +39,19 @@ class Command(BaseCommand):
             type=int,
             help="Input shift 1 atau 2",
         )
+        parser.add_argument(
+            "--hauler",
+            dest="hauler",
+            action="store",
+            type=str,
+            help="Input Hauler",
+            default="",
+        )
 
     def handle(self, *args, **options):
         date = options.get("date")
         shift = options.get("shift")
+        hauler = options.get("hauler")
 
         subquery_hauler = hmOperator.objects.filter(
             equipment=OuterRef("truck_id__jigsaw"),
@@ -56,29 +65,31 @@ class Command(BaseCommand):
             logout_time__gte=OuterRef("time_full"),
         ).values("id")[:1]
 
-        data = (
-            ritase.objects.filter(
+        if hauler == "":
+            obj = ritase.objects.filter(
                 deleted_at__isnull=True, report_date=date, shift=shift
             )
-            .annotate(
-                operator_hauler_id=Coalesce(
-                    Subquery(subquery_hauler.values("id")), None
-                ),
-                operator_loader_id=Coalesce(
-                    Subquery(subquery_loader.values("id")), None
-                ),
+        else:
+            obj = ritase.objects.filter(
+                deleted_at__isnull=True,
+                report_date=date,
+                shift=shift,
+                truck_id__jigsaw=hauler,
             )
-            .values(
-                "truck_id__jigsaw",
-                "operator_hauler_id",
-                "time_full",
-                "loader_id__unit",
-                "operator_loader_id",
-                "type",
-                "hour",
-                "report_date",
-                "shift",
-            )
+
+        data = obj.annotate(
+            operator_hauler_id=Coalesce(Subquery(subquery_hauler.values("id")), None),
+            operator_loader_id=Coalesce(Subquery(subquery_loader.values("id")), None),
+        ).values(
+            "truck_id__jigsaw",
+            "operator_hauler_id",
+            "time_full",
+            "loader_id__unit",
+            "operator_loader_id",
+            "type",
+            "hour",
+            "report_date",
+            "shift",
         )
         df = pd.DataFrame(list(data))
         df = df.rename(

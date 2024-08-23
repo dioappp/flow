@@ -11,6 +11,9 @@ import math
 from stb_hauler.models import HaulerStatus
 from stb_loader.models import loaderID
 import pandas as pd
+from django.core.management import call_command
+import asyncio
+from asgiref.sync import sync_to_async
 
 
 # Create your views here.
@@ -51,21 +54,21 @@ def get_shift_time(date: str, shift: str) -> tuple[datetime, datetime]:
 
 
 def get_cn_jigsaw(hauler_pattern: str) -> str:
-    if not str(hauler_pattern).startswith("d"):
+    if not str(hauler_pattern).startswith("D"):
         try:
             obj = truckID.objects.get(code=hauler_pattern)
             hauler_jigsaw = obj.jigsaw
         except ObjectDoesNotExist:
             hauler_jigsaw = None
     else:
-        hauler_jigsaw = str(hauler_pattern).upper()
+        hauler_jigsaw = hauler_pattern
     return hauler_jigsaw
 
 
 def operator(request):
     date_pattern = request.POST.get("date")
     shift_pattern = request.POST.get("shift")
-    hauler_pattern = request.POST.get("hauler")
+    hauler_pattern = str(request.POST.get("hauler")).upper()
 
     ts, te = get_shift_time(date_pattern, shift_pattern)
     ts = ts - timedelta(minutes=30)
@@ -91,6 +94,32 @@ def operator(request):
 
     response = {"data": list(data), "equipment": hauler_jigsaw}
     return JsonResponse(response, status=200)
+
+
+@sync_to_async
+def get_operator(id):
+    return hmOperator.objects.get(pk=id)
+
+
+async def load_ritase_not_login(request):
+    id = request.POST.get("id")
+    shift = request.POST.get("shift")
+    date = request.POST.get("date")
+
+    _, te = get_shift_time(date, shift)
+
+    op = await get_operator(id)
+    op.logout_time = te
+    await sync_to_async(op.save)()
+
+    hauler = op.equipment
+
+    def run_command():
+        call_command("cek_ritase", date=date, shift=shift, hauler=hauler)
+
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, run_command)
+    return HttpResponse(status=200)
 
 
 def calculate_wh(request):

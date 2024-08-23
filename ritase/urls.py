@@ -15,4 +15,5 @@ urlpatterns = [
     path("delete_row/", views.delete_row, name="delete_row"),
     path("wh/", views.calculate_wh, name="wh"),
     path("get_options/", views.get_options, name="get_options"),
+    path("load_rit/", views.load_ritase_not_login, name="load_ritase_not_login"),
 ]

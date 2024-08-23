@@ -57,12 +57,6 @@
                                 <option value="2">Shift 2</option>
                             </select>
                         </div>
-                        <button type="button"
-                                class="btn btn-primary me-3"
-                                id="btn_load"
-                                onclick="loadTable()">
-                            <i class="feather mr-2 icon-loader"></i> Refresh
-                        </button>
                     </div>
                 </div>
             </div>
@@ -149,6 +143,28 @@
         }
 
         get_options(handleOpt);
+
+        function load_data_ritase() {
+            $.ajax({
+                url: "{% url 'ritase:load_ritase_not_login' %}",
+                type: "POST",
+                data: {
+                    id: $('#ID').val(),
+                    date: $("#date-select").val(),
+                    shift: $("#shift-select").val(),
+                },
+                headers: {
+                    "X-CSRFToken": csrf_token,
+                },
+                success: function(data) {
+                    loadTable()
+                },
+                error: function(error) {
+                    console.error(error);
+                },
+
+            })
+        }
 
 
         function load() {
@@ -394,7 +410,11 @@
                     },
                 },
                 columns: column,
-                rowId: 'id'
+                rowId: 'id',
+                language: {
+                    zeroRecords: '<b>Jika pada grafik dibawah terdapat ritase.</b> Tekan tombol disamping untuk memuat data <button class="btn btn-warning event-btnx m-2" onclick="load_data_ritase()"><b>Load</b></button>'
+                },
+
             });
         }
 
