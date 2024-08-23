@@ -59,61 +59,62 @@
 {% endblock content %}
 {% block script %}
     <script type="text/javascript">
-        var deleteUrl =  "{% url 'ritase:delete_row' %}"
+        var deleteUrl = "{% url 'ritase:delete_row' %}"
         var csrf_token = "{{ csrf_token }}"
-        var addUrl =  "{% url 'ritase:addrow' %}"
+        var addUrl = "{% url 'ritase:addrow' %}"
     </script>
     <script src="{% static 'js/web-session-management.js' %}"></script>
     <script src="{% static 'js/ritase.js' %}"></script>
     <script type="text/javascript">
-        function load(){
+        function load() {
             var container = d3.select(".pc-content");
 
             container.selectAll("#operator-card").remove();
             tables = [];
             editors = [];
-            
+
             var row = container.append("div").attr("class", "row").attr("id", "operator-card");
 
             var ritase = row.append("div").attr("class", "col").append("div").attr("class", "card");
-                var cardBodyRit = ritase.append("div").attr("class", "card-body")
-                    .append("div").attr("class", "card-body table-border-style")
-                    .append("div").attr("class", "table-responsive")
-                    .append("table").attr("class", "table table-striped-columns").attr("id", "load-table");
+            var cardBodyRit = ritase.append("div").attr("class", "card-body")
+                .append("div").attr("class", "card-body table-border-style")
+                .append("div").attr("class", "table-responsive")
+                .append("table").attr("class", "table table-striped-columns").attr("id", "load-table");
 
-                var thead = cardBodyRit.append("thead").append("tr");
+            var thead = cardBodyRit.append("thead").append("tr");
 
-                getHeadersLoader()
+            getHeadersLoader()
 
-                headers.forEach(header => {
-                    thead.append("th")
-                        .attr("class", "align-middle bg-primary text-white")
-                        .text(header);
-                });
+            headers.forEach(header => {
+                thead.append("th")
+                    .attr("class", "align-middle bg-primary text-white")
+                    .text(header);
+            });
 
-                var table = $("#load-table").DataTable({processing: true,
-                    serverSide: true,
-                    ordering: false,
-                    stateSave: true,
-                    pagingType: "full_numbers",
-                    ajax: {
-                        url: "{% url 'ritase:cek_ritase_loader' %}",
-                        type: "POST",
-                        headers: {
-                            "X-CSRFToken": csrf_token,
-                        },
-                        data: function(d) {
-                            d.date = $("#date-select").val();
-                            d.shift = $("#shift-select").val();
-                        },
+            var table = $("#load-table").DataTable({
+                processing: true,
+                serverSide: true,
+                ordering: false,
+                stateSave: true,
+                pagingType: "full_numbers",
+                ajax: {
+                    url: "{% url 'ritase:cek_ritase_loader' %}",
+                    type: "POST",
+                    headers: {
+                        "X-CSRFToken": csrf_token,
                     },
-                    columns: column,
-                    rowId: 'id'
-                })
-                tables.push(table)
+                    data: function(d) {
+                        d.date = $("#date-select").val();
+                        d.shift = $("#shift-select").val();
+                    },
+                },
+                columns: column,
+                rowId: 'id'
+            })
+            tables.push(table)
 
-                var editor = new DatatablesInlineEditor(table, options);
-                editors.push(editor)
+            var editor = new DatatablesInlineEditor(table, options);
+            editors.push(editor)
         }
 
         var options = {
@@ -124,16 +125,13 @@
             fields: [{
                 name: 'loader',
                 type: 'text'
-            },{
+            }, {
                 name: 'hauler',
                 type: 'text'
             }, {
                 name: 'code_material',
                 type: 'select',
-                options: [
-                {% for option in options %}
-                {label: "{{ option }}"},
-                {% endfor %}],
+                options: "",
                 className: 'form-control'
             }, {
                 name: 'a',
@@ -181,7 +179,5 @@
                 youSendData: true,
             },
         };
-
-
     </script>
 {% endblock script %}

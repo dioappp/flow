@@ -71,12 +71,48 @@ class DatatablesInlineEditor {
             let keydownHandled = false;
             this.table.on("keydown focusout", this.cellSelector + " input", function (e) {
                 if (e.type === "keydown") {
-                    if (e.key !== "Enter") {
+                    if (e.key === "Enter") {
+                        keydownHandled = true;
+                        self.handleCellEditEvent(e, this);
+                    } else if (e.key === "Tab") {
+                        e.preventDefault(); // Prevent the default tab action
+    
+                        const shiftKey = e.shiftKey; // Check if Shift key is pressed
+                        const currentCell = $(this).closest(self.cellSelector);
+                        let targetCell;
+
+                        keydownHandled = true;
+                        self.handleCellEditEvent(e, this);
+    
+                        if (shiftKey) {
+                            // Move to the previous cell
+                            targetCell = currentCell.prev(self.cellSelector);
+                            if (!targetCell.length) {
+                                // If there is no previous cell, move to the last cell of the previous row
+                                const prevRow = currentCell.closest('tr').prev('tr');
+                                if (prevRow.length) {
+                                    targetCell = prevRow.find(self.cellSelector).last();
+                                }
+                            }
+                        } else {
+                            // Move to the next cell
+                            targetCell = currentCell.next(self.cellSelector);
+                            if (!targetCell.length) {
+                                // If there is no next cell, move to the first cell of the next row
+                                const nextRow = currentCell.closest('tr').next('tr');
+                                if (nextRow.length) {
+                                    targetCell = nextRow.find(self.cellSelector).first();
+                                }
+                            }
+                        }
+    
+                        if (targetCell.length) {
+                            // Trigger a click event on the target cell to focus on it
+                            targetCell.click();
+                        }
+                    } else {
                         keydownHandled = false;
-                        return;
                     }
-                    keydownHandled = true;
-                    self.handleCellEditEvent(e, this);
                 } else if (e.type === "focusout" && !keydownHandled) {
                     self.handleCellEditEvent(e, this);
                 } else {
