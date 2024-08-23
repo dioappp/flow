@@ -64,6 +64,7 @@ standby_codes = {
     "Disposal/ROM Stoppage": "S13",
     "Control SR": "S17",
     "No Material": "S20A",
+    "Waiting Support Equipment (Schedule)": "BS SS",
 }
 
 RANK = {
