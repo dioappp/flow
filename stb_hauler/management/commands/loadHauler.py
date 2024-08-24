@@ -256,7 +256,7 @@ class Command(BaseCommand):
                         }
                     )
 
-                if isRestTime and not isFriday:
+                if isRestTime and (not isFriday or hour == 0):
                     data.loc[data["Rank"] > 5, ["Standby Code", "Rank"]] = ["S5A", 5]
                     data = data.groupby("Standby Code", as_index=False).agg(
                         {
