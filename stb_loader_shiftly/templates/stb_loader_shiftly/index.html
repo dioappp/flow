@@ -31,6 +31,7 @@
             stateSave: true,
             ordering: false,
             pagingType: "full_numbers",
+            select: true,
             ajax: {
                 url: "{% url 'stb_loader_shiftly:report' %}",
                 type: "POST",
@@ -239,6 +240,26 @@
             event.preventDefault();
             var formData = new FormData(this);
             handleAddFormSubmission("{% url 'stb_loader:add'%}", data_unit, formData)
+        });
+
+        $('#addBatchModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateAddBatchForm(modal);
+        });
+
+        $('#addBatchModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
+
+        $('#addBatchForm').on('submit', function(event) {
+            event.preventDefault();
+            var units = table.rows({
+                selected: true
+            }).data().pluck('unit').toArray()
+            var formData = new FormData(this);
+            formData.append('units', JSON.stringify(units));
+
+            handleAddBatchFormSubmission("{% url 'stb_loader:addbatch'%}", units, formData)
         });
 
         function split() {
