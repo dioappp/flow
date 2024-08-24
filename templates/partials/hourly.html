@@ -47,24 +47,6 @@
             <label class="form-check-label" for="hanging">Hanging</label>
           </div>
         </div>
-        {% for pit, clusters in pit_cluster %}
-          <div class="col-md-auto">
-            <label>{{ pit }}</label>
-            <br />
-            <div class="btn-group btn-group-sm"
-                 role="group"
-                 aria-label="button cluster">
-              {% for cluster in clusters %}
-                <input type="checkbox"
-                       class="btn-check"
-                       id="btn-{{ cluster }}"
-                       onchange="load()"
-                       autocomplete="off">
-                <label class="btn btn-outline-primary" for="btn-{{ cluster }}">{{ cluster }}</label>
-              {% endfor %}
-            </div>
-          </div>
-        {% endfor %}
       </div>
     </div>
     <div id="table-card" class="card-body table-border-style">

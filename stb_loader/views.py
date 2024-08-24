@@ -44,22 +44,7 @@ def index(request):
         "WH GEN",
     ]
     tipe_ritase = ["OB", "General", "Coal", "Top Soil", "IPD", "Mud", "Spoil"]
-    pits = list(
-        ClusterLoader.objects.exclude(pit=None).values_list("pit", flat=True).distinct()
-    )
-    clusters = []
-    for pit in pits:
-        cluster = list(
-            ClusterLoader.objects.exclude(cluster=None)
-            .filter(pit=pit)
-            .values_list("cluster", flat=True)
-            .distinct()
-        )
-        clusters.append(cluster)
-    pit_cluster = [
-        (pit.capitalize(), [cluster.capitalize() for cluster in cluster_list])
-        for pit, cluster_list in zip(pits, clusters)
-    ]
+
     return render(
         request,
         "stb_loader/index.html",
@@ -67,7 +52,6 @@ def index(request):
             "jam": loop_times,
             "stb": stb,
             "ritase": tipe_ritase,
-            "pit_cluster": pit_cluster,
         },
     )
 
@@ -75,8 +59,6 @@ def index(request):
 def reportDataSTB(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
-    cluster = json.loads(request.POST.get("cluster"))
-    cluster = [item.upper() for item in cluster]
 
     subquery_loader = ClusterLoader.objects.filter(
         unit=OuterRef("unit"), date=OuterRef("date"), hour=OuterRef("hour")
@@ -91,10 +73,8 @@ def reportDataSTB(request):
         .values("unit__unit", "pit", "cluster")
         .order_by("-pit", "cluster", "-unit__unit")
     )
-    if not cluster:
-        maindata = maindata.values("unit__unit").distinct()
-    else:
-        maindata = maindata.filter(cluster__in=cluster).values("unit__unit").distinct()
+
+    maindata = maindata.values("unit__unit", "cluster").distinct()
 
     total = maindata.count()
     data = maindata.filter(unit__unit__icontains=request.POST.get("search[value]"))
@@ -113,6 +93,7 @@ def reportDataSTB(request):
     for d in page_obj:
         x = {}
         x["unit"] = d["unit__unit"]
+        x["cluster"] = d["cluster"]
         x["action"] = (
             '<div id="data-'
             + str(d["unit__unit"])

@@ -24,7 +24,6 @@
         var width = 1400;
 
         var undobtn = d3.select("#btn-container").append("button").attr("id", "undoBtn").attr("class", "ms-0 btn btn-warning").text("undo")
-        let selectedLabels = [];
 
         var table = $("#load-table").DataTable({
             processing: true,
@@ -42,7 +41,6 @@
                 data: function(d) {
                     d.date = $("#date-select").val();
                     d.hour = $("#hour-select").val();
-                    d.cluster = JSON.stringify(selectedLabels)
                 },
                 complete: function(d) {
                     checkTimeLineUnit();
@@ -63,6 +61,9 @@
                 searchable: false,
                 width: "5%"
             }, ],
+            rowGroup: {
+                dataSrc: "cluster"
+            },
             language: {
                 emptyTable: '<b>Data belum di ambil dari server Jigsaw.</b> Tekan tombol disamping untuk memuat data <button class="btn btn-warning event-btnx m-2" onclick="load_data()"><b>Load</b></button>'
             }
@@ -91,7 +92,6 @@
         };
 
         function load() {
-            labelFilter()
             table.draw();
         }
 
@@ -228,21 +228,6 @@
                 .call(chart);
         }
 
-        function labelFilter() {
-            $('.btn-check').each(function() {
-                let labelText = $('label[for="' + $(this).attr('id') + '"]').text();
-
-                if ($(this).is(':checked')) {
-                    // If checked, add to the list if not already present
-                    if (!selectedLabels.includes(labelText)) {
-                        selectedLabels.push(labelText);
-                    }
-                } else {
-                    // If unchecked, remove from the list if present
-                    selectedLabels = selectedLabels.filter(label => label !== labelText);
-                }
-            });
-        }
 
         $("#undoBtn").on('click', function() {
             $.ajax({
