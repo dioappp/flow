@@ -63,10 +63,80 @@
         var csrf_token = "{{ csrf_token }}"
         var addUrl = "{% url 'ritase:addrow' %}"
         var addLoaderUrl = '{% url "ritase:addrowloader" %}'
+        var optionsUrl = "{% url 'ritase:get_options' %}"
     </script>
     <script src="{% static 'js/web-session-management.js' %}"></script>
     <script src="{% static 'js/ritase.js' %}"></script>
     <script type="text/javascript">
+        function handleOpt(loaders, materials) {
+            options = {
+                cellSelector: 'tbody td',
+                headers: {
+                    "X-CSRFToken": csrf_token
+                },
+                fields: [{
+                    name: 'loader',
+                    type: 'datalist',
+                    options: [...loaders],
+                    className: 'form-control text-uppercase'
+                }, {
+                    name: 'hauler',
+                    type: 'text'
+                }, {
+                    name: 'code_material',
+                    type: 'datalist',
+                    options: [...materials],
+                    className: 'form-control text-uppercase'
+                }, {
+                    name: 'a',
+                    type: 'numeric'
+                }, {
+                    name: 'b',
+                    type: 'numeric'
+                }, {
+                    name: 'c',
+                    type: 'numeric'
+                }, {
+                    name: 'd',
+                    type: 'numeric'
+                }, {
+                    name: 'e',
+                    type: 'numeric'
+                }, {
+                    name: 'f',
+                    type: 'numeric'
+                }, {
+                    name: 'g',
+                    type: 'numeric'
+                }, {
+                    name: 'h',
+                    type: 'numeric'
+                }, {
+                    name: 'i',
+                    type: 'numeric'
+                }, {
+                    name: 'j',
+                    type: 'numeric'
+                }, {
+                    name: 'k',
+                    type: 'numeric'
+                }, {
+                    name: 'l',
+                    type: 'numeric'
+                }, {
+                    name: 'm',
+                    type: 'numeric'
+                }, ],
+                url: "{% url 'ritase:update'%}",
+                method: 'POST',
+                data: {
+                    youSendData: true,
+                },
+            };
+        }
+
+        get_options(handleOpt);
+
         function load() {
             var container = d3.select(".pc-content");
 
@@ -139,68 +209,5 @@
             var editor = new DatatablesInlineEditor(table, options);
             editors.push(editor)
         }
-
-        var options = {
-            cellSelector: 'tbody td',
-            headers: {
-                "X-CSRFToken": csrf_token
-            },
-            fields: [{
-                name: 'loader',
-                type: 'text'
-            }, {
-                name: 'hauler',
-                type: 'text'
-            }, {
-                name: 'code_material',
-                type: 'select',
-                options: "",
-                className: 'form-control'
-            }, {
-                name: 'a',
-                type: 'numeric'
-            }, {
-                name: 'b',
-                type: 'numeric'
-            }, {
-                name: 'c',
-                type: 'numeric'
-            }, {
-                name: 'd',
-                type: 'numeric'
-            }, {
-                name: 'e',
-                type: 'numeric'
-            }, {
-                name: 'f',
-                type: 'numeric'
-            }, {
-                name: 'g',
-                type: 'numeric'
-            }, {
-                name: 'h',
-                type: 'numeric'
-            }, {
-                name: 'i',
-                type: 'numeric'
-            }, {
-                name: 'j',
-                type: 'numeric'
-            }, {
-                name: 'k',
-                type: 'numeric'
-            }, {
-                name: 'l',
-                type: 'numeric'
-            }, {
-                name: 'm',
-                type: 'numeric'
-            }, ],
-            url: "{% url 'ritase:update'%}",
-            method: 'POST',
-            data: {
-                youSendData: true,
-            },
-        };
     </script>
 {% endblock script %}
