@@ -326,9 +326,11 @@ def addBatch(request):
     ts = f"{old.date} {ts}"
     ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
+    instances = []
+
     for u in units:
         unit = loaderID.objects.get(unit=u)
-        LoaderStatus.objects.create(
+        instance = LoaderStatus.objects.create(
             standby_code=stb,
             timeStart=ts,
             hour=old.hour,
@@ -338,6 +340,14 @@ def addBatch(request):
             report_date=old.report_date,
             unit=unit,
         )
+        instances.append(instance)
+
+    LoaderStatusHistory.objects.create(
+        action="addBatch",
+        loader_status_id=0,
+        data=serializers.serialize("json", instances),
+        token=request.COOKIES.get("csrftoken"),
+    )
     return HttpResponse(status=204)
 
 
@@ -395,21 +405,33 @@ def undo(request):
     obj = list(serializers.deserialize("json", last_action.data))[0]
     unit = obj.object.unit.unit
 
+    units = []
+
     if last_action.action == "update":
         # Revert to previous state
         obj = list(serializers.deserialize("json", last_action.data))[0]
         obj.save()
+        units.append(unit)
 
     elif last_action.action == "add":
         # Delete the last added object
         LoaderStatus.objects.get(pk=last_action.loader_status_id).delete()
+        units.append(unit)
 
     elif last_action.action == "delete":
         # Restore the deleted object
         obj = list(serializers.deserialize("json", last_action.data))[0]
         obj.save()
+        units.append(unit)
+
+    elif last_action.action == "addBatch":
+        objs = list(serializers.deserialize("json", last_action.data))
+        for obj in objs:
+            LoaderStatus.objects.get(pk=obj.object.id).delete()
+            unit = obj.object.unit.unit
+            units.append(unit)
 
     # Remove the last action from history
     last_action.delete()
 
-    return JsonResponse({"unit": unit}, status=200)
+    return JsonResponse({"units": units}, status=200)

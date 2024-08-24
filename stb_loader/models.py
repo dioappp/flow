@@ -50,6 +50,7 @@ class LoaderStatusHistory(models.Model):
         ("add", "Add"),
         ("update", "Update"),
         ("delete", "Delete"),
+        ("addBatch", "AddBatch"),
     )
 
     action = models.CharField(max_length=10, choices=ACTION_CHOICES)
