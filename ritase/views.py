@@ -173,13 +173,13 @@ def calculate_wh(request):
     return JsonResponse(response)
 
 
-def createButton(id):
+def createButton(id, todo, ico, col):
     button = (
         '<button id="delete-'
         + str(id)
         + '" data-id="'
         + str(id)
-        + '" class="btn btn-icon btn-danger avtar-xs mb-0" onclick="deleteRow(this)"><i class="ti ti-minus" style="color: #FFFFFF"></div>'
+        + f'" class="btn btn-icon {col} avtar-xs mb-0" onclick="{todo}"><i class="{ico}" style="color: #FFFFFF"></i></button>'
     )
     return button
 
@@ -200,14 +200,16 @@ def load_ritase(request):
     ).values(*cek_ritase_fields)
     data_return = []
     for d in data:
-        d["action"] = createButton(d["id"])
+        d["action"] = createButton(
+            d["id"], "deleteRow(this)", "ti ti-minus", "btn-danger"
+        )
         data_return.append(d)
 
     response = {
         "draw": request.POST.get("draw"),
         "data": data_return,
     }
-    return JsonResponse(response)
+    return JsonResponse(response, status=200)
 
 
 def load_ritase_loader(request):
@@ -247,7 +249,9 @@ def load_ritase_loader(request):
 
     data_return = []
     for d in page_obj:
-        d["action"] = createButton(d["id"])
+        d["action"] = createButton(
+            d["id"], "deleteRow(this)", "ti ti-minus", "btn-danger"
+        ) + createButton(d["id"], "duplicate(this)", "ti ti-plus", "btn-success")
         data_return.append(d)
 
     response = {
@@ -258,7 +262,7 @@ def load_ritase_loader(request):
         "recordsTotal": total,
         "recordsFiltered": total_filtered,
     }
-    return JsonResponse(response)
+    return JsonResponse(response, status=200)
 
 
 def addrow(request):
@@ -291,34 +295,41 @@ def addrow(request):
     return HttpResponse(status=204)
 
 
-def addrowloader(request):
-    # date = request.POST.get("date")
-    # shift = int(request.POST.get("shift"))
+def duplicate(request):
+    id = int(request.POST.get("id"))
+    old = cek_ritase.objects.get(pk=id)
 
-    # cek_ritase.objects.create(
-    #     date=datetime.strptime(date, "%Y-%m-%d"),
-    #     shift=shift,
-    #     a=0,
-    #     b=0,
-    #     c=0,
-    #     d=0,
-    #     e=0,
-    #     f=0,
-    #     g=0,
-    #     h=0,
-    #     i=0,
-    #     j=0,
-    #     k=0,
-    #     l=0,
-    #     m=0,
-    # )
-    return NotImplementedError
+    cek_ritase.objects.create(
+        date=old.date,
+        shift=old.shift,
+        operator_hauler_id=old.operator_hauler_id,
+        hauler=old.hauler,
+        loader=old.loader,
+        operator_loader_id=old.operator_loader_id,
+        a=0,
+        b=0,
+        c=0,
+        d=0,
+        e=0,
+        f=0,
+        g=0,
+        h=0,
+        i=0,
+        j=0,
+        k=0,
+        l=0,
+        m=0,
+    )
+    return HttpResponse(status=204)
 
 
 def update(request):
     id = request.POST.get("id")
     col = request.POST.get("fieldName")
     val = request.POST.get("value")
+
+    if val == "":
+        val = 0
 
     if col == "code_material":
         val = str(val).upper()

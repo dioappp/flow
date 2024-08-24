@@ -418,22 +418,21 @@ function addRow(button) {
       hauler: $("#cn-hauler").val(),
       id: button.getAttribute("data-id"),
     },
-    complete: function () {
+    success: function () {
       loadTable();
     },
   });
 }
 
-function addRowLoader() {
+function duplicate(button) {
   $.ajax({
-    url: addLoaderUrl,
+    url: duplicateUrl,
     type: "POST",
     headers: {
       "X-CSRFToken": csrf_token,
     },
     data: {
-      date: $("#date-select").val(),
-      shift: $("#shift-select").val(),
+      id: button.getAttribute("data-id"),
     },
     success: function () {
       loadTable();

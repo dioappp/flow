@@ -62,7 +62,7 @@
         var deleteUrl = "{% url 'ritase:delete_row' %}"
         var csrf_token = "{{ csrf_token }}"
         var addUrl = "{% url 'ritase:addrow' %}"
-        var addLoaderUrl = '{% url "ritase:addrowloader" %}'
+        var duplicateUrl = '{% url "ritase:duplicate" %}'
         var optionsUrl = "{% url 'ritase:get_options' %}"
     </script>
     <script src="{% static 'js/web-session-management.js' %}"></script>
