@@ -31,6 +31,7 @@
             serverSide: true,
             stateSave: true,
             ordering: false,
+            select: true,
             pagingType: "full_numbers",
             ajax: {
                 url: "{% url 'stb_loader:report' %}",
@@ -64,6 +65,12 @@
             }, ],
             language: {
                 emptyTable: '<b>Data belum di ambil dari server Jigsaw.</b> Tekan tombol disamping untuk memuat data <button class="btn btn-warning event-btnx m-2" onclick="load_data()"><b>Load</b></button>'
+            }
+        });
+
+        table.on('user-select', function(e, dt, type, cell, originalEvent) {
+            if ($(originalEvent.target).index() === 1) {
+                e.preventDefault();
             }
         });
 
@@ -266,13 +273,35 @@
             var modal = $(this);
             populateAddForm(modal);
         });
+
+        $('#addBatchModal').on('show.bs.modal', function(event) {
+            var modal = $(this);
+            populateAddBatchForm(modal);
+        });
+
         $('#addModal').on('shown.bs.modal', function(event) {
             focusAndSelectInput()
         })
+
+        $('#addBatchModal').on('shown.bs.modal', function(event) {
+            focusAndSelectInput()
+        })
+
         $('#addForm').on('submit', function(event) {
             event.preventDefault();
             var formData = new FormData(this);
             handleAddFormSubmission("{% url 'stb_loader:add'%}", data_unit, formData)
+        });
+
+        $('#addBatchForm').on('submit', function(event) {
+            event.preventDefault();
+            var units = table.rows({
+                selected: true
+            }).data().pluck('unit').toArray()
+            var formData = new FormData(this);
+            formData.append('units', JSON.stringify(units));
+
+            handleAddBatchFormSubmission("{% url 'stb_loader:addbatch'%}", units, formData)
         });
 
         function split() {

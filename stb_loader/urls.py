@@ -14,4 +14,5 @@ urlpatterns = [
     path("load_data", views.load_data, name="load_data"),
     path("undo/", views.undo, name="undo"),
     # path("redo/", views.redo, name="your_redo_view"),
+    path("addbatch/", views.addBatch, name="addbatch"),
 ]

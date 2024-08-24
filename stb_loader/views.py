@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.db.models import Sum, Subquery, OuterRef
-from stb_loader.models import LoaderStatus, ClusterLoader, LoaderStatusHistory
+from stb_loader.models import LoaderStatus, ClusterLoader, LoaderStatusHistory, loaderID
 from ritase.models import ritase
 from datetime import datetime, timedelta
 import math
@@ -312,6 +312,32 @@ def add(request):
                 data=serializers.serialize("json", [new_instance_630]),
                 token=request.COOKIES.get("csrftoken"),
             )
+    return HttpResponse(status=204)
+
+
+def addBatch(request):
+    id = int(request.POST.get("database_id"))
+    old = LoaderStatus.objects.get(pk=id)
+
+    stb = str(request.POST.get("stb")).upper()
+    units = json.loads(request.POST.get("units"))
+
+    ts = request.POST.get("timestart")
+    ts = f"{old.date} {ts}"
+    ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+
+    for u in units:
+        unit = loaderID.objects.get(unit=u)
+        LoaderStatus.objects.create(
+            standby_code=stb,
+            timeStart=ts,
+            hour=old.hour,
+            date=old.date,
+            shift=old.shift,
+            remarks=old.remarks,
+            report_date=old.report_date,
+            unit=unit,
+        )
     return HttpResponse(status=204)
 
 

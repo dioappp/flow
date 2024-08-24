@@ -36,6 +36,13 @@ function populateAddForm(modal) {
   modal.find("input[name=stb]").val("");
 }
 
+function populateAddBatchForm(modal) {
+  modal.find(".modal-title").text("Add Data STB Batch");
+  modal.find("input[name=timestart]").val(data_time.slice(-8));
+  modal.find("input[name=database_id]").val(data_databese_id);
+  modal.find("input[name=stb]").val("");
+}
+
 function populateDeleteForm(modal) {
   var db_id = $("#updateModal").find("input[name=database_id]").val();
   var stb = $("#updateModal").find("input[name=stb]").val();
@@ -83,6 +90,27 @@ function handleAddFormSubmission(url, dataUnit, formData) {
         // Check if the status code is 204
         $("#addModal").modal("hide");
         showDetail(dataUnit);
+      }
+    },
+    error: function (response, status, error) {
+      console.error("Form submission failed:", error);
+    },
+  });
+}
+
+function handleAddBatchFormSubmission(url, units, formData) {
+  $.ajax({
+    type: "POST",
+    url: url,
+    data: formData,
+    processData: false,
+    contentType: false,
+    success: function (response, status, xhr) {
+      if (xhr.status === 204) {
+        $("#addBatchModal").modal("hide");
+        units.forEach((unit) => {
+          showDetail(unit);
+        });
       }
     },
     error: function (response, status, error) {
