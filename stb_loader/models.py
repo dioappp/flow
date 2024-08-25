@@ -16,6 +16,19 @@ class RestTime(models.Model):
     standby_code = models.CharField(max_length=10)
 
 
+class ClusterLoader(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True)
+
+    date = models.DateField()
+    hour = models.IntegerField()
+    unit = models.ForeignKey(loaderID, on_delete=models.CASCADE)
+    cluster = models.CharField(max_length=20, null=True)
+    pit = models.CharField(max_length=10, null=True)
+
+
 class LoaderStatus(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -30,19 +43,7 @@ class LoaderStatus(models.Model):
     standby_code = models.CharField(max_length=10)
     remarks = models.CharField(max_length=200, null=True)
     report_date = models.DateField()
-
-
-class ClusterLoader(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True)
-
-    date = models.DateField()
-    hour = models.IntegerField()
-    unit = models.ForeignKey(loaderID, on_delete=models.CASCADE)
-    cluster = models.CharField(max_length=20, null=True)
-    pit = models.CharField(max_length=10, null=True)
+    location = models.ForeignKey(ClusterLoader, on_delete=models.SET_NULL, null=True)
 
 
 class LoaderStatusHistory(models.Model):
