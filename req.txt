@@ -12,6 +12,8 @@ dj-email-url==1.0.6
 Django==5.0.6
 django-cache-url==3.4.5
 django-crispy-forms==2.1
+django-db-logger==0.1.13
+django-debug-toolbar==4.4.6
 django-import-export==4.1.1
 djlint==1.34.1
 EditorConfig==0.12.4
