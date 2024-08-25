@@ -1,11 +1,14 @@
 from django.core.management.base import BaseCommand
-from django.db import OperationalError, connections
+from django.db import OperationalError, transaction, connections
 from stb_loader.models import loaderID, LoaderStatus, ClusterLoader
 from stb_loader.management.commands.stb_code import standby_codes, RANK, BDC
 import stb_loader.management.commands.function as f
 import pandas as pd
 from pandas import DataFrame
 from datetime import time, datetime, timedelta
+import logging
+
+db_logger = logging.getLogger("stb_loader")
 
 
 class Command(BaseCommand):
@@ -40,11 +43,17 @@ class Command(BaseCommand):
         try:
             cursor_jigsaw = connections["jigsaw"].cursor()
         except OperationalError as e:
+            db_logger.error(f"Server Jigsaw Error -{dtime}: {e}")
             self.stderr.write(f"Operational Error: {e}")
             return
 
-        cursor_jigsaw.execute(ss_sql)
-        data = cursor_jigsaw.fetchall()
+        try:
+            cursor_jigsaw.execute(ss_sql)
+            data = cursor_jigsaw.fetchall()
+        except Exception as e:
+            db_logger.error(f"Failed to execute query ss_ql: {e}")
+            self.stderr.write(f"Failed to execute: {e}")
+
         shift_states_df = pd.DataFrame(
             columns=["Time Start", "Time End", "Equipment", "Reason"]
         )
@@ -105,8 +114,13 @@ class Command(BaseCommand):
         WHERE e.name LIKE 'D%' AND et.name IN ('spotting', 'loading', 'waiting')
         """
 
-        cursor_jigsaw.execute(ac_sql)
-        data = cursor_jigsaw.fetchall()
+        try:
+            cursor_jigsaw.execute(ac_sql)
+            data = cursor_jigsaw.fetchall()
+        except Exception as e:
+            db_logger.error(f"Failed to execute query ac_ql: {e}")
+            self.stderr.write(f"Failed to execute: {e}")
+
         shift_activity_df = pd.DataFrame(
             columns=["Time Start", "Time End", "Equipment", "Shovel", "Activity"]
         )
@@ -153,10 +167,16 @@ class Command(BaseCommand):
             cursor_mcr = connections["MCRBD"].cursor()
         except OperationalError as e:
             self.stderr.write(f"Operational Error: {e}")
+            db_logger.error(f"Server MCRBD Error -{dtime}: {e}")
             return
 
-        cursor_mcr.execute(bd_sql)
-        data = cursor_mcr.fetchall()
+        try:
+            cursor_mcr.execute(bd_sql)
+            data = cursor_mcr.fetchall()
+        except Exception as e:
+            db_logger.error(f"Failed to execute query bd_sql: {e}")
+            self.stderr.write(f"Failed to execute: {e}")
+
         breakdown_df = pd.DataFrame(
             columns=[
                 "Time Start",
@@ -438,30 +458,51 @@ class Command(BaseCommand):
                 f"{dtime}: Load data shift states, shift activity, dan MCR BD Loader"
             )
         )
+        try:
+            data, cluster = self.main(dtime)
+            with transaction.atomic():
+                for i, row in data.iterrows():
+                    try:
+                        unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
+                        LoaderStatus.objects.update_or_create(
+                            date=row["date"],
+                            shift=row["shift"],
+                            hour=row["hour"],
+                            timeStart=row["Time Start"],
+                            report_date=row["report_date"],
+                            unit=unit,
+                            defaults={
+                                "standby_code": row["Standby Code"],
+                                "remarks": row["remarks"],
+                            },
+                        )
+                    except Exception as e:
+                        # Log detailed information about the error
+                        db_logger.error(
+                            f"Error inserting LoaderStatus row {i}: {e}, data: {row.to_dict()}"
+                        )
+                        raise  # Raise exception to trigger rollback for the entire transaction
 
-        data, cluster = self.main(dtime)
-        for i, row in data.iterrows():
-            unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
-            LoaderStatus.objects.update_or_create(
-                date=row["date"],
-                shift=row["shift"],
-                hour=row["hour"],
-                timeStart=row["Time Start"],
-                report_date=row["report_date"],
-                unit=unit,
-                defaults={
-                    "standby_code": row["Standby Code"],
-                    "remarks": row["remarks"],
-                },
+                for i, row in cluster.iterrows():
+                    try:
+                        unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
+                        ClusterLoader.objects.update_or_create(
+                            unit=unit,
+                            hour=row["Hour"],
+                            date=row["Date"],
+                            defaults={"cluster": row["Cluster"], "pit": row["Pit"]},
+                        )
+                    except Exception as e:
+                        # Log detailed information about the error
+                        db_logger.error(
+                            f"Error inserting ClusterLoader row {i}: {e}, data: {row.to_dict()}"
+                        )
+                        raise  # Raise exception to trigger rollback for the entire transaction
+
+                self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))
+        except Exception as e:
+            # Log the final exception that caused the transaction to fail
+            db_logger.error(f"stb loader failed - {dtime} => {e}")
+            self.stdout.write(
+                self.style.ERROR(f"{dtime}: Data load failed due to error")
             )
-
-        for i, row in cluster.iterrows():
-            unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
-            ClusterLoader.objects.update_or_create(
-                unit=unit,
-                hour=row["Hour"],
-                date=row["Date"],
-                defaults={"cluster": row["Cluster"], "pit": row["Pit"]},
-            )
-
-        self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))

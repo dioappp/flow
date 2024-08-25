@@ -14,7 +14,6 @@ from pathlib import Path
 from environs import Env
 import os
 
-from traitlets import default
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -57,6 +56,7 @@ INSTALLED_APPS = [
     "distance",
     "exporter",
     "hma2b",
+    "django_db_logger",
 ]
 
 MIDDLEWARE = [
@@ -155,3 +155,29 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
+        },
+        "simple": {"format": "%(levelname)s %(asctime)s %(message)s"},
+    },
+    "handlers": {
+        "db_log": {
+            "level": "DEBUG",
+            "class": "django_db_logger.db_log_handler.DatabaseLogHandler",
+        },
+    },
+    "loggers": {
+        "stb_loader": {"handlers": ["db_log"], "level": "DEBUG"},
+        "stb_hauler": {"handlers": ["db_log"], "level": "DEBUG"},
+        "django.request": {  # logging 500 errors to database
+            "handlers": ["db_log"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
