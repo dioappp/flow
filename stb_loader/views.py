@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.db.models import Sum, Subquery, OuterRef
 from stb_loader.models import LoaderStatus, ClusterLoader, LoaderStatusHistory, loaderID
 from ritase.models import ritase
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import math
 import pandas as pd
 from django.db.models.functions import Coalesce
@@ -242,57 +242,44 @@ def add(request):
     id = int(request.POST.get("database_id"))
     stb = str(request.POST.get("stb")).upper()
     old = LoaderStatus.objects.get(pk=id)
+    _old = serializers.serialize("json", [old])
 
     ts = request.POST.get("timestart")
     ts = f"{old.date} {ts}"
     ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
-    new_instance = LoaderStatus.objects.create(
-        standby_code=stb,
+    if old.hour == 6 and ts.time() >= time(6, 30, 0):
+        shift = 1
+    else:
+        shift = 2
+
+    new_instance, created = LoaderStatus.objects.update_or_create(
         timeStart=ts,
         unit=old.unit,
         hour=old.hour,
         date=old.date,
-        shift=old.shift,
+        shift=shift,
         remarks=old.remarks,
         report_date=old.report_date,
+        defaults={"standby_code": stb},
     )
 
-    # Save the new instance's state
-    LoaderStatusHistory.objects.create(
-        action="add",
-        loader_status_id=new_instance.id,
-        data=serializers.serialize("json", [new_instance]),
-        token=request.COOKIES.get("csrftoken"),
-    )
+    if created:
+        # Save the new instance's state
+        LoaderStatusHistory.objects.create(
+            action="add",
+            loader_status_id=new_instance.id,
+            data=serializers.serialize("json", [new_instance]),
+            token=request.COOKIES.get("csrftoken"),
+        )
+    else:
+        LoaderStatusHistory.objects.create(
+            action="update",
+            loader_status_id=id,
+            data=_old,
+            token=request.COOKIES.get("csrftoken"),
+        )
 
-    if old.hour == 6:
-        t = f"{old.date} 06:30:00"
-        t = datetime.strptime(t, "%Y-%m-%d %H:%M:%S")
-        try:
-            LoaderStatus.objects.get(
-                timeStart=t,
-                unit=old.unit,
-                date=old.date,
-            )
-        except LoaderStatus.DoesNotExist:
-            new_instance_630 = LoaderStatus.objects.create(
-                standby_code=stb,
-                timeStart=t,
-                unit=old.unit,
-                hour=old.hour,
-                date=old.date,
-                shift=1,
-                remarks=old.remarks,
-                report_date=old.date,
-            )
-            # Save the new instance's state
-            LoaderStatusHistory.objects.create(
-                action="add",
-                loader_status_id=new_instance_630.id,
-                data=serializers.serialize("json", [new_instance_630]),
-                token=request.COOKIES.get("csrftoken"),
-            )
     return HttpResponse(status=204)
 
 
