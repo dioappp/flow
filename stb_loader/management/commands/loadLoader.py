@@ -460,6 +460,7 @@ class Command(BaseCommand):
         )
         try:
             data, cluster = self.main(dtime)
+            errors = []
             with transaction.atomic():
                 for i, row in data.iterrows():
                     try:
@@ -472,15 +473,16 @@ class Command(BaseCommand):
                             report_date=row["report_date"],
                             unit=unit,
                             defaults={
-                                "standby_code": row["Standby Code"],
+                                "standby_code": (
+                                    None
+                                    if pd.isna(row["Standby Code"])
+                                    else row["Standby Code"]
+                                ),
                                 "remarks": row["remarks"],
                             },
                         )
                     except Exception as e:
-                        # Log detailed information about the error
-                        db_logger.error(
-                            f"Error inserting LoaderStatus row {i}: {e}, data: {row.to_dict()}"
-                        )
+                        errors.append((i, e, row.to_dict()))
                         raise  # Raise exception to trigger rollback for the entire transaction
 
                 for i, row in cluster.iterrows():
@@ -502,6 +504,9 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))
         except Exception as e:
             # Log the final exception that caused the transaction to fail
+            if errors:
+                for i, e, data in errors:
+                    db_logger.error(f"Error inserting Row {i}: {e}, data: {data}")
             db_logger.error(f"stb loader failed - {dtime} => {e}")
             self.stdout.write(
                 self.style.ERROR(f"{dtime}: Data load failed due to error")
