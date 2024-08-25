@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "exporter",
     "hma2b",
     "django_db_logger",
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -64,6 +65,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -181,3 +183,9 @@ LOGGING = {
         },
     },
 }
+
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
