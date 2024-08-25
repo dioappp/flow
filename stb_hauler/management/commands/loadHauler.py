@@ -1,11 +1,14 @@
 from django.core.management.base import BaseCommand
-from django.db import OperationalError, connections
+from django.db import OperationalError, connections, transaction
 from stb_hauler.models import HaulerStatus
 from ritase.models import truckID
 import stb_loader.management.commands.function as f
 import pandas as pd
 from datetime import time, datetime, timedelta
 from stb_loader.management.commands.stb_code import standby_codes, RANK, BDC
+import logging
+
+db_logger = logging.getLogger("stb_hauler")
 
 
 class Command(BaseCommand):
@@ -41,11 +44,17 @@ class Command(BaseCommand):
         try:
             cursor_jigsaw = connections["jigsaw"].cursor()
         except OperationalError as e:
+            db_logger.error(f"Server Jigsaw Error -{dtime}: {e}")
             self.stderr.write(f"Operational Error: {e}")
             return
 
-        cursor_jigsaw.execute(ss_sql)
-        data = cursor_jigsaw.fetchall()
+        try:
+            cursor_jigsaw.execute(ss_sql)
+            data = cursor_jigsaw.fetchall()
+        except Exception as e:
+            db_logger.error(f"Failed to execute query ss_ql: {e}")
+            self.stderr.write(f"Failed to execute: {e}")
+
         shift_states_df = pd.DataFrame(
             columns=["Time Start", "Time End", "Equipment", "Reason"]
         )
@@ -105,9 +114,16 @@ class Command(BaseCommand):
             cursor_mcr = connections["MCRBD"].cursor()
         except OperationalError as e:
             self.stderr.write(f"Operational Error: {e}")
+            db_logger.error(f"Server MCRBD Error -{dtime}: {e}")
             return
-        cursor_mcr.execute(bd_sql)
-        data = cursor_mcr.fetchall()
+
+        try:
+            cursor_mcr.execute(bd_sql)
+            data = cursor_mcr.fetchall()
+        except Exception as e:
+            db_logger.error(f"Failed to execute query bd_sql: {e}")
+            self.stderr.write(f"Failed to execute: {e}")
+
         breakdown_df = pd.DataFrame(
             columns=[
                 "Time Start",
@@ -338,17 +354,39 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dtime = options.get("date")
 
-        data = self.main(dtime)
-        for i, row in data.iterrows():
-            unit, _ = truckID.objects.get_or_create(jigsaw=row["Equipment"])
-            HaulerStatus.objects.create(
-                date=row["date"],
-                shift=row["shift"],
-                hour=row["hour"],
-                timeStart=row["Time Start"],
-                unit=unit,
-                standby_code=row["Standby Code"],
-                remarks=row["remarks"],
-                report_date=row["report_date"],
+        try:
+            data = self.main(dtime)
+            errors = []
+            with transaction.atomic():
+                for i, row in data.iterrows():
+                    try:
+                        unit, _ = truckID.objects.get_or_create(jigsaw=row["Equipment"])
+                        HaulerStatus.objects.update_or_create(
+                            date=row["date"],
+                            shift=row["shift"],
+                            hour=row["hour"],
+                            timeStart=row["Time Start"],
+                            unit=unit,
+                            report_date=row["report_date"],
+                            defaults={
+                                "standby_code": (
+                                    None
+                                    if pd.isna(row["Standby Code"])
+                                    else row["Standby Code"]
+                                ),
+                                "remarks": row["remarks"],
+                            },
+                        )
+                        # print(f'imported {i+1}/{len(data)}')
+                    except Exception as e:
+                        errors.append((i, e, row.to_dict()))
+                        raise  # Raise exception to trigger rollback for the entire transaction
+        except Exception as e:
+            # Log the final exception that caused the transaction to fail
+            if errors:
+                for i, e, data in errors:
+                    db_logger.error(f"Error inserting Row {i}: {e}, data: {data}")
+            db_logger.error(f"stb hauler failed - {dtime} => {e}")
+            self.stdout.write(
+                self.style.ERROR(f"{dtime}: Data load failed due to error")
             )
-            # print(f'imported {i+1}/{len(data)}')
