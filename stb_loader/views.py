@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, time
 import math
 import json
 from django.core import serializers
+from asgiref.sync import sync_to_async
 
 
 # Create your views here.
@@ -128,16 +129,43 @@ def is_nempel_ke_jam_kritis(stb: str, prev: str, next: str) -> bool:
     return stb == "S12" and (prev in jam_kritis or next in jam_kritis)
 
 
-def timeline(request):
+@sync_to_async
+def get_loader_status(date_pattern, hour_pattern, unit_pattern):
+    return list(
+        LoaderStatus.objects.filter(
+            date=date_pattern, hour=hour_pattern, unit__unit=unit_pattern
+        )
+        .order_by("timeStart")
+        .values("id", "standby_code", "timeStart")
+    )
+
+
+@sync_to_async
+def get_ritase(date_pattern, hour_pattern, unit_pattern):
+    return list(
+        ritase.objects.filter(
+            date=date_pattern, hour=hour_pattern, loader_id__unit=unit_pattern
+        )
+        .order_by("time_full")
+        .values(
+            "id",
+            "time_full",
+            "time_empty",
+            "type",
+            "truck_id__jigsaw",
+            "dump_location",
+            "truck_id__OB_capacity",
+        )
+    )
+
+
+async def timeline(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
     unit_pattern = request.POST.get("unit_id")
     show_hanging = request.POST.get("hanging") == "true"
 
-    maindata = LoaderStatus.objects.filter(
-        date=date_pattern, hour=hour_pattern, unit__unit=unit_pattern
-    ).order_by("timeStart")
-    maindata = maindata.values("id", "standby_code", "timeStart")
+    maindata = await get_loader_status(date_pattern, hour_pattern, unit_pattern)
     response = {}
     response["state"] = []
     response["ritase"] = []
@@ -172,18 +200,7 @@ def timeline(request):
         response["state"].append(x)
         continue
 
-    ritasedata = ritase.objects.filter(
-        date=date_pattern, hour=hour_pattern, loader_id__unit=unit_pattern
-    ).order_by("time_full")
-    ritasedata = ritasedata.values(
-        "id",
-        "time_full",
-        "time_empty",
-        "type",
-        "truck_id__jigsaw",
-        "dump_location",
-        "truck_id__OB_capacity",
-    )
+    ritasedata = await get_ritase(date_pattern, hour_pattern, unit_pattern)
 
     for d in ritasedata:
         x = {}

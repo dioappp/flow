@@ -3,6 +3,7 @@ from stb_loader.models import LoaderStatus
 from django.http import JsonResponse
 from datetime import timedelta
 import math
+from asgiref.sync import sync_to_async
 
 
 # Create your views here.
@@ -89,16 +90,24 @@ def reportDataSTB(request):
     return JsonResponse(response)
 
 
-def timeline(request):
+@sync_to_async
+def get_loader_status(date_pattern, shift_pattern, unit_pattern):
+    return list(
+        LoaderStatus.objects.filter(
+            report_date=date_pattern, shift=shift_pattern, unit__unit=unit_pattern
+        )
+        .order_by("timeStart")
+        .values("id", "standby_code", "timeStart", "hour")
+    )
+
+
+async def timeline(request):
     date_pattern = request.POST.get("date")
     shift_pattern = request.POST.get("shift")
     unit_pattern = request.POST.get("unit_id")
     show_hanging = request.POST.get("hanging") == "true"
 
-    maindata = LoaderStatus.objects.filter(
-        report_date=date_pattern, shift=shift_pattern, unit__unit=unit_pattern
-    ).order_by("timeStart")
-    maindata = maindata.values("id", "standby_code", "timeStart", "hour")
+    maindata = await get_loader_status(date_pattern, shift_pattern, unit_pattern)
     response = {}
     response["state"] = []
     response["ritase"] = []
