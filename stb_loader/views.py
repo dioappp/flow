@@ -102,16 +102,17 @@ def reportDataSTB(request):
             + '" class="d3-timeline"></div>'
         )
 
-        ritase_sum = ritase.objects.filter(
-            date=date_pattern, hour=hour_pattern, loader_id__unit=d["unit__unit"]
-        ).aggregate(Sum("truck_id__OB_capacity"))
-        x["produksi"] = (
-            ritase_sum["truck_id__OB_capacity__sum"]
-            if ritase_sum["truck_id__OB_capacity__sum"] is not None
-            else 0
-        )
-
+        # ritase_sum = ritase.objects.filter(
+        #     date=date_pattern, hour=hour_pattern, loader_id__unit=d["unit__unit"]
+        # ).aggregate(Sum("truck_id__OB_capacity"))
+        # x["produksi"] = (
+        #     ritase_sum["truck_id__OB_capacity__sum"]
+        #     if ritase_sum["truck_id__OB_capacity__sum"] is not None
+        #     else 0
+        # )
+        x["produksi"] = 0
         data_return.append(x)
+
     response = {
         "draw": request.POST.get("draw"),
         "data": data_return,
