@@ -49,7 +49,7 @@ def standby(request):
             LoaderStatus.objects.filter(report_date=date, shift=shift)
             .annotate(
                 pit=Coalesce(Subquery(subquery.values("pit")[:1]), None),
-                equipment=F("unit__ellipse"),
+                equipment=F("unit__unit"),
             )
             .values(
                 "report_date",
