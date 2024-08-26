@@ -461,7 +461,25 @@ class Command(BaseCommand):
         try:
             data, cluster = self.main(dtime)
             errors = []
+            clusters = {}
             with transaction.atomic():
+                for i, row in cluster.iterrows():
+                    try:
+                        unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
+                        cluster, _ = ClusterLoader.objects.update_or_create(
+                            unit=unit,
+                            hour=row["Hour"],
+                            date=row["Date"],
+                            defaults={"cluster": row["Cluster"], "pit": row["Pit"]},
+                        )
+                        clusters[unit] = cluster
+                    except Exception as e:
+                        # Log detailed information about the error
+                        db_logger.error(
+                            f"Error inserting ClusterLoader row {i}: {e}, data: {row.to_dict()}"
+                        )
+                        raise  # Raise exception to trigger rollback for the entire transaction
+
                 for i, row in data.iterrows():
                     try:
                         unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
@@ -472,6 +490,7 @@ class Command(BaseCommand):
                             timeStart=row["Time Start"],
                             report_date=row["report_date"],
                             unit=unit,
+                            location=clusters.get(unit, None),
                             defaults={
                                 "standby_code": (
                                     None
@@ -483,22 +502,6 @@ class Command(BaseCommand):
                         )
                     except Exception as e:
                         errors.append((i, e, row.to_dict()))
-                        raise  # Raise exception to trigger rollback for the entire transaction
-
-                for i, row in cluster.iterrows():
-                    try:
-                        unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
-                        ClusterLoader.objects.update_or_create(
-                            unit=unit,
-                            hour=row["Hour"],
-                            date=row["Date"],
-                            defaults={"cluster": row["Cluster"], "pit": row["Pit"]},
-                        )
-                    except Exception as e:
-                        # Log detailed information about the error
-                        db_logger.error(
-                            f"Error inserting ClusterLoader row {i}: {e}, data: {row.to_dict()}"
-                        )
                         raise  # Raise exception to trigger rollback for the entire transaction
 
                 self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))
