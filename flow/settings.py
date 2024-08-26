@@ -176,11 +176,11 @@ LOGGING = {
     "loggers": {
         "stb_loader": {"handlers": ["db_log"], "level": "DEBUG"},
         "stb_hauler": {"handlers": ["db_log"], "level": "DEBUG"},
-        "django.request": {  # logging 500 errors to database
-            "handlers": ["db_log"],
-            "level": "ERROR",
-            "propagate": False,
-        },
+        # "django.request": {  # logging 500 errors to database
+        #     "handlers": ["db_log"],
+        #     "level": "ERROR",
+        #     "propagate": False,
+        # },
     },
 }
 
