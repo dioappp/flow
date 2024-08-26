@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from datetime import timedelta
 import math
 from asgiref.sync import sync_to_async
+from django.db.models import F
 
 
 # Create your views here.
@@ -48,14 +49,26 @@ def reportDataSTB(request):
     date_pattern = request.POST.get("date")
     shift_pattern = int(request.POST.get("shift"))
 
-    maindata = LoaderStatus.objects.filter(
-        report_date=date_pattern, shift=shift_pattern
+    maindata = (
+        LoaderStatus.objects.filter(report_date=date_pattern, shift=shift_pattern)
+        .annotate(
+            cluster=F("location__cluster"),
+            pit=F("location__pit"),
+        )
+        .values("unit__unit", "cluster", "pit")
+        .distinct()
+        .order_by("-pit", "cluster", "-unit__unit")
     )
-    maindata = maindata.values("unit__unit").distinct().order_by("-unit__unit")
 
-    total = maindata.count()
-    data = maindata.filter(unit__unit__icontains=request.POST.get("search[value]"))
-    total_filtered = data.count()
+    maindata_list = list(maindata)
+    total = len(maindata_list)
+    search_val = request.POST.get("search[value]", "")
+    data = [
+        item
+        for item in maindata_list
+        if search_val.lower() in item["unit__unit"].lower()
+    ]
+    total_filtered = len(data)
     _start = request.POST.get("start")
     _length = request.POST.get("length")
     page = 1
@@ -77,6 +90,7 @@ def reportDataSTB(request):
             + str(d["unit__unit"])
             + '" class="d3-timeline"></div>'
         )
+        x["cluster"] = d["cluster"]
         data_return.append(x)
 
     response = {
@@ -113,12 +127,12 @@ async def timeline(request):
     response["ritase"] = []
 
     hour_list = []
-    for d in maindata.values("hour"):
+    for d in maindata:
         if d["hour"] not in hour_list:
             hour_list.append(d["hour"])
 
     for h in hour_list:
-        data = maindata.filter(hour=h)
+        data = [d for d in maindata if d.get("hour") == h]
         for i, d in enumerate(data):
             x = {}
             x["database_id"] = d["id"]
