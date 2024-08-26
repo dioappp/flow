@@ -92,7 +92,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data MCR BD Hauler"))
         # Data Breakdown
         bd_sql = """
-        select *, `bd_status`(`shift_breakdown`.`problem`) AS `problem_type` 
+        select *, 
+        case when `bd_status`(`shift_breakdown`.`problem`) = 'BA' then 'BUS' else `bd_status`(`shift_breakdown`.`problem`) end AS `problem_type` 
         from `shift_breakdown` 
         where 
         (
@@ -101,7 +102,7 @@ class Command(BaseCommand):
             `shift_breakdown`.`section` = 'PHW'
             and
             (
-                (`shift_breakdown`.`temp_rfu_date` >= cast((now() + interval -(3) day) as date)) 
+                (`shift_breakdown`.`temp_rfu_date` >= cast((now() + interval -(14) day) as date)) 
                 or 
                 (`shift_breakdown`.`rfu_date` = '0000-00-00') 
                 or 

@@ -144,7 +144,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data MCR BD Loader"))
 
         bd_sql = """
-        select *, `bd_status`(`shift_breakdown`.`problem`) AS `problem_type` 
+        select *, 
+        case when `bd_status`(`shift_breakdown`.`problem`) = 'BA' then 'BUS' else `bd_status`(`shift_breakdown`.`problem`) end AS `problem_type` 
         from `shift_breakdown` 
         where 
         (
