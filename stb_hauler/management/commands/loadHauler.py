@@ -46,7 +46,7 @@ class Command(BaseCommand):
         except OperationalError as e:
             db_logger.error(f"Server Jigsaw Error -{dtime}: {e}")
             self.stderr.write(f"Operational Error: {e}")
-            return
+            raise
 
         try:
             cursor_jigsaw.execute(ss_sql)
@@ -54,6 +54,7 @@ class Command(BaseCommand):
         except Exception as e:
             db_logger.error(f"Failed to execute query ss_ql: {e}")
             self.stderr.write(f"Failed to execute: {e}")
+            raise
 
         shift_states_df = pd.DataFrame(
             columns=["Time Start", "Time End", "Equipment", "Reason"]
@@ -116,7 +117,7 @@ class Command(BaseCommand):
         except OperationalError as e:
             self.stderr.write(f"Operational Error: {e}")
             db_logger.error(f"Server MCRBD Error -{dtime}: {e}")
-            return
+            raise
 
         try:
             cursor_mcr.execute(bd_sql)
@@ -124,6 +125,7 @@ class Command(BaseCommand):
         except Exception as e:
             db_logger.error(f"Failed to execute query bd_sql: {e}")
             self.stderr.write(f"Failed to execute: {e}")
+            raise
 
         breakdown_df = pd.DataFrame(
             columns=[
