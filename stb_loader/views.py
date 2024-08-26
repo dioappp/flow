@@ -2,13 +2,11 @@ import asyncio
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
-from django.db.models import Sum, Subquery, OuterRef
-from stb_loader.models import LoaderStatus, ClusterLoader, LoaderStatusHistory, loaderID
+from django.db.models import F
+from stb_loader.models import LoaderStatus, LoaderStatusHistory, loaderID
 from ritase.models import ritase
 from datetime import datetime, timedelta, time
 import math
-import pandas as pd
-from django.db.models.functions import Coalesce
 import json
 from django.core import serializers
 
@@ -60,25 +58,26 @@ def reportDataSTB(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
 
-    subquery_loader = ClusterLoader.objects.filter(
-        unit=OuterRef("unit"), date=OuterRef("date"), hour=OuterRef("hour")
-    )
-
     maindata = (
         LoaderStatus.objects.filter(date=date_pattern, hour=hour_pattern)
         .annotate(
-            cluster=Coalesce(Subquery(subquery_loader.values("cluster")[:1]), None),
-            pit=Coalesce(Subquery(subquery_loader.values("pit")[:1]), None),
+            cluster=F("location__cluster"),
+            pit=F("location__pit"),
         )
         .values("unit__unit", "pit", "cluster")
+        .distinct()
         .order_by("-pit", "cluster", "-unit__unit")
     )
 
-    maindata = maindata.values("unit__unit", "cluster").distinct()
-
-    total = maindata.count()
-    data = maindata.filter(unit__unit__icontains=request.POST.get("search[value]"))
-    total_filtered = data.count()
+    maindata_list = list(maindata)
+    total = len(maindata_list)
+    search_val = request.POST.get("search[value]", "")
+    data = [
+        item
+        for item in maindata_list
+        if search_val.lower() in item["unit__unit"].lower()
+    ]
+    total_filtered = len(data)
     _start = request.POST.get("start")
     _length = request.POST.get("length")
     page = 1
