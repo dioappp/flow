@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import CharField
 
 
 # Create your models here.
@@ -64,3 +65,15 @@ class LoaderStatusHistory(models.Model):
         return (
             f"{self.get_action_display()} - {self.loader_status_id} at {self.timestamp}"
         )
+
+
+class Standby(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=10)
+    rank = models.SmallIntegerField()
+    color = models.CharField(max_length=10)
+
+
+class Reason(models.Model):
+    reason = models.TextField()
+    code = models.ForeignKey(Standby, on_delete=models.CASCADE)
