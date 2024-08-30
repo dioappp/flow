@@ -12,7 +12,7 @@ db_logger = logging.getLogger("stb_loader")
 
 
 class Command(BaseCommand):
-    def main(self, dtime: str) -> tuple[DataFrame, DataFrame]:
+    def main(self, dtime: str) -> tuple[DataFrame, DataFrame, DataFrame]:
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data shift states Loader"))
 
         ss_sql = f"""
@@ -439,7 +439,7 @@ class Command(BaseCommand):
         result["report_date"] = result["date"]
         cond = (result["shift"] == 2) & (result["hour"] <= 6)
         result.loc[cond, "report_date"] = result["date"] - pd.Timedelta(days=1)
-        return result, cluster_df
+        return result, cluster_df, shift_states_df
 
     def add_arguments(self, parser):
         def_time = datetime.now() - timedelta(hours=1)
@@ -463,7 +463,7 @@ class Command(BaseCommand):
             )
         )
         try:
-            data, cluster = self.main(dtime)
+            data, cluster, ss = self.main(dtime)
             errors = []
             clusters = {}
             with transaction.atomic():
@@ -505,7 +505,9 @@ class Command(BaseCommand):
                             },
                         )
                     except Exception as e:
-                        errors.append((i, e, row.to_dict()))
+                        ss = ss[ss["Equipment"] == row["Equipment"]]
+                        ss = ss[ss["Standby Code"].isna()]
+                        errors.append((i, e, ss.to_dict()))
                         raise  # Raise exception to trigger rollback for the entire transaction
 
                 self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))
