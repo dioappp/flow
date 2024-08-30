@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import OperationalError, transaction, connections
-from stb_loader.models import loaderID, LoaderStatus, ClusterLoader
-from stb_loader.management.commands.stb_code import standby_codes, RANK, BDC
+from stb_loader.models import loaderID, LoaderStatus, ClusterLoader, Reason
+from stb_loader.management.commands.stb_code import BDC
 import stb_loader.management.commands.function as f
 import pandas as pd
 from pandas import DataFrame
@@ -14,6 +14,12 @@ db_logger = logging.getLogger("stb_loader")
 class Command(BaseCommand):
     def main(self, dtime: str) -> tuple[DataFrame, DataFrame, DataFrame]:
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data shift states Loader"))
+        # Fetch all reasons with their related standby codes
+        reasons = Reason.objects.select_related("code").all()
+
+        # Separate the dictionaries for standby code and rank
+        standby_codes = {reason.reason: reason.code.code for reason in reasons}
+        ranks = {reason.code.code: reason.code.rank for reason in reasons}
 
         ss_sql = f"""
         declare @time_start datetime, @time_end datetime
@@ -87,7 +93,7 @@ class Command(BaseCommand):
         shift_states_df["Reason"] = shift_states_df["Reason"].fillna("Production")
         # ambil loader aja
         shift_states_df["Standby Code"] = shift_states_df["Reason"].map(standby_codes)
-        shift_states_df["Rank"] = shift_states_df["Standby Code"].map(RANK)
+        shift_states_df["Rank"] = shift_states_df["Standby Code"].map(ranks)
         loader_df = shift_states_df.copy()
 
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data shift activity"))
@@ -263,7 +269,7 @@ class Command(BaseCommand):
                 ts + pd.Timedelta(minutes=5),
             ],
             "Standby Code": "S6",
-            "Rank": RANK["S6"],
+            "Rank": ranks["S6"],
         }
         change_shift_df = pd.DataFrame(data=data_change_shift)
 
