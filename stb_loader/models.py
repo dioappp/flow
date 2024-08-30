@@ -75,5 +75,5 @@ class Standby(models.Model):
 
 
 class Reason(models.Model):
-    reason = models.TextField()
+    reason = models.CharField(max_length=60)
     code = models.ForeignKey(Standby, on_delete=models.CASCADE)
