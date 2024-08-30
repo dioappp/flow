@@ -1,7 +1,6 @@
 from typing import Any
 import pandas as pd
 from pandas import DataFrame, Timestamp
-from .stb_code import RANK
 import warnings
 
 # Disable future warnings
