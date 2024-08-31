@@ -21,7 +21,7 @@ def index(request):
     return render(request, "ritase/index.html")
 
 
-def get_options(requst):
+def get_options():
     materials = list(material.objects.values_list("code", flat=True))
     materials.append("")
     loaders = list(loaderID.objects.values_list("unit", flat=True).order_by("unit"))
