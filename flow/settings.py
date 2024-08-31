@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "exporter",
     "hma2b",
     "django_db_logger",
+    "dataloader",
     "debug_toolbar",
 ]
 
