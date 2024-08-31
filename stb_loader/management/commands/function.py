@@ -31,7 +31,9 @@ def generate_s12(
         }
     )
 
-    trucks_act = trucks_act.sort_values("Time Start").reset_index(drop=True)
+    trucks_act = trucks_act.sort_values(["Time Start", "Time End"]).reset_index(
+        drop=True
+    )
 
     RUN = True
     while RUN:
