@@ -10,83 +10,97 @@
     <div class="row">
         <div class="col-3">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Ritase</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3 row row-cols-4">
-                        <label for="date-select" class="col col-form-label">Tanggal</label>
-                        <div class="col-auto">
-                            <input class="form-control"
-                                   type="date"
-                                   placeholder="Month data.."
-                                   onchange="load()"
-                                   id="date-select"
-                                   name="date"
-                                   value="{% now "Y-m-d" %}" />
+                <form method="POST"
+                      enctype="multipart/form-data"
+                      action="{% url 'dataloader:ritase' %}">
+                    <div class="card-header">
+                        <h5 class="mb-0">Ritase</h5>
+                    </div>
+                    <div class="card-body">
+                        {% csrf_token %}
+                        <div class="mb-3 row row-cols-4">
+                            <label for="date-select" class="col col-form-label">Tanggal</label>
+                            <div class="col-auto">
+                                <input class="form-control"
+                                       type="date"
+                                       placeholder="Month data.."
+                                       onchange="load()"
+                                       id="date-select"
+                                       name="date"
+                                       value="{% now "Y-m-d" %}" />
+                            </div>
+                        </div>
+                        <div class="mb-3 row row-cols-4">
+                            <label for="hour-select" class="col col-form-label">Jam</label>
+                            <div class="col-auto">
+                                <input type="text"
+                                       class="form-control"
+                                       placeholder="HH:MM"
+                                       id="hour-select"
+                                       name="hour"
+                                       required>
+                            </div>
+                        </div>
+                        <div class="mb-3 row row-cols-4">
+                            <label for="durasi" class="col col-form-label">Durasi</label>
+                            <div class="col-auto">
+                                <input type="number"
+                                       step="1"
+                                       class="form-control"
+                                       id="durasi"
+                                       name="durasi"
+                                       min="0"
+                                       placeholder="optional. default 1 jam">
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-3 row row-cols-4">
-                        <label for="hour-select" class="col col-form-label">Jam</label>
-                        <div class="col-auto">
-                            <input type="text"
-                                   class="form-control"
-                                   placeholder="HH:MM"
-                                   id="hour-select"
-                                   required>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-end">
+                            <button type="submit"class="btn btn-primary" id="btn-ritase">Load</button>
                         </div>
                     </div>
-                    <div class="mb-3 row row-cols-4">
-                        <label for="durasi" class="col col-form-label">Durasi</label>
-                        <div class="col-auto">
-                            <input type="number" step="1" class="form-control" id="durasi">
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <div class="d-flex justify-content-end">
-                        <button class="btn btn-primary" id="btn-ritase">Load</button>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
         <div class="col-3">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">HM Operator</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3 row row-cols-4">
-                        <label for="date-select" class="col col-form-label">Tanggal</label>
-                        <div class="col-auto">
-                            <input class="form-control"
-                                   type="date"
-                                   placeholder="Month data.."
-                                   onchange="load()"
-                                   id="date-select"
-                                   name="date"
-                                   value="{% now "Y-m-d" %}" />
+                <form method="POST"
+                      enctype="multipart/form-data"
+                      action="{% url 'dataloader:hm' %}">
+                    <div class="card-header">
+                        <h5 class="mb-0">HM Operator</h5>
+                    </div>
+                    <div class="card-body">
+                        {% csrf_token %}
+                        <div class="mb-3 row row-cols-4">
+                            <label for="date-select" class="col col-form-label">Tanggal</label>
+                            <div class="col-auto">
+                                <input class="form-control"
+                                       type="date"
+                                       placeholder="Month data.."
+                                       onchange="load()"
+                                       id="date-select"
+                                       name="date"
+                                       value="{% now "Y-m-d" %}" />
+                            </div>
+                        </div>
+                        <div class="mb-3 row row-cols-4">
+                            <label for="shift" class="col col-form-label">Shift</label>
+                            <div class="col-5">
+                                <select name="shift" id="shift-select" class="form-control">
+                                    <option value="1">Shift 1</option>
+                                    <option value="2">Shift 2</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-3 row row-cols-4">
-                        <label for="shift" class="col col-form-label">Shift</label>
-                        <div class="col-5">
-                            <select name="shift" id="shift-select" class="form-control">
-                                <option value="1">Shift 1</option>
-                                <option value="2">Shift 2</option>
-                            </select>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary" id="btn-hm">Load</button>
                         </div>
                     </div>
-                </div>
-                <div class="card-footer">
-                    <div class="d-flex justify-content-end">
-                        <button class="btn btn-primary" id="btn-hm">Load</button>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
 {% endblock content %}
-{% block script %}
-
-{% endblock script %}

@@ -12,5 +12,5 @@ urlpatterns = [
     path("distance/", include("distance.urls")),
     path("exporter/", include("exporter.urls")),
     path("hm/", include("hma2b.urls")),
-    path("load_data", include("dataloader.urls")),
+    path("load_data/", include("dataloader.urls")),
 ] + debug_toolbar_urls()
