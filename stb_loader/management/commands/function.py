@@ -48,8 +48,8 @@ def generate_s12(
     trucks_act["groups"] = trucks_act["groups"].cumsum()
     trucks_act = trucks_act.groupby("groups", as_index=False).agg(
         {
-            "Time Start": "first",
-            "Time End": "last",
+            "Time Start": "min",
+            "Time End": "max",
             "Equipment": ", ".join,
             "Activity": "first",
             "Shovel": "first",
