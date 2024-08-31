@@ -20,7 +20,6 @@
     <script src="{% static 'js/standby.js' %}"></script>
     <script type="text/javascript">
         let colorScale = getColorData()
-        var width = 1400;
         setTimeFrameShiftly()
 
         var undobtn = d3.select("#btn-container").append("button").attr("id", "undoBtn").attr("class", "ms-0 btn btn-warning").text("undo")
@@ -198,6 +197,7 @@
 
             var container = d3.select("#data-" + id_element);
             container.select("svg").remove();
+            var width = $('thead tr th:nth-child(2)').width()
             var svg = container
                 .append("svg")
                 .attr("width", width)

@@ -23,7 +23,6 @@
     <script src="{% static 'js/standby.js' %}"></script>
     <script type="text/javascript">
         let colorScale = getColorData()
-        var width = 1400;
 
         var table = $("#load-table").DataTable({
             processing: true,
@@ -211,6 +210,7 @@
 
             var container = d3.select("#data-" + id_element);
             container.select("svg").remove();
+            var width = $('thead tr th:nth-child(2)').width()
             var svg = container
                 .append("svg")
                 .attr("width", width)
