@@ -1,12 +1,12 @@
 import asyncio
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from stb_hauler.models import HaulerStatus
 from ritase.models import ritase
 from datetime import timedelta, datetime
 import math
-import pandas as pd
+from asgiref.sync import sync_to_async
 
 
 # Create your views here.
@@ -51,12 +51,22 @@ def reportDataSTB(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
 
-    maindata = HaulerStatus.objects.filter(date=date_pattern, hour=hour_pattern)
-    maindata = maindata.values("unit__jigsaw").distinct().order_by("-unit__jigsaw")
+    maindata = (
+        HaulerStatus.objects.filter(date=date_pattern, hour=hour_pattern)
+        .values("unit__jigsaw")
+        .distinct()
+        .order_by("-unit__jigsaw")
+    )
 
-    total = maindata.count()
-    data = maindata.filter(unit__jigsaw__icontains=request.POST.get("search[value]"))
-    total_filtered = data.count()
+    maindata_list = list(maindata)
+    total = len(maindata_list)
+    search_val = request.POST.get("search[value]", "")
+    data = [
+        item
+        for item in maindata_list
+        if search_val.lower() in item["unit__jigsaw"].lower()
+    ]
+    total_filtered = len(data)
     _start = request.POST.get("start")
     _length = request.POST.get("length")
     page = 1
@@ -95,15 +105,42 @@ def reportDataSTB(request):
     return JsonResponse(response)
 
 
-def timeline(request):
+@sync_to_async
+def get_hauler_status(date_pattern, hour_pattern, unit_pattern):
+    return list(
+        HaulerStatus.objects.filter(
+            date=date_pattern, hour=hour_pattern, unit__jigsaw=unit_pattern
+        )
+        .order_by("timeStart")
+        .values("id", "standby_code", "timeStart")
+    )
+
+
+@sync_to_async
+def get_ritase(date_pattern, hour_pattern, unit_pattern):
+    return list(
+        ritase.objects.filter(
+            date=date_pattern, hour=hour_pattern, truck_id__jigsaw=unit_pattern
+        )
+        .order_by("time_full")
+        .values(
+            "id",
+            "time_full",
+            "time_empty",
+            "type",
+            "loader_id__unit",
+            "dump_location",
+            "truck_id__OB_capacity",
+        )
+    )
+
+
+async def timeline(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
     unit_pattern = request.POST.get("unit_id")
 
-    maindata = HaulerStatus.objects.filter(
-        date=date_pattern, hour=hour_pattern, unit__jigsaw=unit_pattern
-    ).order_by("timeStart")
-    maindata = maindata.values("id", "standby_code", "timeStart")
+    maindata = await get_hauler_status(date_pattern, hour_pattern, unit_pattern)
     response = {}
     response["state"] = []
     response["ritase"] = []
@@ -124,18 +161,7 @@ def timeline(request):
         x["label"] = d["standby_code"]
         response["state"].append(x)
 
-    ritasedata = ritase.objects.filter(
-        date=date_pattern, hour=hour_pattern, truck_id__jigsaw=unit_pattern
-    ).order_by("time_full")
-    ritasedata = ritasedata.values(
-        "id",
-        "time_full",
-        "time_empty",
-        "type",
-        "loader_id__unit",
-        "dump_location",
-        "truck_id__OB_capacity",
-    )
+    ritasedata = await get_ritase(date_pattern, hour_pattern, unit_pattern)
 
     for d in ritasedata:
         x = {}

@@ -3,6 +3,7 @@ from stb_hauler.models import HaulerStatus
 from ritase.models import ritase
 from django.http import JsonResponse
 from datetime import timedelta
+from asgiref.sync import sync_to_async
 import math
 
 
@@ -46,14 +47,22 @@ def reportDataSTB(request):
     date_pattern = request.POST.get("date")
     shift_pattern = int(request.POST.get("shift"))
 
-    maindata = HaulerStatus.objects.filter(
-        report_date=date_pattern, shift=shift_pattern
+    maindata = (
+        HaulerStatus.objects.filter(report_date=date_pattern, shift=shift_pattern)
+        .values("unit__jigsaw")
+        .distinct()
+        .order_by("-unit__jigsaw")
     )
-    maindata = maindata.values("unit__jigsaw").distinct().order_by("-unit__jigsaw")
 
-    total = maindata.count()
-    data = maindata.filter(unit__jigsaw__icontains=request.POST.get("search[value]"))
-    total_filtered = data.count()
+    maindata_list = list(maindata)
+    total = len(maindata_list)
+    search_val = request.POST.get("search[value]", "")
+    data = [
+        item
+        for item in maindata_list
+        if search_val.lower() in item["unit__jigsaw"].lower()
+    ]
+    total_filtered = len(data)
     _start = request.POST.get("start")
     _length = request.POST.get("length")
     page = 1
@@ -88,26 +97,53 @@ def reportDataSTB(request):
     return JsonResponse(response)
 
 
-def timeline(request):
+@sync_to_async
+def get_hauler_status(date_pattern, shift_pattern, unit_pattern):
+    return list(
+        HaulerStatus.objects.filter(
+            report_date=date_pattern, shift=shift_pattern, unit__jigsaw=unit_pattern
+        )
+        .order_by("timeStart")
+        .values("id", "standby_code", "timeStart", "hour")
+    )
+
+
+@sync_to_async
+def get_ritase(date_pattern, shift_pattern, unit_pattern):
+    return list(
+        ritase.objects.filter(
+            report_date=date_pattern, shift=shift_pattern, truck_id__jigsaw=unit_pattern
+        )
+        .order_by("time_full")
+        .values(
+            "id",
+            "time_full",
+            "time_empty",
+            "type",
+            "loader_id__unit",
+            "dump_location",
+            "truck_id__OB_capacity",
+        )
+    )
+
+
+async def timeline(request):
     date_pattern = request.POST.get("date")
     shift_pattern = request.POST.get("shift")
     unit_pattern = request.POST.get("unit_id")
 
-    maindata = HaulerStatus.objects.filter(
-        report_date=date_pattern, shift=shift_pattern, unit__jigsaw=unit_pattern
-    ).order_by("timeStart")
-    maindata = maindata.values("id", "standby_code", "timeStart", "hour")
+    maindata = await get_hauler_status(date_pattern, shift_pattern, unit_pattern)
     response = {}
     response["state"] = []
     response["ritase"] = []
 
     hour_list = []
-    for d in maindata.values("hour"):
+    for d in maindata:
         if d["hour"] not in hour_list:
             hour_list.append(d["hour"])
 
     for h in hour_list:
-        data = maindata.filter(hour=h)
+        data = [d for d in maindata if d.get("hour") == h]
         for i, d in enumerate(data):
             x = {}
             x["database_id"] = d["id"]
@@ -133,18 +169,7 @@ def timeline(request):
             x["label"] = d["standby_code"]
             response["state"].append(x)
 
-    ritasedata = ritase.objects.filter(
-        report_date=date_pattern, shift=shift_pattern, truck_id__jigsaw=unit_pattern
-    ).order_by("time_full")
-    ritasedata = ritasedata.values(
-        "id",
-        "time_full",
-        "time_empty",
-        "type",
-        "loader_id__unit",
-        "dump_location",
-        "truck_id__OB_capacity",
-    )
+    ritasedata = await get_ritase(date_pattern, shift_pattern, unit_pattern)
 
     for d in ritasedata:
         x = {}
