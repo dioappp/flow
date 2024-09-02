@@ -27,8 +27,13 @@ async def ritase(request):
     return HttpResponse(status=204)
 
 
-def hm(request):
+async def hm(request):
     date = request.POST.get("date")
-    shift = request.POST.get("shift")
+    shift = int(request.POST.get("shift"))
 
+    def run_command():
+        call_command("hm", date=date, shift=shift)
+
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, run_command)
     return HttpResponse(status=204)
