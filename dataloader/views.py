@@ -18,6 +18,8 @@ async def ritase(request):
 
     if durasi == "":
         durasi = 1
+    else:
+        durasi = int(durasi)
 
     def run_command():
         call_command("ritase", date=date_str, durasi=durasi)
