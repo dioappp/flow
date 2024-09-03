@@ -46,6 +46,12 @@
                 },
             },
             columns: [{
+                className: 'dt-control',
+                orderable: false,
+                data: null,
+                defaultContent: '',
+                width: "2%"
+            }, {
                 data: "unit",
                 orderable: false,
                 searchable: false,
@@ -69,7 +75,7 @@
         });
 
         table.on('user-select', function(e, dt, type, cell, originalEvent) {
-            if ($(originalEvent.target).index() === 1) {
+            if ($(originalEvent.target).index() === 2 || $(originalEvent.target).index() === 0) {
                 e.preventDefault();
             }
         });
@@ -120,7 +126,7 @@
             });
         }
 
-        function generateToSVG(id_element, data) {
+        function generateToSVG(id_element, data, x = null) {
             let standbyData = [];
             let ritasiData = [];
             for (let i = 0; i < data["state"].length; i++) {
@@ -220,7 +226,7 @@
                 });
             var container = d3.select("#data-" + id_element);
             container.select("svg").remove();
-            var width = $('thead tr th:nth-child(2)').width()
+            var width = $('thead tr th:nth-child(3)').width()
             var svg = container
                 .append("svg")
                 .attr("width", width)
@@ -302,6 +308,72 @@
             event.preventDefault();
             var formData = new FormData(this);
             handleDeleteSubmission("{% url 'stb_loader:delete'%}", data_unit, formData)
+        });
+
+        function checkTimeLineUnitChild() {
+            $(".d3-timeline-child").each(function() {
+                var id = $(this).data("id");
+                showDetailChild(id);
+            });
+        }
+
+        function format(data) {
+            return data.map(d =>
+                `<div class="row">
+                <div class="col col-auto" style="width: 9%;">
+                <h5>${d.hauler}</h5></div>
+                <div id="data-${d.hauler}" data-id="${d.hauler}" class="col d3-timeline-child"></div>
+                </div>`
+            ).join('\n');
+        }
+
+        function showDetailChild(id) {
+            $.ajax({
+                url: "{% url 'stb_hauler:timeline' %}",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                data: {
+                    date: $("#date-select").val(),
+                    hour: $("#hour-select").val(),
+                    unit_id: id,
+                    hanging: $("#hanging")[0].checked,
+                },
+                success: function(data) {
+                    generateToSVG(id, data);
+                },
+            });
+        }
+
+        // Add event listener for opening and closing details
+        $('#load-table tbody').on('click', 'td.dt-control', function() {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+
+            if (row.child.isShown()) {
+                // This row is already open - close it
+                row.child.hide();
+            } else {
+                // Open this row
+                $.ajax({
+                    url: "{% url 'stb_loader:load_child' %}",
+                    type: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                    },
+                    data: {
+                        unit: row.data().unit,
+                        date: $("#date-select").val(),
+                        hour: $("#hour-select").val(),
+                    },
+                    complete: function(response) {
+                        var node = format(response.responseJSON.data)
+                        row.child(node).show();
+                        checkTimeLineUnitChild()
+                    }
+                })
+            }
         });
     </script>
 {% endblock script %}
