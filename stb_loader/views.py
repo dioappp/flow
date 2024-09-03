@@ -10,6 +10,7 @@ import math
 import json
 from django.core import serializers
 from asgiref.sync import sync_to_async
+from ritase.models import ritase
 
 
 # Create your views here.
@@ -53,6 +54,30 @@ def index(request):
             "ritase": tipe_ritase,
         },
     )
+
+
+def data_child(request):
+    date = request.POST.get("date")
+    hour = request.POST.get("hour")
+    unit = request.POST.get("unit")
+
+    loader = loaderID.objects.get(unit=unit)
+    maindata = (
+        ritase.objects.filter(date=date, hour=hour, loader_id=loader)
+        .annotate(hauler=F("truck_id__jigsaw"))
+        .values("hauler")
+        .distinct()
+        .order_by("-hauler")
+    )
+
+    data_return = []
+    for d in maindata:
+        x = {}
+        x["hauler"] = d["hauler"]
+        data_return.append(x)
+
+    response = {"data": data_return}
+    return JsonResponse(response)
 
 
 def reportDataSTB(request):
