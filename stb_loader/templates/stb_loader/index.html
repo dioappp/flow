@@ -320,8 +320,8 @@
         function format(data) {
             return data.map(d =>
                 `<div class="row">
-                <div class="col col-auto" style="width: 9%;">
-                <h5>${d.hauler}</h5></div>
+                <div class="col col-auto align-items-center" style="width: 9%;">
+                <p>${d.hauler}</p></div>
                 <div id="data-${d.hauler}" data-id="${d.hauler}" class="col d3-timeline-child"></div>
                 </div>`
             ).join('\n');
