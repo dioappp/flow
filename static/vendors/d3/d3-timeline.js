@@ -374,20 +374,20 @@
       if (showTimeAxis) { appendTimeAxis(g, xAxis, timeAxisYPosition); }
       if (timeAxisTick) { appendTimeAxisTick(g, xAxis, maxStack); }
 
-      if (width > gParentSize.width) {
-        var move = function() {
-          var x = Math.min(0, Math.max(gParentSize.width - width, d3.event.translate[0]));
-          zoom.translate([x, 0]);
-          g.attr("transform", "translate(" + x + ",0)");
-          scroll(x*scaleFactor, xScale);
-        };
+      // if (width > gParentSize.width) {
+      //   var move = function() {
+      //     var x = Math.min(0, Math.max(gParentSize.width - width, d3.event.translate[0]));
+      //     zoom.translate([x, 0]);
+      //     g.attr("transform", "translate(" + x + ",0)");
+      //     scroll(x*scaleFactor, xScale);
+      //   };
 
-        var zoom = d3.behavior.zoom().x(xScale).on("zoom", move);
+      //   var zoom = d3.behavior.zoom().x(xScale).on("zoom", move);
 
-        gParent
-          .attr("class", "scrollable")
-          .call(zoom);
-      }
+      //   gParent
+      //     .attr("class", "scrollable")
+      //     .call(zoom);
+      // }
 
       if (rotateTicks) {
         g.selectAll(".tick text")
