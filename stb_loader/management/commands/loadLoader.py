@@ -152,7 +152,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data MCR BD Loader"))
 
         bd_sql = """
-        select *, 
+        select bd_date, bd_time, rfu_date, rfu_time, unit_id, bd_code, problem, 
         case when `bd_status`(`shift_breakdown`.`problem`) = 'BA' then 'BUS' else `bd_status`(`shift_breakdown`.`problem`) end AS `problem_type` 
         from `shift_breakdown` 
         where 
@@ -198,17 +198,17 @@ class Command(BaseCommand):
             ]
         )
         for i, d in enumerate(data):
-            a = str(f"{d[6]} {d[7]}")
-            if d[8] != "":
-                b = str(f"{d[8]} {d[9]}")
+            a = str(f"{d[0]} {d[1]}")
+            if d[2] != "":
+                b = str(f"{d[2]} {d[3]}")
             else:
                 b = ""
             breakdown_df.loc[i + 1, "Time Start"] = a
             breakdown_df.loc[i + 1, "Time End"] = b
-            breakdown_df.loc[i + 1, "Equipment"] = d[10]
-            breakdown_df.loc[i + 1, "bd_code"] = d[17]
-            breakdown_df.loc[i + 1, "remarks"] = d[16]
-            breakdown_df.loc[i + 1, "Standby Code"] = d[29]
+            breakdown_df.loc[i + 1, "Equipment"] = d[4]
+            breakdown_df.loc[i + 1, "bd_code"] = d[5]
+            breakdown_df.loc[i + 1, "remarks"] = d[6]
+            breakdown_df.loc[i + 1, "Standby Code"] = d[7]
         breakdown_df["Time Start"] = pd.to_datetime(
             breakdown_df["Time Start"], format="%Y-%m-%d %H:%M", utc=True
         )
@@ -468,9 +468,9 @@ class Command(BaseCommand):
                 f"{dtime}: Load data shift states, shift activity, dan MCR BD Loader"
             )
         )
+        errors_data = []
         try:
             data, cluster, ss = self.main(dtime)
-            errors = []
             clusters = {}
             with transaction.atomic():
                 for i, row in cluster.iterrows():
@@ -513,14 +513,14 @@ class Command(BaseCommand):
                     except Exception as e:
                         ss = ss[ss["Equipment"] == row["Equipment"]]
                         ss = ss[ss["Standby Code"].isna()]
-                        errors.append((i, e, ss.to_dict()))
+                        errors_data.append((i, e, ss.to_dict()))
                         raise  # Raise exception to trigger rollback for the entire transaction
 
                 self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))
         except Exception as e:
             # Log the final exception that caused the transaction to fail
-            if errors:
-                for i, e, data in errors:
+            if errors_data:
+                for i, e, data in errors_data:
                     db_logger.error(f"Error inserting Row {i}: {e}, data: {data}")
             db_logger.error(f"stb loader failed - {dtime} => {e}")
             self.stdout.write(
