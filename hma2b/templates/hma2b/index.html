@@ -109,6 +109,19 @@
                 ordering: false,
                 stateSave: true,
                 pagingType: "full_numbers",
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, "All"]
+                ],
+                layout: {
+                    top1Start: {
+                        buttons: [{
+                            extend: 'copyHtml5',
+                            text: 'Copy',
+                            title: null,
+                        }],
+                    },
+                },
                 ajax: {
                     url: "{% url 'hma2b:cek_operator' %}",
                     type: "POST",

@@ -39,9 +39,15 @@ def operator(request):
         .order_by("equipment", "hm_start")
     )
 
-    total = maindata.count()
-    data = maindata.filter(equipment__icontains=request.POST.get("search[value]"))
-    total_filtered = data.count()
+    maindata_list = list(maindata)
+    total = len(maindata_list)
+    search_val = request.POST.get("search[value]", "")
+    data = [
+        item
+        for item in maindata_list
+        if search_val.lower() in item["equipment"].lower()
+    ]
+    total_filtered = len(data)
     _start = request.POST.get("start")
     _length = request.POST.get("length")
     page = 1
@@ -50,7 +56,8 @@ def operator(request):
         start = int(_start)
         length = int(_length)
         page = math.ceil(start / length) + 1
-    page_obj = data[start : start + length]
+
+    page_obj = data[start : start + length] if length > 0 else data
 
     response = {
         "draw": request.POST.get("draw"),
