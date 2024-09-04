@@ -13,4 +13,5 @@ urlpatterns = [
     path("exporter/", include("exporter.urls")),
     path("hm/", include("hma2b.urls")),
     path("load_data/", include("dataloader.urls")),
+    path("hpr/", include("hpr.urls")),
 ] + debug_toolbar_urls()

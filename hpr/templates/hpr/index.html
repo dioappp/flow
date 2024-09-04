@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    | HPR
+{% endblock title %}
+{% block breadcrumb_title %}
+    Hourly Production Report
+{% endblock breadcrumb_title %}
+{% block breadcrumb %}
+    <li class="breadcrumb-item">
+        <a href="#">Produksi</a>
+    </li>
+    <li class="breadcrumb-item">
+        <a href="{% url 'hpr:index' %}">HPR</a>
+    </li>
+{% endblock breadcrumb %}
+{% block content %}
+    <div class="row">
+        <div class="col-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-floating">
+                        <textarea class="form-control"
+                                  placeholder="Leave a comment here"
+                                  id="floatingTextarea"
+                                  style="height: 500px"></textarea>
+                        <label for="floatingTextarea">Comments</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block script %}
+    <script src="{% static 'vendors/excel-clipboard/app.js' %}"></script>
+    {% comment %} <script type='text/javascript'>
+     function removeExtraTabs(string) {
+         return string.replace(new RegExp("\t\t", "g"), "\t")
+     }
+
+     function generateTable() {
+         removeExtraTabs($('#pastein').val());
+         var rows = data.split("\n");
+         var table =
+     }
+ </script> {% endcomment %}
+{% endblock script %}
