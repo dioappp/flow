@@ -48,6 +48,7 @@
                 data: null,
                 orderable: false,
                 searchable: false,
+                defaultContent: "",
                 width: "0%"
             }, {
                 data: "unit",
@@ -215,7 +216,7 @@
 
             var container = d3.select("#data-" + id_element);
             container.select("svg").remove();
-            var width = $('thead tr th:nth-child(2)').width()
+            var width = $('thead tr th:nth-child(3)').width()
             var svg = container
                 .append("svg")
                 .attr("width", width)
