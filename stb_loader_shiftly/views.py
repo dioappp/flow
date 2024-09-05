@@ -1,5 +1,5 @@
-from django.forms import IntegerField
 from django.shortcuts import render
+from exporter.views import is_in_jam_kritis
 from hm.models import hmOperator
 from ritase.views import get_shift_time
 from stb_loader.models import LoaderStatus
@@ -8,6 +8,7 @@ from datetime import timedelta
 import math
 from asgiref.sync import sync_to_async
 from django.db.models import F, Q
+import pandas as pd
 
 
 # Create your views here.
@@ -98,6 +99,10 @@ def reportDataSTB(request):
     )
     data_hm = {item["equipment"]: item["durasi"] for item in data_hm}
 
+    unit_list = [item["unit__unit"] for item in page_obj]
+
+    data_wh = get_wh(date_pattern, shift_pattern, unit_list)
+
     data_return = []
     for d in page_obj:
         x = {}
@@ -111,6 +116,7 @@ def reportDataSTB(request):
         )
         x["cluster"] = d["cluster"]
         x["hm"] = data_hm.get(d["unit__unit"], 0)
+        x["wh"] = data_wh.get(d["unit__unit"], 0)
         data_return.append(x)
 
     response = {
@@ -122,6 +128,62 @@ def reportDataSTB(request):
         "recordsFiltered": total_filtered,
     }
     return JsonResponse(response)
+
+
+def get_wh(date, shift, unit_list) -> dict:
+    data_loader = (
+        LoaderStatus.objects.filter(
+            report_date=date, shift=shift, unit__unit__in=unit_list
+        )
+        .annotate(
+            equipment=F("unit__unit"),
+        )
+        .values(
+            "equipment",
+            "timeStart",
+            "standby_code",
+        )
+    )
+    data = list(data_loader)
+    if not data:
+        return {}
+
+    df = pd.DataFrame(data)
+    df = df.sort_values(by=["equipment", "timeStart"])
+    df["timeStart"] = pd.to_datetime(df["timeStart"])
+
+    s = 60 - df["timeStart"].max().second
+    if shift == 2 and df["timeStart"].max().hour == 6:
+        m = 29 - df["timeStart"].max().minute
+    else:
+        m = 59 - df["timeStart"].max().minute
+
+    te = df["timeStart"].max() + pd.Timedelta(minutes=m, seconds=s)
+
+    df["timeEnd"] = df.groupby("equipment")["timeStart"].shift(-1)
+    df["timeEnd"] = df["timeEnd"].fillna(te)
+
+    df["durasi"] = df["timeEnd"] - df["timeStart"]
+    df["durasi"] = pd.to_timedelta(df["durasi"]).dt.total_seconds() / 3600
+
+    df = df.reset_index(drop=True)
+
+    ids = df.index[df.standby_code == "S12"].tolist()
+
+    for id in ids:
+        if not is_in_jam_kritis(id, df):
+            df.loc[id, "standby_code"] = "WH"
+
+    df = df.groupby(["equipment", "standby_code"], as_index=False).agg(
+        {
+            "durasi": "sum",
+        }
+    )
+
+    df = df[df["standby_code"].str.contains("WH")]
+    df = df.groupby("equipment").sum()
+    df = df.drop(columns="standby_code")
+    return df.to_dict()["durasi"]
 
 
 @sync_to_async
