@@ -1,10 +1,13 @@
+from django.forms import IntegerField
 from django.shortcuts import render
+from hm.models import hmOperator
+from ritase.views import get_shift_time
 from stb_loader.models import LoaderStatus
 from django.http import JsonResponse
 from datetime import timedelta
 import math
 from asgiref.sync import sync_to_async
-from django.db.models import F
+from django.db.models import F, Q
 
 
 # Create your views here.
@@ -79,6 +82,22 @@ def reportDataSTB(request):
         page = math.ceil(start / length) + 1
     page_obj = data[start : start + length]
 
+    ts, te = get_shift_time(date_pattern, shift_pattern)
+    ts = ts - timedelta(minutes=30)
+    te = te - timedelta(hours=1)
+
+    data_hm = (
+        hmOperator.objects.filter(
+            Q(equipment__startswith="X")
+            | Q(equipment__startswith="S")
+            | Q(equipment__startswith="E"),
+            Q(login_time__gte=ts, login_time__lt=te),
+        )
+        .annotate(durasi=(F("hm_end") - F("hm_start")))
+        .values("equipment", "durasi")
+    )
+    data_hm = {item["equipment"]: item["durasi"] for item in data_hm}
+
     data_return = []
     for d in page_obj:
         x = {}
@@ -91,6 +110,7 @@ def reportDataSTB(request):
             + '" class="d3-timeline"></div>'
         )
         x["cluster"] = d["cluster"]
+        x["hm"] = data_hm.get(d["unit__unit"], 0)
         data_return.append(x)
 
     response = {

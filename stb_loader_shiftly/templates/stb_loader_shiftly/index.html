@@ -54,13 +54,25 @@
                 data: "action",
                 orderable: false,
                 searchable: false
-            }, ],
+            }, {
+                data: "hm",
+                orderable: false,
+                searchable: false,
+                width: "3%",
+                render: $.fn.dataTable.render.number('', '.', 2, '')
+
+            }],
             language: {
                 emptyTable: '<b>Data belum di ambil dari server Jigsaw.</b> Pastikan data hourly sudah tersedia'
             },
             rowGroup: {
                 dataSrc: "cluster"
             },
+            rowCallback: function(row, data) {
+                if (data.hm <= 0 || data.hm > 15) {
+                    $('td:eq(2)', row).addClass("bg-danger text-white");
+                }
+            }
         });
 
         function load() {
