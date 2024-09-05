@@ -19,6 +19,9 @@
     <script src="{% static 'js/modal-form-handler.js' %}"></script>
     <script src="{% static 'js/standby.js' %}"></script>
     <script type="text/javascript">
+        d3.select('table thead tr').selectAll('th').filter(function(d, i) {
+            return i >= 2;
+        }).remove()
         let colorScale = getColorData()
         setTimeFrameShiftly()
 
