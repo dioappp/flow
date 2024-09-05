@@ -78,7 +78,10 @@
             },
             rowCallback: function(row, data) {
                 if (data.hm <= 0 || data.hm > 15) {
-                    $('td:eq(2)', row).addClass("bg-danger text-white");
+                    $('td:eq(2)', row).addClass("bg-warning text-white");
+                }
+                if (data.wh > data.hm) {
+                    $('td:eq(3)', row).addClass("bg-danger text-white");
                 }
             }
         });
