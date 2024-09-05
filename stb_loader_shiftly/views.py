@@ -83,7 +83,7 @@ def reportDataSTB(request):
         page = math.ceil(start / length) + 1
     page_obj = data[start : start + length]
 
-    ts, te = get_shift_time(date_pattern, shift_pattern)
+    ts, te = get_shift_time(date_pattern, str(shift_pattern))
     ts = ts - timedelta(minutes=30)
     te = te - timedelta(hours=1)
 

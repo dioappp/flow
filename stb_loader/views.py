@@ -292,8 +292,10 @@ def add(request):
 
     if old.hour == 6 and ts.time() >= time(6, 30, 0):
         shift = 1
-    else:
+    elif old.hour == 6 and ts.time() < time(6, 30, 0):
         shift = 2
+    else:
+        shift = old.shift
 
     new_instance, created = LoaderStatus.objects.update_or_create(
         timeStart=ts,
