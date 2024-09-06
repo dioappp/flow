@@ -148,7 +148,7 @@
                 ritasiData.push({
                     display: "circle",
                     starting_time: element.time_full,
-                    hauler: element.hauler,
+                    unit: element.unit,
                     database_id: element.database_id,
                     label: element.type,
                     loc: element.loc,
@@ -215,7 +215,7 @@
                             x = d.label
                         }
                         Tooltip
-                            .html(d.hauler + "<br><b>" + x + "</b>: " + d.loc)
+                            .html(d.unit + "<br><b>" + x + "</b>: " + d.loc)
                     }
                 })
                 .mouseout(function(d, i, datum) {
