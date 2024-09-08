@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from datetime import timedelta
 import math
 from asgiref.sync import sync_to_async
-from django.db.models import F, Q
+from django.db.models import F, Q, Max
 import pandas as pd
 
 
@@ -57,8 +57,8 @@ def reportDataSTB(request):
     maindata = (
         LoaderStatus.objects.filter(report_date=date_pattern, shift=shift_pattern)
         .annotate(
-            cluster=F("location__cluster"),
-            pit=F("location__pit"),
+            cluster=Max("location__cluster"),
+            pit=Max("location__pit"),
         )
         .values("unit__unit", "cluster", "pit")
         .distinct()

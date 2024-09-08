@@ -2,7 +2,7 @@ import asyncio
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
-from django.db.models import F
+from django.db.models import F, Max
 from exporter.views import is_in_jam_kritis
 from stb_loader.models import LoaderStatus, LoaderStatusHistory, loaderID
 from ritase.models import ritase
@@ -88,11 +88,8 @@ def reportDataSTB(request):
 
     maindata = (
         LoaderStatus.objects.filter(date=date_pattern, hour=hour_pattern)
-        .annotate(
-            cluster=F("location__cluster"),
-            pit=F("location__pit"),
-        )
-        .values("unit__unit", "pit", "cluster")
+        .values("unit__unit")
+        .annotate(pit=Max("location__cluster"), cluster=Max("location__pit"))
         .distinct()
         .order_by("-pit", "cluster", "-unit__unit")
     )
