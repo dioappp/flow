@@ -48,7 +48,7 @@ function getColorData() {
     S18: "#4287f5",
     S19: "#f06d16",
     S20C: "#a7f2bb",
-    "WH O": "#5c511c",
+    "WH O": "#07cceb",
     "WH T": "#a169cf",
     "WH C": "#38d1a3",
     WH: "#07cceb",

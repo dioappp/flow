@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
 from django.db.models import F
+from exporter.views import is_in_jam_kritis
 from stb_loader.models import LoaderStatus, LoaderStatusHistory, loaderID
 from ritase.models import ritase
 from datetime import datetime, timedelta, time
@@ -11,6 +12,7 @@ import json
 from django.core import serializers
 from asgiref.sync import sync_to_async
 from ritase.models import ritase
+import pandas as pd
 
 
 # Create your views here.
@@ -184,16 +186,75 @@ def get_ritase(date_pattern, hour_pattern, unit_pattern):
     )
 
 
+def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
+    response = {}
+    response["state"] = []
+    response["ritase"] = []
+
+    df = pd.DataFrame(maindata)
+    df = df.sort_values(["timeStart"]).reset_index(drop=True)
+    df["equipment"] = unit_pattern
+    ids = df.index[df.standby_code == "S12"].tolist()
+
+    for id in ids:
+        if not is_in_jam_kritis(id, df):
+            df.loc[id, "standby_code"] = "WH"
+
+    df["group"] = (df["standby_code"] != df["standby_code"].shift()).cumsum()
+    df = df.groupby(["group"], as_index=False).first()
+    df = df.drop(columns="group")
+
+    if ritdata:
+        rdf = pd.DataFrame(ritdata)
+        rdf = rdf.sort_values(["time_full"]).reset_index(drop=True)
+        rdf["group"] = (rdf["type"] != rdf["type"].shift()).cumsum()
+        rdf = rdf.groupby(["group"], as_index=False).last()
+        rdf = rdf.drop(columns="group")
+
+        counter = len(rdf)
+
+        df.loc[(df["standby_code"] == "WH"), "standby_code"] = f"WH {rdf.loc[0,'type']}"
+
+        if counter != 1:
+            x = []
+            x = rdf
+            x = x.rename(columns={"time_full": "timeStart", "type": "standby_code"})
+            x["standby_code"] = x["standby_code"].apply(lambda x: f"WH {x}")
+            x.drop(
+                columns=[
+                    "time_empty",
+                    "truck_id__jigsaw",
+                    "dump_location",
+                    "truck_id__OB_capacity",
+                ],
+                inplace=True,
+            )
+            last_data = x.loc[counter - 1, "standby_code"]
+            x["standby_code"] = x["standby_code"].shift(-1)
+            x.loc[counter - 1, "standby_code"] = last_data
+            df = pd.concat([df, x])
+        df = df.sort_values(["timeStart"]).reset_index(drop=True)
+        df["id"] = df["id"].fillna(0)
+
+    df = df.to_dict(orient="records")
+    return df
+
+
 async def timeline(request):
     date_pattern = request.POST.get("date")
     hour_pattern = request.POST.get("hour")
     unit_pattern = request.POST.get("unit_id")
     show_hanging = request.POST.get("hanging") == "true"
+    wh_proses = True
 
     maindata = await get_loader_status(date_pattern, hour_pattern, unit_pattern)
     response = {}
     response["state"] = []
     response["ritase"] = []
+
+    if wh_proses:
+        ritdata = await get_ritase(date_pattern, hour_pattern, unit_pattern)
+        maindata = get_wh_proses(maindata, ritdata, unit_pattern)
 
     for i, d in enumerate(maindata):
         x = {}
