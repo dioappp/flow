@@ -58,6 +58,13 @@ class Command(BaseCommand):
                     "standby_code",
                 ] = f"WH {d.type}"
             else:
+                df.loc[
+                    (df["standby_code"] == "WH")
+                    & (df["hour"] == d.hour)
+                    & (df["date"] == d.date)
+                    & (df["equipment"] == d.equipment),
+                    "standby_code",
+                ] = f"WH {d.type}"
                 x = []
                 x = rdf[
                     (rdf["date"] == d.date)
@@ -68,7 +75,7 @@ class Command(BaseCommand):
                 x["standby_code"] = x["standby_code"].apply(lambda x: f"WH {x}")
                 df = pd.concat([df, x])
         df = df.sort_values(["equipment", "timeStart"]).reset_index(drop=True)
-        df["code_after"] = df["standby_code"].shift(-1)
-        df.loc[df["standby_code"] == "WH", "standby_code"] = df["code_after"]
-        df.drop(columns=["code_after"], inplace=True)
-        df.to_csv("stb_perjam2.csv", sep=";")
+        # df["code_after"] = df["standby_code"].shift(-1)
+        # df.loc[df["standby_code"] == "WH", "standby_code"] = df["code_after"]
+        # df.drop(columns=["code_after"], inplace=True)
+        df.to_csv("stb_perjam1.csv", sep=";")
