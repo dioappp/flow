@@ -249,6 +249,9 @@ def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
                 x = rdf[(rdf["date"] == d.date) & (rdf["hour"] == d.hour)]
                 x = x.rename(columns={"time_full": "timeStart", "type": "standby_code"})
                 x["standby_code"] = x["standby_code"].apply(lambda x: f"WH {x}")
+                last_data = x.loc[x.index[-1], "standby_code"]
+                x["standby_code"] = x["standby_code"].shift(-1)
+                x.loc[x.index[-1], "standby_code"] = last_data
                 df = pd.concat([df, x])
         df = df.sort_values(["timeStart"]).reset_index(drop=True)
         df["id"] = df["id"].fillna(0)
