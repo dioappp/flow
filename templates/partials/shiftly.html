@@ -28,14 +28,14 @@
             </select>
           </div>
         </div>
-        <div class="col-md-7">
+        <div class="col-md-auto">
           <label>&nbsp;</label>
           <br />
           <button type="button" class="btn btn-info" id="btn_filter" onclick="load()">
             <i class="feather mr-2 icon-filter"></i>Filter
           </button>
         </div>
-        <div class="col-md-auto text-right form-check">
+        <div class="col-md-auto form-check">
           <label>&nbsp;</label>
           <br />
           <div class="form-check form-switch">
@@ -46,6 +46,18 @@
                    onchange="load()"
                    checked>
             <label class="form-check-label" for="hanging">Hanging</label>
+          </div>
+        </div>
+        <div class="col-md-auto text-right form-check">
+          <label>&nbsp;</label>
+          <br />
+          <div class="form-check form-switch">
+            <input class="form-check-input"
+                   type="checkbox"
+                   role="switch"
+                   id="wh_proses"
+                   onchange="load()">
+            <label class="form-check-label" for="wh_proses">Show WH by Proses</label>
           </div>
         </div>
       </div>

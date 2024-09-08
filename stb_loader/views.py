@@ -245,7 +245,7 @@ async def timeline(request):
     hour_pattern = request.POST.get("hour")
     unit_pattern = request.POST.get("unit_id")
     show_hanging = request.POST.get("hanging") == "true"
-    wh_proses = True
+    wh_proses = request.POST.get("wh_proses") == "true"
 
     maindata = await get_loader_status(date_pattern, hour_pattern, unit_pattern)
     response = {}

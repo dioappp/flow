@@ -291,8 +291,7 @@ async def timeline(request):
     shift_pattern = request.POST.get("shift")
     unit_pattern = request.POST.get("unit_id")
     show_hanging = request.POST.get("hanging") == "true"
-    # wh_proses = request.POST.get("wh_proses") == "true"
-    wh_proses = True
+    wh_proses = request.POST.get("wh_proses") == "true"
 
     maindata = await get_loader_status(date_pattern, shift_pattern, unit_pattern)
 

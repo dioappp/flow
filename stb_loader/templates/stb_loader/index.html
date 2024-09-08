@@ -119,6 +119,7 @@
                     hour: $("#hour-select").val(),
                     unit_id: id,
                     hanging: $("#hanging")[0].checked,
+                    wh_proses: $("#wh_proses")[0].checked,
                 },
                 success: function(data) {
                     generateToSVG(id, data);
