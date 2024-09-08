@@ -30,6 +30,9 @@
             serverSide: true,
             stateSave: true,
             ordering: false,
+            search: {
+                return: true
+            },
             pagingType: "full_numbers",
             ajax: {
                 url: "{% url 'stb_hauler_shiftly:report' %}",

@@ -30,6 +30,9 @@
             stateSave: true,
             ordering: false,
             select: true,
+            search: {
+                return: true
+            },
             pagingType: "full_numbers",
             ajax: {
                 url: "{% url 'stb_loader:report' %}",
