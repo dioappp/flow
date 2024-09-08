@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from exporter.views import is_in_jam_kritis
 from hm.models import hmOperator
+from ritase.models import ritase
 from ritase.views import get_shift_time
 from stb_loader.models import LoaderStatus
 from django.http import JsonResponse
@@ -197,16 +198,112 @@ def get_loader_status(date_pattern, shift_pattern, unit_pattern):
     )
 
 
+@sync_to_async
+def get_ritase(date_pattern, shift_pattern, unit_pattern):
+    return list(
+        ritase.objects.filter(
+            report_date=date_pattern,
+            type__isnull=False,
+            shift=shift_pattern,
+            loader_id__unit=unit_pattern,
+        ).values("type", "time_full", "hour", "date")
+    )
+
+
+def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
+    response = {}
+    response["state"] = []
+    response["ritase"] = []
+
+    df = pd.DataFrame(maindata)
+    df = df.sort_values(["timeStart"]).reset_index(drop=True)
+    df["equipment"] = unit_pattern
+    ids = df.index[df.standby_code == "S12"].tolist()
+
+    for id in ids:
+        if not is_in_jam_kritis(id, df):
+            df.loc[id, "standby_code"] = "WH"
+
+    df["group"] = (df["standby_code"] != df["standby_code"].shift()).cumsum()
+    df = df.groupby(["hour", "group"], as_index=False).first()
+    df = df.drop(columns="group")
+
+    if ritdata:
+        rdf = pd.DataFrame(ritdata)
+        rdf = rdf.sort_values(["time_full"]).reset_index(drop=True)
+        rdf["group"] = (rdf["type"] != rdf["type"].shift()).cumsum()
+        rdf = rdf.groupby(["hour", "group"], as_index=False).last()
+        rdf = rdf.drop(columns="group")
+
+        counter = rdf.groupby(["date", "hour"], as_index=False).agg(
+            {"time_full": "count", "type": "first"}
+        )
+        for i, d in counter.iterrows():
+            df.loc[
+                (df["standby_code"] == "WH") & (df["hour"] == d.hour),
+                "standby_code",
+            ] = f"WH {d.type}"
+
+            if d.time_full != 1:
+                x = []
+                x = rdf[(rdf["date"] == d.date) & (rdf["hour"] == d.hour)]
+                x = x.rename(columns={"time_full": "timeStart", "type": "standby_code"})
+                x["standby_code"] = x["standby_code"].apply(lambda x: f"WH {x}")
+                df = pd.concat([df, x])
+        df = df.sort_values(["timeStart"]).reset_index(drop=True)
+        df["id"] = df["id"].fillna(0)
+
+    hour_list = list(df["hour"].unique())
+    df = df.to_dict(orient="records")
+
+    for h in hour_list:
+        data = [d for d in df if d.get("hour") == h]
+        for i, d in enumerate(data):
+            x = {}
+            x["database_id"] = d.get(
+                "id",
+            )
+            x["unit"] = unit_pattern
+            x["timeStart"] = d["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+            if not h == 6:
+                x["timeEnd"] = (
+                    (data[0]["timeStart"] + timedelta(hours=1)).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    if i == len(data) - 1
+                    else data[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+                )
+            else:
+                x["timeEnd"] = (
+                    (data[0]["timeStart"] + timedelta(minutes=30)).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    if i == len(data) - 1
+                    else data[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+                )
+            x["label"] = d["standby_code"]
+            response["state"].append(x)
+    return response
+
+
 async def timeline(request):
     date_pattern = request.POST.get("date")
     shift_pattern = request.POST.get("shift")
     unit_pattern = request.POST.get("unit_id")
     show_hanging = request.POST.get("hanging") == "true"
+    # wh_proses = request.POST.get("wh_proses") == "true"
+    wh_proses = True
 
     maindata = await get_loader_status(date_pattern, shift_pattern, unit_pattern)
+
     response = {}
     response["state"] = []
     response["ritase"] = []
+
+    if wh_proses:
+        ritdata = await get_ritase(date_pattern, shift_pattern, unit_pattern)
+        response = get_wh_proses(maindata, ritdata, unit_pattern)
+        return JsonResponse(response, safe=False, status=200)
 
     hour_list = []
     for d in maindata:
