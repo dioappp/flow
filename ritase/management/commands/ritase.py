@@ -101,14 +101,14 @@ class Command(BaseCommand):
         sql_dump = f"""
         declare @start_date datetime, @enddate datetime
         set @start_date = '{dtime}'
-        set @enddate = dateadd("HH",12,'{dtime_end}')
+        set @enddate = dateadd("mi",30,'{dtime_end}')
 
         SELECT 
             sl.id as 'load_id', -- 0
             dateadd("HH",8,time_empty) as 'time_empty', -- 1
             loc.name as 'dump_loc', -- 2
             case 
-                when loc.name like '%PERBAIKAN%' or loc.name like '%INPIT%' or loc.name like '%FRONT%' or loc.name like '%JALAN%' or loc.name like '%MAINT%' or loc.name like '%SUPP%' or loc.name like '%JLN%' then 'I' 
+                when (loc.name like '%PERBAIKAN%' or loc.name like '%INPIT%' or loc.name like '%FRONT%' or loc.name like '%JALAN%' or loc.name like '%MAINT%' or loc.name like '%SUPP%' or loc.name like '%JLN%') and loc.name not like 'D%' then 'I' 
                 when loc.name like '%TS%' and emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'T'
                 else (	case 
                     when emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'O'
