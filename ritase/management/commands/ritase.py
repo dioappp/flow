@@ -130,14 +130,14 @@ class Command(BaseCommand):
             loader, _ = loaderID.objects.get_or_create(unit=d["truck"])
             truck, _ = truckID.objects.get_or_create(jigsaw=d["shovel"])
             ritase.objects.update_or_create(
-                date=date,
-                hour=hour,
-                shift=shift,
                 load_id=d["load_id"],
-                time_full=dt,
-                truck_id=truck,
-                loader_id=loader,
                 defaults={
+                    "date": date,
+                    "hour": hour,
+                    "shift": shift,
+                    "time_full": dt,
+                    "truck_id": truck,
+                    "loader_id": loader,
                     "material": d["material"],
                     "blast": d["blast"],
                     "grade": d["grade"],
