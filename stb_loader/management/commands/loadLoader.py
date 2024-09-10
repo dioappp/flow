@@ -167,6 +167,8 @@ class Command(BaseCommand):
                 (`shift_breakdown`.`rfu_date` = '0000-00-00') 
                 or 
                 (`shift_breakdown`.`rfu_date` = '')
+                or 
+                (`shift_breakdown`.`rfu_date` is null)
             )
         ) 
         order by `shift_breakdown`.`id` desc
@@ -308,6 +310,10 @@ class Command(BaseCommand):
                     # Data BD
                     data = f.combine_bd(data, loader_bd)
 
+                data = data[data["Time Start"] != data["Time End"]].reset_index(
+                    drop=True
+                )
+
                 data.loc[
                     data["Standby Code"].astype(str).str.contains("SS", case=True),
                     ["Standby Code", "Rank"],
@@ -409,9 +415,6 @@ class Command(BaseCommand):
                         ],
                     ],
                     axis=0,
-                )
-                result = result[result["Time Start"] != result["Time End"]].reset_index(
-                    drop=True
                 )
             else:
                 if hour == 6:
