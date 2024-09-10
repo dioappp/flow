@@ -127,8 +127,8 @@ class Command(BaseCommand):
             else:
                 report_date = date
 
-            loader, _ = loaderID.objects.get_or_create(unit=d["truck"])
-            truck, _ = truckID.objects.get_or_create(jigsaw=d["shovel"])
+            loader, _ = loaderID.objects.get_or_create(unit=d["shovel"])
+            truck, _ = truckID.objects.get_or_create(jigsaw=d["truck"])
             ritase.objects.update_or_create(
                 load_id=d["load_id"],
                 defaults={
@@ -163,6 +163,8 @@ class Command(BaseCommand):
                 entry.type = d["material_id"]
                 entry.save()
             except ritase.DoesNotExist:
+                continue
+            except:
                 continue
 
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data Dumping"))
