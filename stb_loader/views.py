@@ -117,7 +117,7 @@ def reportDataSTB(request):
     for d in page_obj:
         x = {}
         x["unit"] = d["unit__unit"]
-        x["cluster"] = d["cluster"]
+        x["cluster"] = f"{d["cluster"]}, {d['pit']}"
         x["action"] = (
             '<div id="data-'
             + str(d["unit__unit"])
