@@ -89,7 +89,7 @@ def reportDataSTB(request):
     maindata = (
         LoaderStatus.objects.filter(date=date_pattern, hour=hour_pattern)
         .values("unit__unit")
-        .annotate(pit=Max("location__cluster"), cluster=Max("location__pit"))
+        .annotate(pit=Max("location__pit"), cluster=Max("location__cluster"))
         .distinct()
         .order_by("-pit", "cluster", "-unit__unit")
     )
