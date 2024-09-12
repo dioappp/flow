@@ -400,8 +400,7 @@ def addBatch(request):
 
     for u in units:
         unit = loaderID.objects.get(unit=u)
-        instance = LoaderStatus.objects.create(
-            standby_code=stb,
+        instance = LoaderStatus.objects.update_or_create(
             timeStart=ts,
             hour=old.hour,
             date=old.date,
@@ -409,6 +408,7 @@ def addBatch(request):
             remarks=old.remarks,
             report_date=old.report_date,
             unit=unit,
+            defaults={"standby_code": stb},
         )
         instances.append(instance)
 
