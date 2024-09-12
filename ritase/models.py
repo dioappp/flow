@@ -22,7 +22,7 @@ class ritase(models.Model):
     date = models.DateField()
     shift = models.IntegerField()
     hour = models.IntegerField()
-    load_id = models.IntegerField(null=True)
+    load_id = models.IntegerField(null=True, unique=True)
     time_full = models.DateTimeField()
     time_empty = models.DateTimeField(null=True)
     truck_id = models.ForeignKey(truckID, on_delete=models.SET_NULL, null=True)
