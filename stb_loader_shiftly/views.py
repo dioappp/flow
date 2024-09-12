@@ -56,11 +56,11 @@ def reportDataSTB(request):
 
     maindata = (
         LoaderStatus.objects.filter(report_date=date_pattern, shift=shift_pattern)
+        .values("unit__unit")
         .annotate(
             cluster=Max("location__cluster"),
             pit=Max("location__pit"),
         )
-        .values("unit__unit", "cluster", "pit")
         .distinct()
         .order_by("-pit", "cluster", "-unit__unit")
     )
@@ -117,7 +117,7 @@ def reportDataSTB(request):
             + str(d["unit__unit"])
             + '" class="d3-timeline"></div>'
         )
-        x["cluster"] = d["cluster"]
+        x["cluster"] = f"{d["cluster"]}, {d['pit']}"
         x["hm"] = data_hm.get(d["unit__unit"], 0)
         x["wh"] = data_wh.get(d["unit__unit"], 0)
         data_return.append(x)
