@@ -148,10 +148,10 @@ class Command(BaseCommand):
         )
         for i, d in enumerate(data):
             a = str(f"{d[0]} {d[1]}")
-            if d[2] != "":
-                b = str(f"{d[2]} {d[3]}")
-            else:
+            if (d[2] == "") or (d[2] is None):
                 b = ""
+            else:
+                b = str(f"{d[2]} {d[3]}")
             breakdown_df.loc[i + 1, "Time Start"] = a
             breakdown_df.loc[i + 1, "Time End"] = b
             breakdown_df.loc[i + 1, "Equipment"] = d[4]
@@ -371,35 +371,48 @@ class Command(BaseCommand):
         try:
             data, ss = self.main(dtime)
             with transaction.atomic():
+                hauler_data = []
                 for i, row in data.iterrows():
-                    try:
-                        unit, _ = truckID.objects.get_or_create(jigsaw=row["Equipment"])
-                        HaulerStatus.objects.update_or_create(
-                            date=row["date"],
-                            shift=row["shift"],
-                            hour=row["hour"],
-                            timeStart=row["Time Start"],
-                            unit=unit,
-                            report_date=row["report_date"],
-                            defaults={
-                                "standby_code": (
-                                    None
-                                    if pd.isna(row["Standby Code"])
-                                    else row["Standby Code"]
-                                ),
-                                "remarks": row["remarks"],
-                            },
-                        )
-                        # print(f'imported {i+1}/{len(data)}')
-                    except Exception as e:
+                    if pd.isna(row["Standby Code"]):
                         ss = ss[ss["Equipment"] == row["Equipment"]]
                         ss = ss[ss["Standby Code"].isna()]
-                        errors_data.append((i, e, ss.to_dict()))
-                        raise  # Raise exception to trigger rollback for the entire transaction
+                        errors_data.append((i, ss.to_dict()))
+                        raise Exception(
+                            "ada data kode standby yang belum tercatat di database"
+                        )
+                    unit, _ = truckID.objects.get_or_create(jigsaw=row["Equipment"])
+                    status = HaulerStatus(
+                        date=row["date"],
+                        shift=row["shift"],
+                        hour=row["hour"],
+                        timeStart=row["Time Start"],
+                        unit=unit,
+                        report_date=row["report_date"],
+                        standby_code=(
+                            None
+                            if pd.isna(row["Standby Code"])
+                            else row["Standby Code"]
+                        ),
+                        remarks=row["remarks"],
+                    )
+                    hauler_data.append(status)
+                HaulerStatus.objects.bulk_create(
+                    hauler_data,
+                    update_conflicts=True,
+                    unique_fields=[
+                        "date",
+                        "shift",
+                        "hour",
+                        "timeStart",
+                        "unit",
+                        "report_date",
+                    ],
+                    update_fields=["standby_code", "remarks"],
+                )
         except Exception as e:
             # Log the final exception that caused the transaction to fail
             if errors_data:
-                for i, e, data in errors_data:
+                for i, data in errors_data:
                     db_logger.error(f"Error inserting Row {i}: {e}, data: {data}")
             db_logger.error(f"stb hauler failed - {dtime} => {e}")
             self.stdout.write(
