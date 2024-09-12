@@ -57,8 +57,8 @@ class Command(BaseCommand):
         """
         sql_dump = f"""
         declare @start_date datetime, @enddate datetime
-        set @start_date = '{dtime}'
-        set @enddate = dateadd("mi",30,'{dtime_end}')
+        set @start_date = dateadd("mi",15,'{dtime}')
+        set @enddate = dateadd("mi",15,'{dtime_end}')
 
         SELECT 
             sl.id as 'load_id', -- 0
@@ -113,6 +113,7 @@ class Command(BaseCommand):
 
         dumping = dumping[~dumping["load_id"].isin(data["load_id"])]
 
+        list_data = []
         for _, d in data.iterrows():
             dt = d["time_full"].tz_localize("UTC")
             date = dt.date()
@@ -129,28 +130,47 @@ class Command(BaseCommand):
 
             loader, _ = loaderID.objects.get_or_create(unit=d["shovel"])
             truck, _ = truckID.objects.get_or_create(jigsaw=d["truck"])
-            ritase.objects.update_or_create(
+            rit = ritase(
                 load_id=d["load_id"],
-                defaults={
-                    "date": date,
-                    "hour": hour,
-                    "shift": shift,
-                    "time_full": dt,
-                    "truck_id": truck,
-                    "loader_id": loader,
-                    "material": d["material"],
-                    "blast": d["blast"],
-                    "grade": d["grade"],
-                    "report_date": report_date,
-                    "time_empty": (
-                        None
-                        if pd.isna(d["time_empty"])
-                        else d["time_empty"].tz_localize("UTC")
-                    ),
-                    "dump_location": None if pd.isna(d["dump_loc"]) else d["dump_loc"],
-                    "type": None if pd.isna(d["material_id"]) else d["material_id"],
-                },
+                date=date,
+                hour=hour,
+                shift=shift,
+                time_full=dt,
+                truck_id=truck,
+                loader_id=loader,
+                material=d["material"],
+                blast=d["blast"],
+                grade=d["grade"],
+                report_date=report_date,
+                time_empty=(
+                    None
+                    if pd.isna(d["time_empty"])
+                    else d["time_empty"].tz_localize("UTC")
+                ),
+                dump_location=None if pd.isna(d["dump_loc"]) else d["dump_loc"],
+                type=None if pd.isna(d["material_id"]) else d["material_id"],
             )
+            list_data.append(rit)
+
+        ritase.objects.bulk_create(
+            list_data,
+            update_conflicts=True,
+            unique_fields=["load_id"],
+            update_fields=[
+                "date",
+                "hour",
+                "shift",
+                "time_full",
+                "truck_id",
+                "loader_id",
+                "material",
+                "grade",
+                "report_date",
+                "time_empty",
+                "dump_location",
+                "type",
+            ],
+        )
 
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data loading"))
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Memulai memuat data Dumping"))
