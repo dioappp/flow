@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from datetime import timedelta
 import math
 from asgiref.sync import sync_to_async
-from django.db.models import F, Q, Max
+from django.db.models import F, Q, Max, Sum
 import pandas as pd
 
 
@@ -95,7 +95,9 @@ def reportDataSTB(request):
             | Q(equipment__startswith="E"),
             Q(login_time__gte=ts, login_time__lt=te),
         )
-        .annotate(durasi=(F("hm_end") - F("hm_start")))
+        .annotate(d=(F("hm_end") - F("hm_start")))
+        .values("equipment")
+        .annotate(durasi=Sum("d"))
         .values("equipment", "durasi")
     )
     data_hm = {item["equipment"]: item["durasi"] for item in data_hm}
