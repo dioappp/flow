@@ -60,9 +60,14 @@ def index(request):
 
 def data_child(request):
     date = request.POST.get("date")
-    hour = request.POST.get("hour")
+    hour = int(request.POST.get("hour"))
     unit = request.POST.get("unit")
 
+    if hour in list(range(7,18)):
+        shift = 1
+    else:
+        shift = 2
+    
     loader = loaderID.objects.get(unit=unit)
     maindata = (
         ritase.objects.filter(date=date, hour=hour, loader_id=loader)
@@ -71,6 +76,15 @@ def data_child(request):
         .distinct()
         .order_by("-hauler")
     )
+
+    if not maindata:
+        maindata = (
+            ritase.objects.filter(date=date, shift=shift, loader_id=loader)
+            .annotate(hauler=F("truck_id__jigsaw"))
+            .values("hauler")
+            .distinct()
+            .order_by("-hauler")
+        )
 
     data_return = []
     for d in maindata:
