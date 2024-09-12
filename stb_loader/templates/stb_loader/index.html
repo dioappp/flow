@@ -45,7 +45,7 @@
                     d.hour = $("#hour-select").val();
                 },
                 complete: function(d) {
-                    checkTimeLineUnit();
+                    checkTimeLineUnit(d.responseJSON.data);
                 },
             },
             columns: [{
@@ -103,7 +103,8 @@
             table.draw();
         }
 
-        function checkTimeLineUnit() {
+        function checkTimeLineUnit(d) {
+            console.log(d)
             $(".d3-timeline").each(function() {
                 var id = $(this).data("id");
                 showDetail(id);
