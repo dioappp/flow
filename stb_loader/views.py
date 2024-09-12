@@ -400,7 +400,7 @@ def addBatch(request):
 
     for u in units:
         unit = loaderID.objects.get(unit=u)
-        instance = LoaderStatus.objects.update_or_create(
+        instance, created= LoaderStatus.objects.update_or_create(
             timeStart=ts,
             hour=old.hour,
             date=old.date,
@@ -412,12 +412,21 @@ def addBatch(request):
         )
         instances.append(instance)
 
-    LoaderStatusHistory.objects.create(
-        action="addBatch",
-        loader_status_id=0,
-        data=serializers.serialize("json", instances),
-        token=request.COOKIES.get("csrftoken"),
-    )
+    if created:
+        LoaderStatusHistory.objects.create(
+            action="addBatch",
+            loader_status_id=0,
+            data=serializers.serialize("json", instances),
+            token=request.COOKIES.get("csrftoken"),
+        )
+    else:
+        LoaderStatusHistory.objects.create(
+            action="updateBtch",
+            loader_status_id=0,
+            data=serializers.serialize("json", instances),
+            token=request.COOKIES.get("csrftoken"),
+        )
+
     return HttpResponse(status=204)
 
 
@@ -498,6 +507,13 @@ def undo(request):
         objs = list(serializers.deserialize("json", last_action.data))
         for obj in objs:
             LoaderStatus.objects.get(pk=obj.object.id).delete()
+            unit = obj.object.unit.unit
+            units.append(unit)
+    
+    elif last_action.action == "updateBtch":
+        objs = list(serializers.deserialize("json", last_action.data))
+        for obj in objs:
+            obj.save()
             unit = obj.object.unit.unit
             units.append(unit)
 
