@@ -201,10 +201,10 @@ class Command(BaseCommand):
         )
         for i, d in enumerate(data):
             a = str(f"{d[0]} {d[1]}")
-            if d[2] != "":
-                b = str(f"{d[2]} {d[3]}")
-            else:
+            if d[2] == "" or d[2] is None:
                 b = ""
+            else:
+                b = str(f"{d[2]} {d[3]}")
             breakdown_df.loc[i + 1, "Time Start"] = a
             breakdown_df.loc[i + 1, "Time End"] = b
             breakdown_df.loc[i + 1, "Equipment"] = d[4]
