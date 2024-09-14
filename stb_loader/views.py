@@ -163,7 +163,7 @@ def reportDataSTB(request):
 
 
 def is_nempel_ke_jam_kritis(stb: str, prev: str, next: str) -> bool:
-    jam_kritis = ["S6", "S5A", "S8"]
+    jam_kritis = ["S6", "S5A", "S8","S15"]
     return stb == "S12" and (prev in jam_kritis or next in jam_kritis)
 
 

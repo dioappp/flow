@@ -16,7 +16,7 @@ def index(request):
 
 
 def is_in_jam_kritis(id: int, df: pd.DataFrame) -> bool:
-    jam_kritis = ["S6", "S5A", "S8"]
+    jam_kritis = ["S6", "S5A", "S8", "S15"]
     unit = df.loc[id, "equipment"]
 
     if id == 0:
