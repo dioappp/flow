@@ -13,6 +13,7 @@ from django.core import serializers
 from asgiref.sync import sync_to_async
 from ritase.models import ritase
 import pandas as pd
+from django.db import connections
 
 
 # Create your views here.
@@ -180,21 +181,53 @@ def get_loader_status(date_pattern, hour_pattern, unit_pattern):
 
 @sync_to_async
 def get_ritase(date_pattern, hour_pattern, unit_pattern):
-    return list(
-        ritase.objects.filter(
-            date=date_pattern, hour=hour_pattern, loader_id__unit=unit_pattern
+    with connections["default"].cursor() as cursor:
+        cursor.execute(
+            f"""
+            WITH Duration_Calculations AS (
+                SELECT
+                    *,
+                    (strftime('%s', r.time_empty) - strftime('%s', r.time_full))/60.0 AS duration,
+                    LAG(r.time_empty) OVER (PARTITION BY r.truck_id_id ORDER BY r.time_full) AS previous_time_empty
+                FROM
+                    ritase_ritase as r
+            ),
+            Filtered_Durations AS (
+                SELECT
+                    *,
+                    (strftime('%s', time_full) - strftime('%s', previous_time_empty))/60.0 AS gap_duration
+                FROM
+                    Duration_Calculations
+                WHERE
+                    previous_time_empty IS NOT NULL
+            )
+            SELECT
+                f.id,
+                f.time_full,
+                f.time_empty,
+                f.type,
+                f.dump_location,
+                t.jigsaw as hauler
+            FROM
+                Filtered_Durations AS f
+            LEFT JOIN ritase_truckid AS t ON f.truck_id_id = t.id
+            LEFT JOIN stb_loader_loaderid AS l ON f.loader_id_id = l.id
+            WHERE
+                f.date = '{date_pattern}'
+                AND
+                l.unit = '{unit_pattern}'
+                AND
+                f.hour = '{hour_pattern}'
+                AND
+                duration > 5
+                AND 
+                gap_duration > 5;
+            """
         )
-        .order_by("time_full")
-        .values(
-            "id",
-            "time_full",
-            "time_empty",
-            "type",
-            "truck_id__jigsaw",
-            "dump_location",
-            "truck_id__OB_capacity",
-        )
-    )
+        columns = [desc[0] for desc in cursor.description]
+        result = [dict(zip(columns,row)) for row in cursor.fetchall()]
+    return result
+
 
 
 def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
@@ -259,13 +292,14 @@ async def timeline(request):
     wh_proses = request.POST.get("wh_proses") == "true"
 
     maindata = await get_loader_status(date_pattern, hour_pattern, unit_pattern)
+    ritasedata = await get_ritase(date_pattern, hour_pattern, unit_pattern)
+
     response = {}
     response["state"] = []
     response["ritase"] = []
 
     if wh_proses:
-        ritdata = await get_ritase(date_pattern, hour_pattern, unit_pattern)
-        maindata = get_wh_proses(maindata, ritdata, unit_pattern)
+        maindata = get_wh_proses(maindata, ritasedata, unit_pattern)
 
     for i, d in enumerate(maindata):
         x = {}
@@ -297,8 +331,6 @@ async def timeline(request):
         response["state"].append(x)
         continue
 
-    ritasedata = await get_ritase(date_pattern, hour_pattern, unit_pattern)
-
     for d in ritasedata:
         x = {}
         x["database_id"] = d["id"]
@@ -307,7 +339,7 @@ async def timeline(request):
             d["time_empty"].strftime("%Y-%m-%d %H:%M:%S") if d["time_empty"] else "N/A"
         )
         x["type"] = d["type"]
-        x["unit"] = d["truck_id__jigsaw"]
+        x["unit"] = d["hauler"]
         x["loc"] = d["dump_location"]
         response["ritase"].append(x)
 
