@@ -332,13 +332,6 @@
             handleDeleteSubmission("{% url 'stb_loader:delete'%}", data_unit, formData)
         });
 
-        function checkTimeLineUnitChild() {
-            $(".d3-timeline-child").each(function() {
-                var id = $(this).data("id");
-                showDetailChild(id);
-            });
-        }
-
         function format(data) {
             return data.map(d =>
                 `<div class="row">
@@ -348,26 +341,6 @@
                 </div>`
             ).join('\n');
         }
-
-        function showDetailChild(id) {
-            $.ajax({
-                url: "{% url 'stb_hauler:timeline' %}",
-                type: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                data: {
-                    date: $("#date-select").val(),
-                    hour: $("#hour-select").val(),
-                    unit_id: id,
-                    hanging: $("#hanging")[0].checked,
-                },
-                success: function(data) {
-                    generateToSVG(id, data);
-                },
-            });
-        }
-
         // Add event listener for opening and closing details
         $('#load-table tbody').on('click', 'td.dt-control', function() {
             var tr = $(this).closest('tr');
@@ -397,6 +370,35 @@
                 })
             }
         });
+
+        function checkTimeLineUnitChild() {
+            $(".d3-timeline-child").each(function() {
+                var id = $(this).data("id");
+                showDetailChild(id);
+            });
+        }
+
+
+        function showDetailChild(id) {
+            $.ajax({
+                url: "{% url 'stb_hauler:timeline' %}",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                data: {
+                    date: $("#date-select").val(),
+                    hour: $("#hour-select").val(),
+                    unit_id: id,
+                    hanging: $("#hanging")[0].checked,
+                },
+                success: function(data) {
+                    if (data['state'].length) {
+                        generateToSVG(id, data);
+                    }
+                },
+            });
+        }
     </script>
 {% endblock script %}
 {% block modals %}
