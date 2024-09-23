@@ -15,4 +15,5 @@ urlpatterns = [
     # path("redo/", views.redo, name="your_redo_view"),
     path("addbatch/", views.addBatch, name="addbatch"),
     path("load_child/", views.data_child, name="load_child"),
+    path("timeline_batch/", views.timeline_batch, name="timeline_batch"),
 ]

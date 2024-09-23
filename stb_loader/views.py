@@ -313,6 +313,98 @@ async def timeline(request):
 
     return JsonResponse(response, safe=False)
 
+@sync_to_async
+def get_status_batch(date_pattern, hour_pattern, unit_pattern):
+    return list(
+        LoaderStatus.objects.filter(
+            date=date_pattern, hour=hour_pattern, unit__unit__in=unit_pattern
+        )
+        .order_by("unit__unit","timeStart")
+        .values("id", "unit__unit", "standby_code", "timeStart")
+    )
+
+
+@sync_to_async
+def get_ritase_batch(date_pattern, hour_pattern, unit_pattern):
+    return list(
+        ritase.objects.filter(
+            date=date_pattern, hour=hour_pattern, loader_id__unit__in=unit_pattern
+        )
+        .order_by("time_full")
+        .values(
+            "id",
+            "time_full",
+            "time_empty",
+            "type",
+            "loader_id__unit",
+            "truck_id__jigsaw",
+            "dump_location",
+            "truck_id__OB_capacity",
+        )
+    )
+
+async def timeline_batch(request):
+    date = request.POST.get("date")
+    hour = request.POST.get("hour")
+    units = json.loads(request.POST.get("unit_id"))
+    show_hanging = request.POST.get("hanging") == "true"
+    wh_proses = request.POST.get("wh_proses") == "true"
+
+    maindata = await get_status_batch(date, hour, units)
+    ritasedata = await get_ritase_batch(date, hour, units)
+
+    response = {}
+
+    for unit in units:
+        response[unit] = {'state':[],'ritase':[]} 
+
+    if wh_proses:
+        maindata = get_wh_proses(maindata, ritasedata, units)
+
+    for i, d in enumerate(maindata):
+        x = {}
+        x["database_id"] = d["id"]
+        x["unit"] = d["unit__unit"]
+        x["timeStart"] = d["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+        x["timeEnd"] = (
+            (maindata[0]["timeStart"] + timedelta(hours=1)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            if i == len(maindata) - 1 or maindata[i]["unit__unit"] != maindata[i+1]["unit__unit"]
+            else maindata[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+        )
+        # Check the previous and next records if they exist
+        prev_code = maindata[i - 1]["standby_code"] if i > 0 else None
+        next_code = maindata[i + 1]["standby_code"] if i < len(maindata) - 1 else None
+
+        hanging_jam_kritis = is_nempel_ke_jam_kritis(
+            d["standby_code"], prev_code, next_code
+        )
+
+        if show_hanging or hanging_jam_kritis or d["standby_code"] != "S12":
+            x["label"] = d["standby_code"]
+            response[d["unit__unit"]]["state"].append(x)
+            continue
+
+        # If neither the previous nor the next code is S6, change S12 to WH
+        x["label"] = "WH"
+        response[d["unit__unit"]]["state"].append(x)
+        continue
+
+    for d in ritasedata:
+        x = {}
+        x["database_id"] = d["id"]
+        x["time_full"] = d["time_full"].strftime("%Y-%m-%d %H:%M:%S")
+        x["time_empty"] = (
+            d["time_empty"].strftime("%Y-%m-%d %H:%M:%S") if d["time_empty"] else "N/A"
+        )
+        x["type"] = d["type"]
+        x["unit"] = d["truck_id__jigsaw"]
+        x["loc"] = d["dump_location"]
+        response[d["loader_id__unit"]]["ritase"].append(x)
+
+    return JsonResponse(response, safe=False)
+
 
 async def load_data(request):
     date = request.POST.get("date")
