@@ -410,6 +410,13 @@ def addBatch(request):
     ts = f"{old.date} {ts}"
     ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
+    if old.hour == 6 and ts.time() >= time(6, 30, 0):
+        shift = 1
+    elif old.hour == 6 and ts.time() < time(6, 30, 0):
+        shift = 2
+    else:
+        shift = old.shift
+
     instances = []
 
     for u in units:
@@ -418,7 +425,7 @@ def addBatch(request):
             timeStart=ts,
             hour=old.hour,
             date=old.date,
-            shift=old.shift,
+            shift=shift,
             remarks=old.remarks,
             report_date=old.report_date,
             unit=unit,
@@ -441,7 +448,7 @@ def addBatch(request):
             token=request.COOKIES.get("csrftoken"),
         )
 
-    return HttpResponse(status=204)
+    return HttpResponse(status=204) 
 
 
 def delete(request):
