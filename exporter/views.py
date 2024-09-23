@@ -19,19 +19,20 @@ def is_in_jam_kritis(id: int, df: pd.DataFrame) -> bool:
     jam_kritis = ["S6", "S5A", "S8", "S15"]
     unit = df.loc[id, "equipment"]
 
-    if id == 0:
-        check_before = True
-    else:
-        stb_before = df.loc[id - 1, "standby_code"]
-        unit_before = df.loc[id - 1, "equipment"]
-        check_before = (stb_before in jam_kritis) and (unit_before == unit)
+    if id == 0 or id == len(df) - 1:
+        return True
 
-    if id == len(df) - 1:
-        check_after = True
-    else:
-        stb_after = df.loc[id + 1, "standby_code"]
-        unit_after = df.loc[id + 1, "equipment"]
-        check_after = (stb_after in jam_kritis) and (unit_after == unit)
+    unit_before = df.loc[id - 1, "equipment"]
+    unit_after = df.loc[id + 1, "equipment"]
+
+    if unit_before != unit or unit_after != unit:
+        return True
+
+    stb_before = df.loc[id - 1, "standby_code"]
+    check_before = stb_before in jam_kritis
+
+    stb_after = df.loc[id + 1, "standby_code"]
+    check_after = stb_after in jam_kritis
 
     return check_before or check_after
 
