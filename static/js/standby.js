@@ -131,3 +131,24 @@ function rightClick(e) {
       .show();
   }
 }
+
+$(document).ready(function () {
+  // Show or hide the button based on scroll position
+  $(window).scroll(function () {
+    if ($(this).scrollTop() > 100) {
+      $("#scrollToTop").fadeIn();
+    } else {
+      $("#scrollToTop").fadeOut();
+    }
+  });
+
+  // Scroll to top on button click
+  $("#scrollToTop").click(function () {
+    $("html, body").animate(
+      {
+        scrollTop: 0,
+      },
+      "fast"
+    );
+  });
+});

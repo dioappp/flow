@@ -1,3 +1,11 @@
 #table-standby tbody tr td {
     height: 100px; /* Set your desired height */
 }
+
+#scrollToTop {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px;
+    z-index: 1000;
+}
