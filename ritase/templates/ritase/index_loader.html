@@ -150,7 +150,7 @@
             var cardBodyRit = ritase.append("div").attr("class", "card-body")
                 .append("div").attr("class", "card-body table-border-style")
                 .append("div").attr("class", "table-responsive")
-                .append("table").attr("class", "table table-striped-columns").attr("id", "load-table");
+                .append("table").attr("class", "table table-striped-columns").attr("id", "table-ritase-loader");
 
             var thead = cardBodyRit.append("thead").append("tr");
 
@@ -162,7 +162,7 @@
                     .text(header);
             });
 
-            var table = $("#load-table").DataTable({
+            var table = $("#table-ritase-loader").DataTable({
                 processing: true,
                 serverSide: true,
                 ordering: false,

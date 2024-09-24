@@ -470,10 +470,13 @@ def add(request):
 
     if old.hour == 6 and ts.time() >= time(6, 30, 0):
         shift = 1
+        report_date = old.date
     elif old.hour == 6 and ts.time() < time(6, 30, 0):
         shift = 2
+        report_date = old.date - timedelta(days=1)
     else:
         shift = old.shift
+        report_date = old.report_date
 
     new_instance, created = LoaderStatus.objects.update_or_create(
         timeStart=ts,
@@ -482,7 +485,7 @@ def add(request):
         date=old.date,
         shift=shift,
         remarks=old.remarks,
-        report_date=old.report_date,
+        report_date=report_date,
         defaults={"standby_code": stb},
     )
 
@@ -516,6 +519,16 @@ def addBatch(request):
     ts = f"{old.date} {ts}"
     ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
 
+    if old.hour == 6 and ts.time() >= time(6, 30, 0):
+        shift = 1
+        report_date = old.date
+    elif old.hour == 6 and ts.time() < time(6, 30, 0):
+        shift = 2
+        report_date = old.date - timedelta(days=1)
+    else:
+        shift = old.shift
+        report_date = old.report_date
+
     instances = []
 
     for u in units:
@@ -524,9 +537,9 @@ def addBatch(request):
             timeStart=ts,
             hour=old.hour,
             date=old.date,
-            shift=old.shift,
+            shift=shift,
             remarks=old.remarks,
-            report_date=old.report_date,
+            report_date=report_date,
             unit=unit,
             defaults={"standby_code": stb},
         )
@@ -547,7 +560,7 @@ def addBatch(request):
             token=request.COOKIES.get("csrftoken"),
         )
 
-    return HttpResponse(status=204)
+    return HttpResponse(status=204) 
 
 
 def delete(request):
