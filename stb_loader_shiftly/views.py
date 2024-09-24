@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render
 from exporter.views import is_in_jam_kritis
 from hm.models import hmOperator
@@ -10,6 +11,8 @@ import math
 from asgiref.sync import sync_to_async
 from django.db.models import F, Q, Max, Sum
 import pandas as pd
+
+from stb_loader.views import is_nempel_ke_jam_kritis
 
 
 # Create your views here.
@@ -342,4 +345,100 @@ async def timeline(request):
             else:
                 x["label"] = d["standby_code"]
             response["state"].append(x)
+    return JsonResponse(response, safe=False)
+
+@sync_to_async
+def get_status_batch(date_pattern, shift_pattern, unit_pattern):
+    return list(
+        LoaderStatus.objects.filter(
+            report_date=date_pattern, shift=shift_pattern, unit__unit__in=unit_pattern
+        )
+        .order_by("unit__unit","timeStart")
+        .values("id", "unit__unit", "standby_code", "timeStart", "hour")
+    )
+
+
+@sync_to_async
+def get_ritase_batch(date_pattern, shift_pattern, unit_pattern):
+    return list(
+        ritase.objects.filter(
+            report_date=date_pattern, shift=shift_pattern, loader_id__unit__in=unit_pattern
+        )
+        .order_by("time_full")
+        .values(
+            "id",
+            "time_full",
+            "time_empty",
+            "type",
+            "loader_id__unit",
+            "truck_id__jigsaw",
+            "dump_location",
+            "truck_id__OB_capacity",
+        )
+    )
+
+async def timeline_batch(request):
+    date = request.POST.get("date")
+    shift = request.POST.get("shift")
+    units = json.loads(request.POST.get("unit_id"))
+    show_hanging = request.POST.get("hanging") == "true"
+    wh_proses = request.POST.get("wh_proses") == "true"
+
+    maindata = await get_status_batch(date, shift, units)
+
+    response = {}
+
+    for unit in units:
+        response[unit] = {'state':[],'ritase':[]} 
+
+    if wh_proses:
+        ritasedata = await get_ritase_batch(date, shift, units)
+        maindata = get_wh_proses(maindata, ritasedata, units)
+
+    hour_list = []
+    for d in maindata:
+        if d["hour"] not in hour_list:
+            hour_list.append(d["hour"])
+
+    for h in hour_list:
+        data = [d for d in maindata if d.get("hour") == h]
+        for i, d in enumerate(data):
+            x = {}
+            x["database_id"] = d["id"]
+            x["unit"] = d["unit__unit"]
+            x["timeStart"] = d["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+            if not h == 6:
+                x["timeEnd"] = (
+                    (data[0]["timeStart"] + timedelta(hours=1)).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    if i == len(data) - 1 or data[i]["unit__unit"] != data[i+1]["unit__unit"]
+                    else data[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+                )
+            else:
+                x["timeEnd"] = (
+                    (data[0]["timeStart"] + timedelta(minutes=30)).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    if i == len(data) - 1 or data[i]["unit__unit"] != data[i+1]["unit__unit"]
+                    else data[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
+                )
+            # Check the previous and next records if they exist
+            prev_code = maindata[i - 1]["standby_code"] if i > 0 else None
+            next_code = maindata[i + 1]["standby_code"] if i < len(maindata) - 1 else None
+
+            hanging_jam_kritis = is_nempel_ke_jam_kritis(
+                d["standby_code"], prev_code, next_code
+            )
+
+            if show_hanging or hanging_jam_kritis or d["standby_code"] != "S12":
+                x["label"] = d["standby_code"]
+                response[d["unit__unit"]]["state"].append(x)
+                continue
+
+            # If neither the previous nor the next code is S6, change S12 to WH
+            x["label"] = "WH"
+            response[d["unit__unit"]]["state"].append(x)
+            continue
+
     return JsonResponse(response, safe=False)
