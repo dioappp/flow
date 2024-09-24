@@ -260,6 +260,7 @@ def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
                 df = pd.concat([df, x])
         df = df.sort_values(["timeStart"]).reset_index(drop=True)
         df["id"] = df["id"].fillna(0)
+        df = df.ffill()
 
     hour_list = list(df["hour"].unique())
     df = df.to_dict(orient="records")
@@ -310,7 +311,7 @@ async def timeline(request):
     if wh_proses:
         ritdata = await get_ritase(date_pattern, shift_pattern, unit_pattern)
         response = get_wh_proses(maindata, ritdata, unit_pattern)
-        return JsonResponse(response, safe=False, status=200)
+            
 
     hour_list = []
     for d in maindata:
@@ -370,6 +371,8 @@ def get_ritase_batch(date_pattern, shift_pattern, unit_pattern):
             "time_full",
             "time_empty",
             "type",
+            "hour",
+            "date",
             "loader_id__unit",
             "truck_id__jigsaw",
             "dump_location",
@@ -385,15 +388,28 @@ async def timeline_batch(request):
     wh_proses = request.POST.get("wh_proses") == "true"
 
     maindata = await get_status_batch(date, shift, units)
+    ritasedata = await get_ritase_batch(date, shift, units)
 
     response = {}
+    data = []
 
     for unit in units:
         response[unit] = {'state':[],'ritase':[]} 
-
+        if wh_proses:
+            stb_unit = [
+                    item
+                    for item in maindata
+                    if unit in item["unit__unit"]
+                ]
+            rit_unit = [
+                    item
+                    for item in ritasedata
+                    if unit in item["loader_id__unit"]
+                ]
+            response[unit] = get_wh_proses(stb_unit, rit_unit, unit)
+            
     if wh_proses:
-        ritasedata = await get_ritase_batch(date, shift, units)
-        maindata = get_wh_proses(maindata, ritasedata, units)
+        return JsonResponse(response, safe=False, status=200)
 
     hour_list = []
     for d in maindata:
