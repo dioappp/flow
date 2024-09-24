@@ -6,4 +6,5 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("reportstb", views.reportDataSTB, name="report"),
     path("timeline", views.timeline, name="timeline"),
+    path("timeline_batch", views.timeline_batch, name="timeline_batch"),
 ]

@@ -198,10 +198,6 @@ def get_ritase(date_pattern, hour_pattern, unit_pattern):
 
 
 def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
-    response = {}
-    response["state"] = []
-    response["ritase"] = []
-
     df = pd.DataFrame(maindata)
     df = df.sort_values(["timeStart"]).reset_index(drop=True)
     df["equipment"] = unit_pattern
@@ -237,6 +233,7 @@ def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
                     "truck_id__jigsaw",
                     "dump_location",
                     "truck_id__OB_capacity",
+                    "loader_id__unit",
                 ],
                 inplace=True,
             )
@@ -246,6 +243,7 @@ def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
             df = pd.concat([df, x])
         df = df.sort_values(["timeStart"]).reset_index(drop=True)
         df["id"] = df["id"].fillna(0)
+        df = df.ffill()
 
     df = df.to_dict(orient="records")
     return df
@@ -343,6 +341,9 @@ def get_ritase_batch(date_pattern, hour_pattern, unit_pattern):
         )
     )
 
+def get_wh_proses_batch(maindata, ritdata, units):
+    ...
+
 async def timeline_batch(request):
     date = request.POST.get("date")
     hour = request.POST.get("hour")
@@ -354,12 +355,25 @@ async def timeline_batch(request):
     ritasedata = await get_ritase_batch(date, hour, units)
 
     response = {}
+    data = []
 
     for unit in units:
         response[unit] = {'state':[],'ritase':[]} 
-
+        if wh_proses:
+            stb_unit = [
+                    item
+                    for item in maindata
+                    if unit in item["unit__unit"]
+                ]
+            rit_unit = [
+                    item
+                    for item in ritasedata
+                    if unit in item["loader_id__unit"]
+                ]
+            data += get_wh_proses(stb_unit, rit_unit, unit)
+            
     if wh_proses:
-        maindata = get_wh_proses(maindata, ritasedata, units)
+        maindata = data
 
     for i, d in enumerate(maindata):
         x = {}

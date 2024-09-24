@@ -205,7 +205,8 @@
                 .colors(colorScale)
                 .colorProperty("label")
                 .click(function(d, i, datum) {
-                    if (datum.label == 'STB') {
+                    if (datum.label == 'STB' &&
+                        !$("#wh_proses")[0].checked) {
                         $('#updateModal').on('show.bs.modal', function(event) {
                             var modal = $(this);
                             populateUpdateForm(modal, d)
@@ -399,6 +400,14 @@
                 },
             });
         }
+
+        $("#wh_proses").change(function() {
+            if ($(this)[0].checked) {
+                $("#customContextMenu button").prop("disabled", true);
+            } else {
+                $("#customContextMenu button").prop("disabled", false);
+            }
+        })
     </script>
 {% endblock script %}
 {% block modals %}
