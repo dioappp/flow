@@ -120,7 +120,7 @@ def reportDataSTB(request):
             + str(d["unit__unit"])
             + '" class="d3-timeline"></div>'
         )
-        x["cluster"] = f"{d["cluster"]}, {d['pit']}"
+        x["cluster"] = f"{d['cluster']}, {d['pit']}"
         x["hm"] = data_hm.get(d["unit__unit"], 0)
         x["wh"] = data_wh.get(d["unit__unit"], 0)
         data_return.append(x)
@@ -263,6 +263,7 @@ def get_wh_proses(maindata: list, ritdata: list, unit_pattern: str) -> dict:
         df = df.ffill()
 
     hour_list = list(df["hour"].unique())
+    df.loc[df["standby_code"].isin(["WH None"]), "standby_code"] = "WH GEN"
     df = df.to_dict(orient="records")
 
     for h in hour_list:
@@ -311,7 +312,6 @@ async def timeline(request):
     if wh_proses:
         ritdata = await get_ritase(date_pattern, shift_pattern, unit_pattern)
         response = get_wh_proses(maindata, ritdata, unit_pattern)
-            
 
     hour_list = []
     for d in maindata:
@@ -348,13 +348,14 @@ async def timeline(request):
             response["state"].append(x)
     return JsonResponse(response, safe=False)
 
+
 @sync_to_async
 def get_status_batch(date_pattern, shift_pattern, unit_pattern):
     return list(
         LoaderStatus.objects.filter(
             report_date=date_pattern, shift=shift_pattern, unit__unit__in=unit_pattern
         )
-        .order_by("unit__unit","timeStart")
+        .order_by("unit__unit", "timeStart")
         .values("id", "unit__unit", "standby_code", "timeStart", "hour")
     )
 
@@ -363,7 +364,9 @@ def get_status_batch(date_pattern, shift_pattern, unit_pattern):
 def get_ritase_batch(date_pattern, shift_pattern, unit_pattern):
     return list(
         ritase.objects.filter(
-            report_date=date_pattern, shift=shift_pattern, loader_id__unit__in=unit_pattern
+            report_date=date_pattern,
+            shift=shift_pattern,
+            loader_id__unit__in=unit_pattern,
         )
         .order_by("time_full")
         .values(
@@ -380,6 +383,7 @@ def get_ritase_batch(date_pattern, shift_pattern, unit_pattern):
         )
     )
 
+
 async def timeline_batch(request):
     date = request.POST.get("date")
     shift = request.POST.get("shift")
@@ -394,20 +398,12 @@ async def timeline_batch(request):
     data = []
 
     for unit in units:
-        response[unit] = {'state':[],'ritase':[]} 
+        response[unit] = {"state": [], "ritase": []}
         if wh_proses:
-            stb_unit = [
-                    item
-                    for item in maindata
-                    if unit in item["unit__unit"]
-                ]
-            rit_unit = [
-                    item
-                    for item in ritasedata
-                    if unit in item["loader_id__unit"]
-                ]
+            stb_unit = [item for item in maindata if unit in item["unit__unit"]]
+            rit_unit = [item for item in ritasedata if unit in item["loader_id__unit"]]
             response[unit] = get_wh_proses(stb_unit, rit_unit, unit)
-            
+
     if wh_proses:
         return JsonResponse(response, safe=False, status=200)
 
@@ -428,7 +424,8 @@ async def timeline_batch(request):
                     (data[0]["timeStart"] + timedelta(hours=1)).strftime(
                         "%Y-%m-%d %H:%M:%S"
                     )
-                    if i == len(data) - 1 or data[i]["unit__unit"] != data[i+1]["unit__unit"]
+                    if i == len(data) - 1
+                    or data[i]["unit__unit"] != data[i + 1]["unit__unit"]
                     else data[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
                 )
             else:
@@ -436,12 +433,15 @@ async def timeline_batch(request):
                     (data[0]["timeStart"] + timedelta(minutes=30)).strftime(
                         "%Y-%m-%d %H:%M:%S"
                     )
-                    if i == len(data) - 1 or data[i]["unit__unit"] != data[i+1]["unit__unit"]
+                    if i == len(data) - 1
+                    or data[i]["unit__unit"] != data[i + 1]["unit__unit"]
                     else data[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
                 )
             # Check the previous and next records if they exist
             prev_code = maindata[i - 1]["standby_code"] if i > 0 else None
-            next_code = maindata[i + 1]["standby_code"] if i < len(maindata) - 1 else None
+            next_code = (
+                maindata[i + 1]["standby_code"] if i < len(maindata) - 1 else None
+            )
 
             hanging_jam_kritis = is_nempel_ke_jam_kritis(
                 d["standby_code"], prev_code, next_code
