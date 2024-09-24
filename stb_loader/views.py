@@ -63,11 +63,11 @@ def data_child(request):
     hour = int(request.POST.get("hour"))
     unit = request.POST.get("unit")
 
-    if hour in list(range(7,18)):
+    if hour in list(range(7, 18)):
         shift = 1
     else:
         shift = 2
-    
+
     loader = loaderID.objects.get(unit=unit)
     maindata = (
         ritase.objects.filter(date=date, hour=hour, loader_id=loader)
@@ -131,7 +131,7 @@ def reportDataSTB(request):
     for d in page_obj:
         x = {}
         x["unit"] = d["unit__unit"]
-        x["cluster"] = f"{d["cluster"]}, {d['pit']}"
+        x["cluster"] = f"{d['cluster']}, {d['pit']}"
         x["action"] = (
             '<div id="data-'
             + str(d["unit__unit"])
@@ -163,7 +163,7 @@ def reportDataSTB(request):
 
 
 def is_nempel_ke_jam_kritis(stb: str, prev: str, next: str) -> bool:
-    jam_kritis = ["S6", "S5A", "S8","S15"]
+    jam_kritis = ["S6", "S5A", "S8", "S15"]
     return stb == "S12" and (prev in jam_kritis or next in jam_kritis)
 
 
@@ -311,13 +311,14 @@ async def timeline(request):
 
     return JsonResponse(response, safe=False)
 
+
 @sync_to_async
 def get_status_batch(date_pattern, hour_pattern, unit_pattern):
     return list(
         LoaderStatus.objects.filter(
             date=date_pattern, hour=hour_pattern, unit__unit__in=unit_pattern
         )
-        .order_by("unit__unit","timeStart")
+        .order_by("unit__unit", "timeStart")
         .values("id", "unit__unit", "standby_code", "timeStart")
     )
 
@@ -341,8 +342,9 @@ def get_ritase_batch(date_pattern, hour_pattern, unit_pattern):
         )
     )
 
-def get_wh_proses_batch(maindata, ritdata, units):
-    ...
+
+def get_wh_proses_batch(maindata, ritdata, units): ...
+
 
 async def timeline_batch(request):
     date = request.POST.get("date")
@@ -358,20 +360,12 @@ async def timeline_batch(request):
     data = []
 
     for unit in units:
-        response[unit] = {'state':[],'ritase':[]} 
+        response[unit] = {"state": [], "ritase": []}
         if wh_proses:
-            stb_unit = [
-                    item
-                    for item in maindata
-                    if unit in item["unit__unit"]
-                ]
-            rit_unit = [
-                    item
-                    for item in ritasedata
-                    if unit in item["loader_id__unit"]
-                ]
+            stb_unit = [item for item in maindata if unit in item["unit__unit"]]
+            rit_unit = [item for item in ritasedata if unit in item["loader_id__unit"]]
             data += get_wh_proses(stb_unit, rit_unit, unit)
-            
+
     if wh_proses:
         maindata = data
 
@@ -384,7 +378,8 @@ async def timeline_batch(request):
             (maindata[0]["timeStart"] + timedelta(hours=1)).strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
-            if i == len(maindata) - 1 or maindata[i]["unit__unit"] != maindata[i+1]["unit__unit"]
+            if i == len(maindata) - 1
+            or maindata[i]["unit__unit"] != maindata[i + 1]["unit__unit"]
             else maindata[i + 1]["timeStart"].strftime("%Y-%m-%d %H:%M:%S")
         )
         # Check the previous and next records if they exist
@@ -533,7 +528,7 @@ def addBatch(request):
 
     for u in units:
         unit = loaderID.objects.get(unit=u)
-        instance, created= LoaderStatus.objects.update_or_create(
+        instance, created = LoaderStatus.objects.update_or_create(
             timeStart=ts,
             hour=old.hour,
             date=old.date,
@@ -560,7 +555,7 @@ def addBatch(request):
             token=request.COOKIES.get("csrftoken"),
         )
 
-    return HttpResponse(status=204) 
+    return HttpResponse(status=204)
 
 
 def delete(request):
@@ -642,7 +637,7 @@ def undo(request):
             LoaderStatus.objects.get(pk=obj.object.id).delete()
             unit = obj.object.unit.unit
             units.append(unit)
-    
+
     elif last_action.action == "updateBtch":
         objs = list(serializers.deserialize("json", last_action.data))
         for obj in objs:
