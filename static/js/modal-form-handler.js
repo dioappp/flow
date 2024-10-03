@@ -24,8 +24,10 @@ function populateUpdateForm(modal, d) {
     (startHour === 6 && startMinute === 30 && startSecond === 0)
   ) {
     modal.find("#deleteButton").prop("disabled", true);
+    modal.find("input[name=timestart]").prop("disabled", true);
   } else {
     modal.find("#deleteButton").prop("disabled", false);
+    modal.find("input[name=timestart]").prop("disabled", false);
   }
 }
 
