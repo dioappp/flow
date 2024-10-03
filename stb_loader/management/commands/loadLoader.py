@@ -167,6 +167,8 @@ class Command(BaseCommand):
                 (`shift_breakdown`.`rfu_date` = '0000-00-00') 
                 or 
                 (`shift_breakdown`.`rfu_date` = '')
+                or 
+                (`shift_breakdown`.`rfu_date` is null)
             )
         ) 
         order by `shift_breakdown`.`id` desc
@@ -199,10 +201,10 @@ class Command(BaseCommand):
         )
         for i, d in enumerate(data):
             a = str(f"{d[0]} {d[1]}")
-            if d[2] != "":
-                b = str(f"{d[2]} {d[3]}")
-            else:
+            if d[2] == "" or d[2] is None:
                 b = ""
+            else:
+                b = str(f"{d[2]} {d[3]}")
             breakdown_df.loc[i + 1, "Time Start"] = a
             breakdown_df.loc[i + 1, "Time End"] = b
             breakdown_df.loc[i + 1, "Equipment"] = d[4]
@@ -308,6 +310,10 @@ class Command(BaseCommand):
                     # Data BD
                     data = f.combine_bd(data, loader_bd)
 
+                data = data[data["Time Start"] != data["Time End"]].reset_index(
+                    drop=True
+                )
+
                 data.loc[
                     data["Standby Code"].astype(str).str.contains("SS", case=True),
                     ["Standby Code", "Rank"],
@@ -410,9 +416,6 @@ class Command(BaseCommand):
                     ],
                     axis=0,
                 )
-                result = result[result["Time Start"] != result["Time End"]].reset_index(
-                    drop=True
-                )
             else:
                 if hour == 6:
                     loader_bd = f.split30min(loader_bd)
@@ -489,33 +492,46 @@ class Command(BaseCommand):
                             f"Error inserting ClusterLoader row {i}: {e}, data: {row.to_dict()}"
                         )
                         raise  # Raise exception to trigger rollback for the entire transaction
-
+                loader_data = []
                 for i, row in data.iterrows():
-                    try:
-                        unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
-                        LoaderStatus.objects.update_or_create(
-                            date=row["date"],
-                            shift=row["shift"],
-                            hour=row["hour"],
-                            timeStart=row["Time Start"],
-                            report_date=row["report_date"],
-                            unit=unit,
-                            location=clusters.get(unit, None),
-                            defaults={
-                                "standby_code": (
-                                    None
-                                    if pd.isna(row["Standby Code"])
-                                    else row["Standby Code"]
-                                ),
-                                "remarks": row["remarks"],
-                            },
-                        )
-                    except Exception as e:
+                    if pd.isna(row["Standby Code"]):
                         ss = ss[ss["Equipment"] == row["Equipment"]]
                         ss = ss[ss["Standby Code"].isna()]
-                        errors_data.append((i, e, ss.to_dict()))
-                        raise  # Raise exception to trigger rollback for the entire transaction
+                        errors_data.append((i, ss.to_dict()))
+                        raise Exception(
+                            "ada data kode standby yang belum tercatat di database"
+                        )
 
+                    unit, _ = loaderID.objects.get_or_create(unit=row["Equipment"])
+                    status = LoaderStatus(
+                        date=row["date"],
+                        shift=row["shift"],
+                        hour=row["hour"],
+                        timeStart=row["Time Start"],
+                        report_date=row["report_date"],
+                        unit=unit,
+                        location=clusters.get(unit, None),
+                        standby_code=(
+                            None
+                            if pd.isna(row["Standby Code"])
+                            else row["Standby Code"]
+                        ),
+                        remarks=row["remarks"],
+                    )
+                    loader_data.append(status)
+                LoaderStatus.objects.bulk_create(
+                    loader_data,
+                    update_conflicts=True,
+                    unique_fields=[
+                        "date",
+                        "shift",
+                        "hour",
+                        "timeStart",
+                        "unit",
+                        "report_date",
+                    ],
+                    update_fields=["standby_code", "remarks", "location"],
+                )
                 self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data sukses"))
         except Exception as e:
             # Log the final exception that caused the transaction to fail

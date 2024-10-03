@@ -142,6 +142,12 @@ def calculate_wh(request):
         response = {"error": f"tidak ada data WH untuk unit {hauler_jigsaw}"}
         return JsonResponse(response, status=404)
 
+    stb = get_durasi(wh, shift_pattern)
+    response = {"data": stb}
+    return JsonResponse(response)
+
+
+def get_durasi(wh, shift_pattern: int) -> dict:
     df = pd.DataFrame(list(wh))
     df = df.sort_values("timeStart")
     df["timeStart"] = pd.to_datetime(df["timeStart"])
@@ -168,9 +174,8 @@ def calculate_wh(request):
         }
     )
     df = df.set_index("standby_code")
-    stb = df.to_dict()
-    response = {"data": stb}
-    return JsonResponse(response)
+    df = df.to_dict()
+    return df
 
 
 def createButton(id, todo, ico, col):

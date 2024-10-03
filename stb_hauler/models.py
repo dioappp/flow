@@ -17,3 +17,11 @@ class HaulerStatus(models.Model):
     standby_code = models.CharField(max_length=10)
     remarks = models.CharField(max_length=200, null=True)
     report_date = models.DateField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["date", "shift", "hour", "timeStart", "unit", "report_date"],
+                name="unique_hauler_status",
+            )
+        ]

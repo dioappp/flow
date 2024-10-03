@@ -4,6 +4,7 @@ from ritase.models import truckID, ritase
 from django.db import OperationalError, connections
 from datetime import timedelta, datetime
 import pytz
+import pandas as pd
 
 
 class Command(BaseCommand):
@@ -54,61 +55,17 @@ class Command(BaseCommand):
         WHERE sl.deleted_at is NULL AND dateadd("HH",8,time_full) between @start_date and @enddate
         ORDER BY time_full asc
         """
-        try:
-            cursor_jigsaw = connections["jigsaw"].cursor()
-        except OperationalError as e:
-            self.stderr.write(f"Operational Error: {e}")
-            return
-
-        cursor_jigsaw.execute(sql_load)
-        data = cursor_jigsaw.fetchall()
-
-        for d in data:
-            dt = tz.localize(d[1])
-            date = dt.date()
-            hour = dt.hour
-            if (6 < hour < 18) or ((hour == 6) and (dt.minute >= 30)):
-                shift = 1
-            else:
-                shift = 2
-
-            if (shift == 2) and (hour <= 6):
-                report_date = date - timedelta(days=1)
-            else:
-                report_date = date
-
-            loader, _ = loaderID.objects.get_or_create(unit=d[3])
-            truck, _ = truckID.objects.get_or_create(jigsaw=d[2])
-            ritase.objects.update_or_create(
-                date=date,
-                hour=hour,
-                shift=shift,
-                load_id=d[0],
-                time_full=dt,
-                truck_id=truck,
-                loader_id=loader,
-                defaults={
-                    "material": d[4],
-                    "blast": d[5],
-                    "grade": d[6],
-                    "report_date": report_date,
-                },
-            )
-
-        self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data loading"))
-        self.stdout.write(self.style.SUCCESS(f"{dtime}: Memulai memuat data Dumping"))
-
         sql_dump = f"""
         declare @start_date datetime, @enddate datetime
-        set @start_date = '{dtime}'
-        set @enddate = dateadd("HH",12,'{dtime_end}')
+        set @start_date = dateadd("mi",15,'{dtime}')
+        set @enddate = dateadd("mi",15,'{dtime_end}')
 
         SELECT 
             sl.id as 'load_id', -- 0
             dateadd("HH",8,time_empty) as 'time_empty', -- 1
             loc.name as 'dump_loc', -- 2
             case 
-                when loc.name like '%PERBAIKAN%' or loc.name like '%INPIT%' or loc.name like '%FRONT%' or loc.name like '%JALAN%' or loc.name like '%MAINT%' or loc.name like '%SUPP%' or loc.name like '%JLN%' then 'I' 
+                when (loc.name like '%PERBAIKAN%' or loc.name like '%INPIT%' or loc.name like '%FRONT%' or loc.name like '%JALAN%' or loc.name like '%MAINT%' or loc.name like '%SUPP%' or loc.name like '%JLN%') and loc.name not like 'D%' then 'I' 
                 when loc.name like '%TS%' and emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'T'
                 else (	case 
                     when emat.name in ('OB','Blasted','Non-Blasted','Non-Blaste','Ripping','Soft DD','Blasted-2','Non-Blasted-2') then 'O'
@@ -126,17 +83,108 @@ class Command(BaseCommand):
         WHERE sd.deleted_at is NULL AND dateadd("HH",8,time_empty) between @start_date and @enddate
         ORDER BY time_empty asc
         """
-        cursor_jigsaw.execute(sql_dump)
-        data = cursor_jigsaw.fetchall()
+        try:
+            cursor_jigsaw = connections["jigsaw"].cursor()
+        except OperationalError as e:
+            self.stderr.write(f"Operational Error: {e}")
+            return
 
-        for d in data:
+        cursor_jigsaw.execute(sql_load)
+        data = pd.DataFrame(cursor_jigsaw.fetchall())
+        data.columns = [
+            "load_id",
+            "time_full",
+            "truck",
+            "shovel",
+            "material",
+            "blast",
+            "grade",
+        ]
+
+        cursor_jigsaw.execute(sql_dump)
+        dumping = pd.DataFrame(cursor_jigsaw.fetchall())
+        dumping.columns = ["load_id", "time_empty", "dump_loc", "material_id"]
+
+        cursor_jigsaw.close()
+
+        data = pd.merge(
+            data, dumping, left_on="load_id", right_on="load_id", how="left"
+        )
+
+        dumping = dumping[~dumping["load_id"].isin(data["load_id"])]
+
+        list_data = []
+        for _, d in data.iterrows():
+            dt = d["time_full"].tz_localize("UTC")
+            date = dt.date()
+            hour = dt.hour
+            if (6 < hour < 18) or ((hour == 6) and (dt.minute >= 30)):
+                shift = 1
+            else:
+                shift = 2
+
+            if (shift == 2) and (hour <= 6):
+                report_date = date - timedelta(days=1)
+            else:
+                report_date = date
+
+            loader, _ = loaderID.objects.get_or_create(unit=d["shovel"])
+            truck, _ = truckID.objects.get_or_create(jigsaw=d["truck"])
+            rit = ritase(
+                load_id=d["load_id"],
+                date=date,
+                hour=hour,
+                shift=shift,
+                time_full=dt,
+                truck_id=truck,
+                loader_id=loader,
+                material=d["material"],
+                blast=d["blast"],
+                grade=d["grade"],
+                report_date=report_date,
+                time_empty=(
+                    None
+                    if pd.isna(d["time_empty"])
+                    else d["time_empty"].tz_localize("UTC")
+                ),
+                dump_location=None if pd.isna(d["dump_loc"]) else d["dump_loc"],
+                type=None if pd.isna(d["material_id"]) else d["material_id"],
+            )
+            list_data.append(rit)
+
+        ritase.objects.bulk_create(
+            list_data,
+            update_conflicts=True,
+            unique_fields=["load_id"],
+            update_fields=[
+                "date",
+                "hour",
+                "shift",
+                "time_full",
+                "truck_id",
+                "loader_id",
+                "material",
+                "grade",
+                "report_date",
+                "time_empty",
+                "dump_location",
+                "type",
+            ],
+        )
+
+        self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data loading"))
+        self.stdout.write(self.style.SUCCESS(f"{dtime}: Memulai memuat data Dumping"))
+
+        for _, d in dumping.iterrows():
             try:
-                entry = ritase.objects.get(load_id=d[0])
-                entry.time_empty = tz.localize(d[1])
-                entry.dump_location = d[2]
-                entry.type = d[3]
+                entry = ritase.objects.get(load_id=d["load_id"])
+                entry.time_empty = d["time_empty"].tz_localize("UTC")
+                entry.dump_location = d["dump_loc"]
+                entry.type = d["material_id"]
                 entry.save()
             except ritase.DoesNotExist:
                 continue
-        cursor_jigsaw.close()
+            except:
+                continue
+
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Sukses memuat data Dumping"))

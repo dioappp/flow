@@ -24,13 +24,17 @@
 
         var undobtn = d3.select("#btn-container").append("button").attr("id", "undoBtn").attr("class", "ms-0 btn btn-warning").text("undo")
 
-        var table = $("#load-table").DataTable({
+        var table = $("#table-standby").DataTable({
             processing: true,
             serverSide: true,
             stateSave: true,
             ordering: false,
+            search: {
+                return: true
+            },
             pagingType: "full_numbers",
             select: true,
+            fixedHeader: true,
             ajax: {
                 url: "{% url 'stb_loader_shiftly:report' %}",
                 type: "POST",
@@ -42,7 +46,10 @@
                     d.shift = $("#shift-select").val();
                 },
                 complete: function(d) {
-                    checkTimeLineUnit();
+                    var unitList = $.map(d.responseJSON.data, function(item) {
+                        return item.unit;
+                    })
+                    checkTimeLineUnit(unitList);
                 },
             },
             columns: [{
@@ -54,13 +61,35 @@
                 data: "action",
                 orderable: false,
                 searchable: false
-            }, ],
+            }, {
+                data: "hm",
+                orderable: false,
+                searchable: false,
+                width: "3%",
+                render: $.fn.dataTable.render.number('', '.', 2, '')
+
+            }, {
+                data: "wh",
+                orderable: false,
+                searchable: false,
+                width: "3%",
+                render: $.fn.dataTable.render.number('', '.', 2, '')
+
+            }],
             language: {
                 emptyTable: '<b>Data belum di ambil dari server Jigsaw.</b> Pastikan data hourly sudah tersedia'
             },
             rowGroup: {
                 dataSrc: "cluster"
             },
+            rowCallback: function(row, data) {
+                if (data.hm <= 0 || data.hm > 15) {
+                    $('td:eq(2)', row).addClass("bg-warning text-white");
+                }
+                if (data.wh > data.hm) {
+                    $('td:eq(3)', row).addClass("bg-danger text-white");
+                }
+            }
         });
 
         function load() {
@@ -68,10 +97,25 @@
             setTimeFrameShiftly()
         }
 
-        function checkTimeLineUnit() {
-            $(".d3-timeline").each(function() {
-                var id = $(this).data("id");
-                showDetail(id);
+        function checkTimeLineUnit(units) {
+            $.ajax({
+                url: "{% url 'stb_loader_shiftly:timeline_batch' %}",
+                type: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                data: {
+                    date: $("#date-select").val(),
+                    shift: $("#shift-select").val(),
+                    unit_id: JSON.stringify(units),
+                    hanging: $("#hanging")[0].checked,
+                    wh_proses: $("#wh_proses")[0].checked,
+                },
+                success: function(data) {
+                    for (const key in data) {
+                        generateToSVG(key, data[key])
+                    }
+                },
             });
         }
 
@@ -87,6 +131,7 @@
                     shift: $("#shift-select").val(),
                     unit_id: id,
                     hanging: $("#hanging")[0].checked,
+                    wh_proses: $("#wh_proses")[0].checked,
                 },
                 success: function(data) {
                     generateToSVG(id, data);
@@ -151,7 +196,8 @@
                 .colors(colorScale)
                 .colorProperty("label")
                 .click(function(d, i, datum) {
-                    if (datum.label == 'STB') {
+                    if (datum.label == 'STB' &&
+                        !$("#wh_proses")[0].checked) {
                         $('#updateModal').on('show.bs.modal', function(event) {
                             var modal = $(this);
                             populateUpdateForm(modal, d)
@@ -279,6 +325,14 @@
             var formData = new FormData(this);
             handleDeleteSubmission("{% url 'stb_loader:delete'%}", data_unit, formData)
         });
+
+        $("#wh_proses").change(function() {
+            if ($(this)[0].checked) {
+                $("#customContextMenu button").prop("disabled", true);
+            } else {
+                $("#customContextMenu button").prop("disabled", false);
+            }
+        })
     </script>
 {% endblock script %}
 {% block modals %}

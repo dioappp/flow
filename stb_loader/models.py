@@ -46,6 +46,14 @@ class LoaderStatus(models.Model):
     report_date = models.DateField()
     location = models.ForeignKey(ClusterLoader, on_delete=models.SET_NULL, null=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["date", "shift", "hour", "timeStart", "unit", "report_date"],
+                name="unique_loader_status",
+            )
+        ]
+
 
 class LoaderStatusHistory(models.Model):
     ACTION_CHOICES = (
@@ -53,6 +61,7 @@ class LoaderStatusHistory(models.Model):
         ("update", "Update"),
         ("delete", "Delete"),
         ("addBatch", "AddBatch"),
+        ("updateBtch", "UpdateBtch"),
     )
 
     action = models.CharField(max_length=10, choices=ACTION_CHOICES)

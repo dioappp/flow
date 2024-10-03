@@ -334,7 +334,7 @@
                 var cardBodyRit = ritase.append("div").attr("class", "card-body")
                     .append("div").attr("class", "card-body table-border-style")
                     .append("div").attr("class", "table-responsive")
-                    .append("table").attr("class", "table table-striped-columns").attr("id", "load-table" + index);
+                    .append("table").attr("class", "table table-striped-columns").attr("id", "table-ritase" + index);
 
                 var thead = cardBodyRit.append("thead").append("tr");
 
@@ -371,7 +371,7 @@
 
         function createTable(index, item) {
             // Initialize DataTable for this specific card
-            return $("#load-table" + index).DataTable({
+            return $("#table-ritase" + index).DataTable({
                 processing: true,
                 serverSide: true,
                 ordering: false,
@@ -461,7 +461,7 @@
                 ritasiData.push({
                     display: "circle",
                     starting_time: element.time_full,
-                    loader: element.loader,
+                    unit: element.unit,
                     database_id: element.database_id,
                     label: element.type,
                     loc: element.loc,
@@ -527,7 +527,7 @@
                             x = d.label
                         }
                         Tooltip
-                            .html(d.loader + "<br><b>" + x + "</b>: " + d.loc)
+                            .html(d.unit + "<br><b>" + x + "</b>: " + d.loc)
                     }
                 })
                 .mouseout(function(d, i, datum) {

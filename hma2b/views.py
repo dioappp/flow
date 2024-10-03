@@ -22,7 +22,10 @@ def operator(request):
 
     maindata = (
         hmOperator.objects.filter(
-            Q(equipment__startswith="X") | Q(equipment__startswith="G"),
+            Q(equipment__startswith="X")
+            | Q(equipment__startswith="G")
+            | Q(equipment__startswith="S")
+            | Q(equipment__startswith="E"),
             Q(login_time__gte=ts, login_time__lt=te),
             # | Q(logout_time__gt=ts, logout_time__lte=te),
         )
