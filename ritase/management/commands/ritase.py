@@ -57,7 +57,7 @@ class Command(BaseCommand):
         """
         sql_dump = f"""
         declare @start_date datetime, @enddate datetime
-        set @start_date = dateadd("mi",15,'{dtime}')
+        set @start_date = '{dtime}'
         set @enddate = dateadd("mi",15,'{dtime_end}')
 
         SELECT 
