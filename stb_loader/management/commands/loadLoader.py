@@ -536,7 +536,7 @@ class Command(BaseCommand):
         except Exception as e:
             # Log the final exception that caused the transaction to fail
             if errors_data:
-                for i, e, data in errors_data:
+                for i, data in errors_data:
                     db_logger.error(f"Error inserting Row {i}: {e}, data: {data}")
             db_logger.error(f"stb loader failed - {dtime} => {e}")
             self.stdout.write(
