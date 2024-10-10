@@ -321,6 +321,7 @@ def standby(request):
                 "remarks": "first",
                 "date": "first",
                 "pit": "first",
+                "shift": "first",
             }
         )
         result["Project"] = "ADMO"
@@ -348,6 +349,7 @@ def standby(request):
             "standby_code",
             "durasi",
             "remarks",
+            "shift",
         ]
         result = result.reindex(columns=column_order)
         result = result.sort_values(by=["equipment", "date", "hour"])
