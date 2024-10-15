@@ -172,6 +172,8 @@ def get_wh(date, shift, unit_list) -> dict:
     df["durasi"] = df["timeEnd"] - df["timeStart"]
     df["durasi"] = pd.to_timedelta(df["durasi"]).dt.total_seconds() / 3600
 
+    df["shift"] = shift
+
     df = df.reset_index(drop=True)
 
     ids = df.index[df.standby_code == "S12"].tolist()
