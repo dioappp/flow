@@ -222,7 +222,7 @@ class Command(BaseCommand):
         list_loader = loader_df.Equipment.unique()
 
         ts = shift_states_df["Time Start"].min()
-        te = shift_states_df["Time End"].max()
+        te = ts + pd.Timedelta(hours=1)
         half_time = ts + pd.Timedelta(30, "minutes")
         hour = ts.hour
 

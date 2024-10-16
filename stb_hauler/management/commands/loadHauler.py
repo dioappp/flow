@@ -89,7 +89,7 @@ class Command(BaseCommand):
         list_hauler = hauler_df.Equipment.unique()
 
         ts = shift_states_df["Time Start"].min()
-        te = shift_states_df["Time End"].max()
+        te = pd.Timedelta(hours=1)
         half_time = ts + pd.Timedelta(30, "minutes")
 
         hour = ts.hour
