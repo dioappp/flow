@@ -101,6 +101,7 @@ DATABASES = {
     "default": env.dj_db_url("DEFAULT_DATABASE_URL"),
     "jigsaw": env.dj_db_url("JIGSAW_DATABASE_URL"),
     "MCRBD": env.dj_db_url("MCR_DATABASE_URL"),
+    "MCRBD_New": env.dj_db_url("MCR_DATABASE_NEW_URL"),
 }
 
 

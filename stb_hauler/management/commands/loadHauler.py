@@ -100,29 +100,33 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"{dtime}: Load data MCR BD Hauler"))
         # Data Breakdown
         bd_sql = """
-        select bd_date, bd_time, rfu_date, rfu_time, unit_id, bd_code, problem, 
-        case when `bd_status`(`shift_breakdown`.`problem`) = 'BA' then 'BUS' else `bd_status`(`shift_breakdown`.`problem`) end AS `problem_type` 
-        from `shift_breakdown` 
-        where 
-        (
-            (`shift_breakdown`.`deleted_at` is null) 
-            and 
-            `shift_breakdown`.`section` = 'PHW'
-            and
+        SELECT 
+            bd_date, 
+            bd_time, 
+            rfu_date, 
+            rfu_time, 
+            unit_id, 
+            bd_code, 
+            problem
+            --,CASE 
+            --    WHEN dbo.bd_status(problem) = 'BA' THEN 'BUS' 
+            --ELSE dbo.bd_status(problem) 
+            --END AS problem_type
+            ,null as problem_type --delete this after gain access
+        FROM shift_breakdown
+        WHERE 
             (
-                (`shift_breakdown`.`temp_rfu_date` >= cast((now() + interval -(14) day) as date)) 
-                or 
-                (`shift_breakdown`.`rfu_date` = '0000-00-00') 
-                or 
-                (`shift_breakdown`.`rfu_date` = '')
-                or 
-                (`shift_breakdown`.`rfu_date` is null)
+                shift_breakdown.deleted_at IS NULL 
+                AND shift_breakdown.section = 'PLD'
+                AND (
+                    (shift_breakdown.rfu_date >= CAST(DATEADD(DAY, -3, GETDATE()) AS DATE)) 
+                    OR shift_breakdown.rfu_date is null
+                )
             )
-        ) 
-        order by `shift_breakdown`.`id` desc
+        ORDER BY shift_breakdown.id DESC;
         """
         try:
-            cursor_mcr = connections["MCRBD"].cursor()
+            cursor_mcr = connections["MCRBD_New"].cursor()
         except OperationalError as e:
             self.stderr.write(f"Operational Error: {e}")
             db_logger.error(f"Server MCRBD Error -{dtime}: {e}")
