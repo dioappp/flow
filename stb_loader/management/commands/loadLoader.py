@@ -159,12 +159,11 @@ class Command(BaseCommand):
             rfu_time, 
             unit_id, 
             bd_code, 
-            problem
-            --,CASE 
-            --    WHEN dbo.bd_status(problem) = 'BA' THEN 'BUS' 
-            --ELSE dbo.bd_status(problem) 
-            --END AS problem_type
-            ,null as problem_type --delete this after gain access
+            problem,
+            CASE 
+                WHEN dbo.bd_status(problem) = 'BA' THEN 'BUS' 
+                ELSE dbo.bd_status(problem) 
+                END AS problem_type
         FROM shift_breakdown
         WHERE 
             (
@@ -216,10 +215,10 @@ class Command(BaseCommand):
             breakdown_df.loc[i + 1, "remarks"] = d[6]
             breakdown_df.loc[i + 1, "Standby Code"] = d[7]
         breakdown_df["Time Start"] = pd.to_datetime(
-            breakdown_df["Time Start"], format="%Y-%m-%d %H:%M", utc=True
+            breakdown_df["Time Start"], format="%Y-%m-%d %H:%M:%S", utc=True
         )
         breakdown_df["Time End"] = pd.to_datetime(
-            breakdown_df["Time End"], format="%Y-%m-%d %H:%M", utc=True
+            breakdown_df["Time End"], format="%Y-%m-%d %H:%M:%S", utc=True
         )
         cursor_mcr.close()
 
