@@ -91,6 +91,10 @@ class Command(BaseCommand):
 
         cursor_jigsaw.execute(sql_load)
         data = pd.DataFrame(cursor_jigsaw.fetchall())
+        if data.empty:
+            self.stdout.write("Tidak ada Ritase")
+            return
+
         data.columns = [
             "load_id",
             "time_full",

@@ -262,36 +262,40 @@ def standby(request):
             .annotate(equipment=F("loader_id__unit"))
             .values("equipment", "type", "time_full", "hour", "date")
         )
-        rdf = pd.DataFrame(list(rit))
-        rdf = rdf.sort_values(["equipment", "time_full"]).reset_index(drop=True)
-        rdf["group"] = (rdf["type"] != rdf["type"].shift()).cumsum()
-        rdf = rdf.groupby(["equipment", "hour", "group"], as_index=False).last()
-        rdf = rdf.drop(columns="group")
-        counter = rdf.groupby(["equipment", "date", "hour"], as_index=False).agg(
-            {"time_full": "count", "type": "first"}
-        )
-        for i, d in counter.iterrows():
-            df.loc[
-                (df["standby_code"] == "WH")
-                & (df["hour"] == d.hour)
-                & (df["date"] == d.date)
-                & (df["equipment"] == d.equipment),
-                "standby_code",
-            ] = f"WH {d.type}"
 
-            if d.time_full != 1:
-                x = []
-                x = rdf[
-                    (rdf["date"] == d.date)
-                    & (rdf["hour"] == d.hour)
-                    & (rdf["equipment"] == d.equipment)
-                ]
-                x = x.rename(columns={"time_full": "timeStart", "type": "standby_code"})
-                x["standby_code"] = x["standby_code"].apply(lambda x: f"WH {x}")
-                last_data = x.loc[x.index[-1], "standby_code"]
-                x["standby_code"] = x["standby_code"].shift(-1)
-                x.loc[x.index[-1], "standby_code"] = last_data
-                df = pd.concat([df, x])
+        if rit:
+            rdf = pd.DataFrame(list(rit))
+            rdf = rdf.sort_values(["equipment", "time_full"]).reset_index(drop=True)
+            rdf["group"] = (rdf["type"] != rdf["type"].shift()).cumsum()
+            rdf = rdf.groupby(["equipment", "hour", "group"], as_index=False).last()
+            rdf = rdf.drop(columns="group")
+            counter = rdf.groupby(["equipment", "date", "hour"], as_index=False).agg(
+                {"time_full": "count", "type": "first"}
+            )
+            for i, d in counter.iterrows():
+                df.loc[
+                    (df["standby_code"] == "WH")
+                    & (df["hour"] == d.hour)
+                    & (df["date"] == d.date)
+                    & (df["equipment"] == d.equipment),
+                    "standby_code",
+                ] = f"WH {d.type}"
+
+                if d.time_full != 1:
+                    x = []
+                    x = rdf[
+                        (rdf["date"] == d.date)
+                        & (rdf["hour"] == d.hour)
+                        & (rdf["equipment"] == d.equipment)
+                    ]
+                    x = x.rename(
+                        columns={"time_full": "timeStart", "type": "standby_code"}
+                    )
+                    x["standby_code"] = x["standby_code"].apply(lambda x: f"WH {x}")
+                    last_data = x.loc[x.index[-1], "standby_code"]
+                    x["standby_code"] = x["standby_code"].shift(-1)
+                    x.loc[x.index[-1], "standby_code"] = last_data
+                    df = pd.concat([df, x])
 
         df = df.sort_values(["equipment", "timeStart"]).reset_index(drop=True)
         df[["report_date", "shift", "pit"]] = df[
